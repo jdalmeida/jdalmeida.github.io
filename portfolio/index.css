@@ -1,7 +1,21 @@
+@keyframes fadeInLeftToRight {
+    0% {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+.animtxt{
+    animation: fadeInLeftToRight 1s ease-in-out;
+}
+
 .botao {
     display: inline-block;
-    padding: 10px 20px;
-    background-color: #3633b9;
+    padding: 10px 20px; 
     color: #fff;
     border: none;
     border-radius: 5px;
@@ -33,7 +47,7 @@ a:visited{
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #1e1e1e;
+    background-color: #090909;
     color: #ffffff;
     transition: all ease-in-out 1s;
 }
@@ -114,8 +128,9 @@ h2 {
 
 #gridprojetos {
     display: grid;
-    grid-template-columns: 1fr 1fr; /* Duas colunas no PC */
-    gap: 20px; /* Espaço entre as colunas e linhas */
+    grid-template-columns: 0.3fr 0.3fr 0.3fr;
+    gap: 3em;
+    place-content: center;
 }
 
 .projeto {
@@ -146,10 +161,16 @@ h2 {
 
 .projeto a {
     display: inline-block;
-    margin-top: 10px;
+    margin-top: 2em;
     text-decoration: none;
     font-weight: bold;
 }
+
+.justify-between{
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+} 
 
 .botoes-projeto {
     display: flex;
