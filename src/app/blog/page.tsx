@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/markdown'
-import { Calendar, Clock, ArrowRight, Search, Filter, BookOpen, Sparkles } from 'lucide-react'
+import { Calendar, Clock, ArrowRight, Search, BookOpen, Clock10 } from 'lucide-react'
 
 export const metadata = {
   title: 'Blog',
@@ -40,11 +40,10 @@ export default function BlogPage() {
             </p>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto mt-12 slide-in-up animate-delay-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto mt-12 slide-in-up animate-delay-500">
               {[
                 { number: posts.length, label: 'Artigos Publicados', icon: BookOpen },
-                { number: '10k+', label: 'Palavras Escritas', icon: Sparkles },
-                { number: '5+', label: 'Tópicos Cobertos', icon: Filter }
+                { number: posts.reduce((acc, post) => acc + post.readTime, 0), label: 'Minutos de Conteúdo', icon: Clock10 },
               ].map((stat, index) => (
                 <div key={stat.label} className="glass-card p-6 text-center group hover:scale-105 transition-all duration-300">
                   <stat.icon size={24} className="text-primary-500 dark:text-primary-400 mx-auto mb-3 group-hover:scale-110 transition-transform duration-300" />
@@ -61,7 +60,7 @@ export default function BlogPage() {
       <section className="py-12 bg-white/50 dark:bg-gray-800/30 backdrop-blur-sm border-y border-gray-200/50 dark:border-gray-700/50">
         <div className="container">
           <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
+            <div className="flex flex-col gap-6 items-center justify-between">
               {/* Search */}
               <div className="relative flex-1 max-w-md">
                 <Search size={20} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" />
@@ -74,7 +73,7 @@ export default function BlogPage() {
 
               {/* Filter Tags */}
               <div className="flex flex-wrap gap-3">
-                {['Todos', 'Desenvolvimento', 'Liderança', 'Next.js', 'React'].map((tag) => (
+                {posts.reduce((acc, post) => [...acc, ...post.tags], [] as string[]).slice(0, 6).map((tag) => (
                   <button
                     key={tag}
                     className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
@@ -106,7 +105,7 @@ export default function BlogPage() {
                 `}
               >
                 {/* Post Header */}
-                <div className="p-8">
+                <div className="p-8 flex flex-col h-full">
                   {/* Meta Info */}
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                     <div className="flex items-center">
@@ -125,7 +124,7 @@ export default function BlogPage() {
                   </h2>
 
                   {/* Excerpt */}
-                  <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-3 leading-relaxed">
+                  <p className="text-gray-600 dark:text-gray-300 mb-6 line-clamp-3 leading-relaxed flex-1">
                     {post.excerpt}
                   </p>
 

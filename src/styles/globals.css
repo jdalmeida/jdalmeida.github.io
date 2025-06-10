@@ -388,4 +388,39 @@
 .dark .prose pre {
   background: rgb(3, 7, 18); /* gray-950 */
   border-color: rgb(31, 41, 55); /* gray-800 */
+}
+
+/* Spotlight Effect for Name */
+.spotlight-effect {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  position: relative;
+  transition: all 0.3s ease;
+  background: radial-gradient(
+    circle 300px at var(--mouse-x) var(--mouse-y),
+    #60a5fa 0%,
+    #3b82f6 15%,
+    #9333ea 35%,
+    #ec4899 55%,
+    #f56565 75%,
+    #101010 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+.dark .spotlight-effect {
+  background: radial-gradient(
+    circle 300px at var(--mouse-x) var(--mouse-y),
+    #3b82f6 0%,
+    #60a5fa 15%,
+    #a855f7 35%,
+    #f472b6 55%,
+    #fb923c 75%,
+    #ffffff 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
 } 

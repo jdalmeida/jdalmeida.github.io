@@ -69,7 +69,7 @@ export function Header() {
           <div className="hidden md:flex items-center space-x-2">
             {[
               { icon: Github, href: 'https://github.com/jdalmeida', label: 'GitHub' },
-              { icon: Linkedin, href: 'https://linkedin.com/in/joaode.almeida9', label: 'LinkedIn' },
+              { icon: Linkedin, href: 'https://linkedin.com/in/joao-de-almeida9', label: 'LinkedIn' },
               { icon: Mail, href: 'mailto:joao@allpines.com.br', label: 'Email' }
             ].map((social, index) => (
               <a

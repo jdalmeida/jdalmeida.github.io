@@ -9,20 +9,21 @@
     "deploy": "npm run build && touch out/.nojekyll"
   },
   "dependencies": {
+    "date-fns": "^3.0.0",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^0.400.0",
     "next": "^14.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
-    "gray-matter": "^4.0.3",
+    "react-icons": "^5.5.0",
     "remark": "^15.0.0",
-    "remark-html": "^16.0.0",
-    "date-fns": "^3.0.0",
-    "lucide-react": "^0.400.0"
+    "remark-html": "^16.0.0"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.10",
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "@tailwindcss/typography": "^0.5.10",
     "autoprefixer": "^10.0.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.0",
@@ -41,4 +42,4 @@
   ],
   "author": "João de Almeida",
   "license": "MIT"
-} 
+}

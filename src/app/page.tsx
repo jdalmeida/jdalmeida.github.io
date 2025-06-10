@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getAllPosts } from '@/lib/markdown'
-import { ArrowRight, Code, Lightbulb, Users, Sparkles, Rocket, Brain, Target, ChevronDown } from 'lucide-react'
+import { ArrowRight, Code, Lightbulb, Users, Sparkles, Target } from 'lucide-react'
+import SpotlightText from '@/components/SpotlightText'
 
 export default async function Home() {
   const posts = getAllPosts().slice(0, 3)
@@ -24,20 +25,22 @@ export default async function Home() {
             {/* Badge Animado */}
             <div className="inline-flex items-center glass-card px-6 py-3 slide-in-up">
               <Sparkles size={16} className="text-primary-500 dark:text-primary-400 mr-2" />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">CTO da Allpines • Especialista em Tecnologia</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Allpines CTO & Fullstack Developer</span>
             </div>
 
             {/* Título Principal com Efeito Gradient */}
             <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-tight slide-in-up animate-delay-200">
-              <span className="block text-gray-900 dark:text-gray-100 mb-4">Olá, eu sou</span>
-              <span className="gradient-text">João de Almeida</span>
+              <SpotlightText className="gradient-text">
+                Olá, eu sou<br/>
+                João de Almeida
+              </SpotlightText>
             </h1>
 
             {/* Subtítulo com Animação de Digitação */}
             <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed slide-in-up animate-delay-300">
-              CTO especializado em <span className="gradient-text font-semibold">transformação digital</span>, 
-              desenvolvimento de software e liderança técnica. 
-              Criando soluções inovadoras na <span className="gradient-text font-semibold">Allpines</span>.
+              Desenvolvedor <span className="gradient-text font-semibold">fullstack</span>, 
+              buscando transformar problemas em soluções &
+              criando soluções inovadoras na <span className="gradient-text font-semibold">Allpines</span>.
             </p>
 
             {/* Botões de Ação com Efeitos */}
@@ -57,10 +60,10 @@ export default async function Home() {
             </div>
 
             {/* Stats Impressionantes */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-16 slide-in-up animate-delay-700">
+            {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-16 slide-in-up animate-delay-700">
               {[
-                { number: '4+', label: 'Anos de Experiência', icon: Brain },
-                { number: '15+', label: 'Projetos Entregues', icon: Rocket },
+                { number: '4+', label: 'Anos trabalhando com React', icon: FaReact },
+                { number: '5+', label: 'Projetos Entregues', icon: Rocket },
                 { number: '10+', label: 'Tecnologias Dominadas', icon: Code }
               ].map((stat, index) => (
                 <div key={stat.label} className="glass-card p-6 text-center group hover:scale-105 transition-all duration-300">
@@ -69,7 +72,7 @@ export default async function Home() {
                   <div className="text-gray-600 dark:text-gray-400 font-medium">{stat.label}</div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

@@ -55,12 +55,12 @@ export default function ContatoPage() {
                 <div>
                   <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">LinkedIn</h3>
                   <a 
-                    href="https://linkedin.com/in/joaode.almeida9" 
+                    href="https://linkedin.com/in/joao-de-almeida9" 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors inline-flex items-center"
                   >
-                    /in/joaode.almeida9
+                    /in/joao-de-almeida9
                     <ExternalLink size={14} className="ml-1" />
                   </a>
                   <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">

@@ -25,6 +25,7 @@ export interface PostMetadata {
   tags: string[]
   author: string
   readTime: number
+  wordCount: number
 }
 
 // Ensure content directory exists
@@ -51,6 +52,7 @@ export function getAllPosts(): PostMetadata[] {
           tags: matterResult.data.tags || [],
           author: matterResult.data.author || 'João de Almeida',
           readTime: calculateReadTime(matterResult.content),
+          wordCount: matterResult.content.split(/\s+/).length,
         }
       })
 
