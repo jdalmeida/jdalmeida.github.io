@@ -6,8 +6,6 @@ tags: ["blog", "tecnologia", "allpines"]
 author: "João de Almeida"
 ---
 
-# Bem-vindo ao meu blog!
-
 Olá! Sou João de Almeida, CTO da **Allpines**, e este é o meu espaço pessoal para compartilhar insights, experiências e aprendizados sobre tecnologia, desenvolvimento de software e liderança técnica.
 
 ## Sobre mim
