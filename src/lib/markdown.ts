@@ -1,8 +1,6 @@
 import fs from 'fs'
 import path from 'path'
 import matter from 'gray-matter'
-import { remark } from 'remark'
-import html from 'remark-html'
 
 const postsDirectory = path.join(process.cwd(), 'content/posts')
 
@@ -80,18 +78,12 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     const fileContents = fs.readFileSync(fullPath, 'utf8')
     const matterResult = matter(fileContents)
 
-    const processedContent = await remark()
-      .use(html, { sanitize: false })
-      .process(matterResult.content)
-    
-    const contentHtml = processedContent.toString()
-
     return {
       slug,
       title: matterResult.data.title || 'Sem título',
       date: matterResult.data.date || new Date().toISOString(),
       excerpt: matterResult.data.excerpt || '',
-      content: contentHtml,
+      content: matterResult.content,
       tags: matterResult.data.tags || [],
       author: matterResult.data.author || 'João de Almeida',
       readTime: calculateReadTime(matterResult.content),

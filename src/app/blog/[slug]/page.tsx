@@ -5,6 +5,8 @@ import { ptBR } from 'date-fns/locale'
 import { ArrowLeft, Clock, Tag, Calendar, User } from 'lucide-react'
 import { getPostBySlug, getAllPostSlugs } from '@/lib/markdown'
 import type { Metadata } from 'next'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface PageProps {
   params: {
@@ -116,10 +118,11 @@ export default async function BlogPostPage({ params }: PageProps) {
           </header>
 
           {/* Content */}
-          <div 
-            className="prose prose-lg max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-code:text-primary-600 dark:prose-code:text-primary-400 prose-pre:bg-gray-900 dark:prose-pre:bg-gray-950 prose-pre:text-gray-100 dark:prose-pre:text-gray-200 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-blockquote:border-primary-500 dark:prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50/50 dark:prose-blockquote:bg-primary-900/20"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          <div className="prose prose-lg max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-code:text-primary-600 dark:prose-code:text-primary-400 prose-pre:bg-gray-900 dark:prose-pre:bg-gray-950 prose-pre:text-gray-100 dark:prose-pre:text-gray-200 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-blockquote:border-primary-500 dark:prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50/50 dark:prose-blockquote:bg-primary-900/20 prose-table:w-full prose-table:table-auto prose-thead:bg-gray-100 dark:prose-thead:bg-gray-800 prose-th:px-4 prose-th:py-2 prose-th:font-semibold prose-th:text-left prose-tr:border-b prose-tr:border-gray-200 dark:prose-tr:border-gray-700 prose-td:px-4 prose-td:py-2">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {post.content}
+            </ReactMarkdown>
+          </div>
         </article>
 
         {/* Footer */}
