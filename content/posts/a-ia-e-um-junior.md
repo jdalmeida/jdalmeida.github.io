@@ -37,7 +37,11 @@ Pronto! assim você terá um app inteiramente feito por IA, como o Duckduki!
 
 O Duckduki foi um experimento feito por mim para testar até onde o Cursor iria (ele vai bem longe). Esse projeto começou com algns testes utilizando o Gemini e scripts do Powershell, estava tentando fazer um patinho que ficasse na minha tela me lembrando de tomar água.
 Mas como sempre que eu começo uma coisa eu vou até o fim com ela (90% dos meus projetos estão criando teia em repositórios abandonados 💀), eu decidi dar uma outra vida para esse patinho: Ele seria meu companheiro de trabalho.
-Para construir ele eu utilizei um prompt no chatgpt: `com base nas nossas connversas me dê ideias de ferramentas para o meu assistente de IA para desktop. O que eu posso colocar para melhorar minha produtividade?` - Com a resposta que eu obtive eu mandei para o Cursor desenvolver e adivinhe?
+Para construir ele eu utilizei um prompt no ChatGPT: 
+
+>com base nas nossas connversas me dê ideias de ferramentas para o meu assistente de IA para desktop. O que eu posso colocar para melhorar minha produtividade?
+
+Com a resposta que eu obtive eu mandei para o Cursor desenvolver e adivinhe?
 [Esse foi o resultado](https://duckduki.allpines.com.br).
 
 Esse app se tornou minha ferramenta nº 1 no dia a dia do trabalho (claro, depois do cursor), nas últimas alterações que fiz nele consegui deixar parecido com a Spotlight do MacOs (bem de longe se parecem um pouco), optei por esse design pois ele fica no meio da tela e facilita na visualização do conteúdo.

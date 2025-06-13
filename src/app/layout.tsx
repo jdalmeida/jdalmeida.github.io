@@ -109,11 +109,11 @@ export default function RootLayout({
         {/* Scroll Progress Bar */}
         <div 
           id="progress-bar" 
-          className="fixed top-0 left-0 z-50 h-1 bg-gradient-to-r from-primary-500 to-purple-500 dark:from-primary-400 dark:to-purple-400 transition-transform duration-300 origin-left scale-x-0"
+          className="fixed top-0 left-0 z-[999] h-1 bg-gradient-to-r from-primary-500 to-purple-500 dark:from-primary-400 dark:to-purple-400 transition-transform duration-300 origin-left scale-x-0"
         ></div>
 
         {/* Scroll Progress Indicator */}
-        <div className="fixed top-0 left-0 right-0 z-40 h-1 bg-gray-200/50 dark:bg-gray-700/50 transition-colors duration-300">
+        <div className="fixed top-0 left-0 right-0 z-[999] h-1 bg-gray-200/50 dark:bg-gray-700/50 transition-colors duration-300">
           <div 
             id="scroll-progress" 
             className="h-full bg-gradient-to-r from-primary-500 to-purple-500 dark:from-primary-400 dark:to-purple-400 transition-transform duration-150 origin-left scale-x-0"
