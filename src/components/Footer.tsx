@@ -39,7 +39,7 @@ export function Footer() {
             <div className="flex items-center space-x-4">
               {[
                 { icon: Github, href: 'https://github.com/jdalmeida', label: 'GitHub', color: 'hover:bg-gray-700 dark:hover:bg-gray-600' },
-                { icon: Linkedin, href: 'https://linkedin.com/in/jdalmeida', label: 'LinkedIn', color: 'hover:bg-blue-600 dark:hover:bg-blue-500' },
+                { icon: Linkedin, href: 'https://www.linkedin.com/in/joao-de-almeida9', label: 'LinkedIn', color: 'hover:bg-blue-600 dark:hover:bg-blue-500' },
                 { icon: Mail, href: 'mailto:joao@allpines.com.br', label: 'Email', color: 'hover:bg-red-600 dark:hover:bg-red-500' }
               ].map((social) => (
                 <a
