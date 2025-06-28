@@ -143,7 +143,7 @@ export function Header() {
               <div className="flex items-center justify-center space-x-4">
                 {[
                   { icon: Github, href: 'https://github.com/jdalmeida', label: 'GitHub' },
-                  { icon: Linkedin, href: 'https://linkedin.com/in/jdalmeida', label: 'LinkedIn' },
+                  { icon: Linkedin, href: 'https://linkedin.com/in/joao-de-almeida9', label: 'LinkedIn' },
                   { icon: Mail, href: 'mailto:joao@allpines.com.br', label: 'Email' }
                 ].map((social, index) => (
                   <a
