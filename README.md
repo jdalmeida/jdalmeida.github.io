@@ -151,7 +151,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 **João de Almeida**  
 CTO @ Allpines  
-[Email](mailto:joao@allpines.com.br) • [GitHub](https://github.com/jdalmeida) • [LinkedIn](https://linkedin.com/in/jdalmeida)
+[Email](mailto:joao@allpines.com.br) • [GitHub](https://github.com/jdalmeida) • [LinkedIn](https://linkedin.com/in/joao-de-almeida9)
 
 ---
 
