@@ -4,6 +4,8 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { ParticleBackground } from '@/components/ParticleBackground'
 import { SoundEffects } from '@/components/SoundEffects'
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export const metadata: Metadata = {
   title: {
@@ -67,7 +69,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="scroll-smooth">
       <body className="antialiased overflow-x-hidden">
-        
+        <Analytics />
+        <SpeedInsights />
         {/* Particle Background */}
         <ParticleBackground />
         
