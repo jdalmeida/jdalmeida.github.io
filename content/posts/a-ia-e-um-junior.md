@@ -35,7 +35,7 @@ Pronto! assim você terá um app inteiramente feito por IA, como o Duckduki!
 
 ## Duckduki - o companion feito inteiramente por IA
 
-O Duckduki foi um experimento feito por mim para testar até onde o Cursor iria (ele vai bem longe). Esse projeto começou com algns testes utilizando o Gemini e scripts do Powershell, estava tentando fazer um patinho que ficasse na minha tela me lembrando de tomar água.
+O Duckduki foi um experimento feito por mim para testar até onde o Cursor iria (ele vai bem longe). Esse projeto começou com alguns testes utilizando o Gemini e scripts do Powershell, estava tentando fazer um patinho que ficasse na minha tela me lembrando de tomar água.
 Mas como sempre que eu começo uma coisa eu vou até o fim com ela (90% dos meus projetos estão criando teia em repositórios abandonados 💀), eu decidi dar uma outra vida para esse patinho: Ele seria meu companheiro de trabalho.
 Para construir ele eu utilizei um prompt no ChatGPT: 
 
