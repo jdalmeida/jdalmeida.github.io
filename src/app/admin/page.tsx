@@ -186,8 +186,8 @@ export default function AdminPage() {
     return (
       <div className="container py-16">
         <div className="max-w-md mx-auto glass-card p-8">
-          <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Editor de Artigos</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+          <h1 className="text-2xl font-bold mb-6 text-gray-100">Editor de Artigos</h1>
+          <p className="text-sm text-gray-300 mb-6">
             Faça login com a senha definida em <code>ADMIN_PASSWORD</code>.
           </p>
 

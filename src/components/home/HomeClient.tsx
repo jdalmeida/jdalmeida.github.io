@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { ArrowRight, Code, Lightbulb, Users, Target, Terminal, ChevronRight } from 'lucide-react'
+import PixelBlast from '@/components/PixelBlast'
+import { playHoverSound } from '../SoundEffects'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 60 },
@@ -46,6 +48,24 @@ export function HomeClient({ posts }: { posts: any[] }) {
       
       {/* Immersive Hero Section */}
       <section className="relative min-h-[100vh] flex flex-col items-center justify-center px-4 sm:px-8 z-10 pt-20">
+        <motion.div variants={fadeInUp} style={{ width: '100%', height: '100dvh', position: 'absolute', opacity: 0.7, top: -20 }}>
+          <PixelBlast
+            variant="square"
+            pixelSize={3}
+            color="#8eff00"
+            patternScale={2}
+            patternDensity={1}
+            enableRipples
+            rippleSpeed={0.3}
+            rippleThickness={0.1}
+            rippleIntensityScale={1}
+            speed={0.5}
+            transparent
+            edgeFade={0.5} 
+            className={undefined} 
+            style={undefined}
+          />
+        </motion.div>
         <motion.div 
           className="w-full max-w-[90rem] mx-auto flex flex-col items-start"
           style={{ y: heroY, opacity: heroOpacity }}
@@ -114,7 +134,7 @@ export function HomeClient({ posts }: { posts: any[] }) {
               </motion.p>
               
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-6">
-                <Link href="/blog" className="btn-primary w-full sm:w-auto text-center group flex justify-center items-center gap-3">
+                <Link onMouseOverCapture={playHoverSound} href="/blog" className="btn-primary w-full sm:w-auto text-center group flex justify-center items-center gap-3">
                    Explore o Blog
                    <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </Link>

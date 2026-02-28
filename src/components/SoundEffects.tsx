@@ -26,7 +26,7 @@ export function SoundEffects() {
     }
 
     // Sound generation function
-    const createSound = (frequency: number, type: OscillatorType = 'sine', duration: number = 0.1, volume: number = 0.1) => {
+    const createSound = (frequency: number, type: OscillatorType = 'sine', duration: number = 0.1, volume: number = 1) => {
       if (!audioContextRef.current || !isEnabledRef.current) return
 
       try {
