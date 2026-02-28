@@ -1,13 +1,10 @@
 'use client'
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import dynamic from 'next/dynamic'
 import { createBrowserTRPCClient } from '@/lib/trpc-client'
-
-const MDXEditor = dynamic(() => import('@/components/Editor'), {
-  ssr: false,
-  loading: () => <div className="h-96 w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800/50 animate-pulse rounded-xl border border-gray-300 dark:border-gray-700 text-gray-500">Carregando editor...</div>
-})
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { Eye, Code } from 'lucide-react'
 
 type AdminPost = {
   id: number
@@ -44,6 +41,7 @@ export default function AdminPage() {
   const [error, setError] = useState('')
 
   const [form, setForm] = useState(EMPTY_POST)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem(TOKEN_KEY)
@@ -301,11 +299,50 @@ export default function AdminPage() {
               />
             </div>
 
-            <div className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 overflow-hidden min-h-[500px]">
-              <MDXEditor
-                markdown={form.content}
-                onChange={(content) => setForm((prev) => ({ ...prev, content }))}
-              />
+            <div className="flex flex-col w-full h-[600px] mb-4">
+              {/* Header com Toggle */}
+              <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800/80 px-4 py-3 border border-b-0 border-gray-300 dark:border-gray-700 rounded-t-xl">
+                <div className="font-semibold text-gray-700 dark:text-gray-200">
+                  {showPreview ? 'Preview (Visualizar)' : 'Markdown (Escrever)'}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                >
+                  {showPreview ? (
+                    <>
+                      <Code size={16} />
+                      <span>Editar Fonte</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye size={16} />
+                      <span>Visualizar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Corpo principal do Editor / Preview */}
+              <div className="flex-1 min-h-0 border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 rounded-b-xl overflow-hidden shadow-sm flex flex-col">
+                {!showPreview ? (
+                  <textarea
+                    value={form.content}
+                    onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
+                    placeholder="Escreva seu artigo em markdown..."
+                    className="flex-1 w-full bg-transparent p-4 resize-none font-mono text-[13px] sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
+                  />
+                ) : (
+                  <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6 bg-white dark:bg-gray-950">
+                    <div className="prose prose-lg max-w-none prose-headings:text-gray-200 dark:prose-headings:text-gray-100 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-200 dark:prose-strong:text-gray-100 prose-code:text-primary-600 dark:prose-code:text-primary-400 prose-pre:bg-gray-900 dark:prose-pre:bg-gray-950 prose-pre:text-gray-100 dark:prose-pre:text-gray-200 prose-p:text-gray-200 dark:prose-p:text-gray-300 prose-li:text-gray-200 dark:prose-li:text-gray-300 prose-blockquote:border-primary-500 dark:prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50/50 dark:prose-blockquote:bg-primary-900/20 prose-table:w-full prose-table:table-auto prose-thead:bg-gray-100 dark:prose-thead:bg-gray-300 prose-th:px-4 prose-th:py-2 prose-th:font-semibold prose-th:text-left prose-tr:border-b prose-tr:border-gray-200 dark:prose-tr:border-gray-700 prose-td:px-4 prose-td:py-2">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {form.content || '*Nenhum conteúdo adicionado.*'}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
