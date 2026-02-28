@@ -112,7 +112,7 @@ export default async function BlogPage() {
                   <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 mb-4">
                     <div className="flex items-center">
                       <Calendar size={16} className="mr-2" />
-                      <time dateTime={post.date}>{post.date}</time>
+                      <time  dateTime={post.date}>{new Date(post.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</time>
                     </div>
                     <div className="flex items-center bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 px-3 py-1 rounded-full">
                       <Clock size={14} className="mr-1" />
