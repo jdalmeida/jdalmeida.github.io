@@ -66,7 +66,7 @@ export default function SobrePage() {
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Nossa equipe</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Ruan Ferreira</span>
+                    <span className="text-gray-600 dark:text-gray-300">Ruan Bueno</span>
                     <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">CEO</span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -74,7 +74,7 @@ export default function SobrePage() {
                     <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">CTO</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600 dark:text-gray-300">Douglas Hariel</span>
+                    <span className="text-gray-600 dark:text-gray-300">Douglas Fantoni</span>
                     <span className="text-sm text-primary-600 dark:text-primary-400 font-medium">GCO</span>
                   </div>
                   <div className="flex items-center justify-between">
