@@ -1,9 +1,13 @@
 'use client'
 
 import { FormEvent, useEffect, useMemo, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import dynamic from 'next/dynamic'
 import { createBrowserTRPCClient } from '@/lib/trpc-client'
+
+const MDXEditor = dynamic(() => import('@/components/Editor'), {
+  ssr: false,
+  loading: () => <div className="h-96 w-full flex items-center justify-center bg-gray-100 dark:bg-gray-800/50 animate-pulse rounded-xl border border-gray-300 dark:border-gray-700 text-gray-500">Carregando editor...</div>
+})
 
 type AdminPost = {
   id: number
@@ -258,7 +262,7 @@ export default function AdminPage() {
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder="Título"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
                 required
               />
               <input
@@ -266,7 +270,7 @@ export default function AdminPage() {
                 value={form.slug}
                 onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value.toLowerCase() }))}
                 placeholder="slug-do-artigo"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
                 required
               />
             </div>
@@ -275,7 +279,7 @@ export default function AdminPage() {
               value={form.excerpt}
               onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))}
               placeholder="Resumo"
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70"
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
               rows={2}
               required
             />
@@ -286,25 +290,23 @@ export default function AdminPage() {
                 value={form.tagsInput}
                 onChange={(event) => setForm((prev) => ({ ...prev, tagsInput: event.target.value }))}
                 placeholder="tags separadas por vírgula"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
               />
               <input
                 type="text"
                 value={form.author}
                 onChange={(event) => setForm((prev) => ({ ...prev, author: event.target.value }))}
                 placeholder="Autor"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
               />
             </div>
 
-            <textarea
-              value={form.content}
-              onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
-              placeholder="Markdown do artigo"
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 font-mono"
-              rows={16}
-              required
-            />
+            <div className="w-full rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 overflow-hidden min-h-[500px]">
+              <MDXEditor
+                markdown={form.content}
+                onChange={(content) => setForm((prev) => ({ ...prev, content }))}
+              />
+            </div>
 
             <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <input
@@ -325,12 +327,7 @@ export default function AdminPage() {
             </div>
           </form>
 
-          <div className="glass-card p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Preview Markdown</h2>
-            <article className="prose prose-lg max-w-none dark:prose-invert">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.content}</ReactMarkdown>
-            </article>
-          </div>
+
         </div>
       </div>
     </div>
