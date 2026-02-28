@@ -128,7 +128,7 @@ export function HomeClient({ posts }: { posts: any[] }) {
             {/* Aesthetic Stats/Data blocks */}
             <div className="md:col-span-5 lg:col-span-4 lg:col-start-9 hidden md:flex flex-col gap-6 text-right">
                 <motion.div variants={fadeInUp} className="pt-4">
-                  <div className="text-primary-500 font-display font-bold text-4xl mb-1 text-shadow-md">2+</div>
+                  <div className="text-primary-500 font-display font-bold text-4xl mb-1 text-shadow-md">{new Date().getFullYear() - 2023}+</div>
                   <div className="text-gray-500 uppercase tracking-widest text-xs font-bold bg-background/80 inline-block px-2 rounded">Anos de Experiência</div>
                 </motion.div>
                 <motion.div variants={fadeInUp} className="border-t border-gray-800 pt-4">
