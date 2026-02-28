@@ -1,8 +1,5 @@
-import fs from 'fs'
-import path from 'path'
-import matter from 'gray-matter'
-
-const postsDirectory = path.join(process.cwd(), 'content/posts')
+import { appRouter } from '@/server/api/root'
+import { createTRPCContext } from '@/server/api/trpc'
 
 export interface Post {
   slug: string
@@ -26,100 +23,63 @@ export interface PostMetadata {
   wordCount: number
 }
 
-// Ensure content directory exists
-if (!fs.existsSync(postsDirectory)) {
-  fs.mkdirSync(postsDirectory, { recursive: true })
+async function getCaller() {
+  const ctx = await createTRPCContext()
+  return appRouter.createCaller(ctx)
 }
 
-export function getAllPosts(): PostMetadata[] {
-  try {
-    const fileNames = fs.readdirSync(postsDirectory)
-    const allPostsData = fileNames
-      .filter((fileName) => fileName.endsWith('.md'))
-      .map((fileName) => {
-        const slug = fileName.replace(/\.md$/, '')
-        const fullPath = path.join(postsDirectory, fileName)
-        const fileContents = fs.readFileSync(fullPath, 'utf8')
-        const matterResult = matter(fileContents)
-
-        return {
-          slug,
-          title: matterResult.data.title || 'Sem título',
-          date: matterResult.data.date || new Date().toISOString(),
-          excerpt: matterResult.data.excerpt || '',
-          tags: matterResult.data.tags || [],
-          author: matterResult.data.author || 'João de Almeida',
-          readTime: calculateReadTime(matterResult.content),
-          wordCount: matterResult.content.split(/\s+/).length,
-        }
-      })
-
-    return allPostsData.sort((a, b) => {
-      if (a.date < b.date) {
-        return 1
-      } else {
-        return -1
-      }
-    })
-  } catch (error) {
-    console.warn('Erro ao ler posts:', error)
-    return []
+function normalizeDate(date: Date | string | null) {
+  if (!date) {
+    return new Date().toISOString()
   }
+
+  return new Date(date).toISOString()
+}
+
+export async function getAllPosts(): Promise<PostMetadata[]> {
+  const caller = await getCaller()
+  const posts = await caller.posts.listPublished()
+
+  return posts.map((post) => ({
+    slug: post.slug,
+    title: post.title,
+    date: normalizeDate(post.publishedAt ?? post.createdAt),
+    excerpt: post.excerpt,
+    tags: post.tags,
+    author: post.author,
+    readTime: post.readTime,
+    wordCount: post.wordCount,
+  }))
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  try {
-    const fullPath = path.join(postsDirectory, `${slug}.md`)
-    
-    if (!fs.existsSync(fullPath)) {
-      return null
-    }
+  const caller = await getCaller()
+  const post = await caller.posts.getBySlug({ slug })
 
-    const fileContents = fs.readFileSync(fullPath, 'utf8')
-    const matterResult = matter(fileContents)
-
-    return {
-      slug,
-      title: matterResult.data.title || 'Sem título',
-      date: matterResult.data.date || new Date().toISOString(),
-      excerpt: matterResult.data.excerpt || '',
-      content: matterResult.content,
-      tags: matterResult.data.tags || [],
-      author: matterResult.data.author || 'João de Almeida',
-      readTime: calculateReadTime(matterResult.content),
-    }
-  } catch (error) {
-    console.warn(`Erro ao ler post ${slug}:`, error)
+  if (!post) {
     return null
   }
-}
 
-export function getAllPostSlugs(): { params: { slug: string } }[] {
-  try {
-    const fileNames = fs.readdirSync(postsDirectory)
-    return fileNames
-      .filter((fileName) => fileName.endsWith('.md'))
-      .map((fileName) => {
-        return {
-          params: {
-            slug: fileName.replace(/\.md$/, ''),
-          },
-        }
-      })
-  } catch (error) {
-    console.warn('Erro ao ler slugs dos posts:', error)
-    return []
+  return {
+    slug: post.slug,
+    title: post.title,
+    date: normalizeDate(post.publishedAt ?? post.createdAt),
+    excerpt: post.excerpt,
+    content: post.content,
+    tags: post.tags,
+    author: post.author,
+    readTime: post.readTime,
   }
 }
 
-function calculateReadTime(content: string): number {
-  const wordsPerMinute = 200
-  const words = content.trim().split(/\s+/).length
-  const readTime = Math.ceil(words / wordsPerMinute)
-  return readTime
+export async function getAllPostSlugs(): Promise<{ params: { slug: string } }[]> {
+  const posts = await getAllPosts()
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+  }))
 }
 
-export function getFeaturedPosts(limit: number = 3): PostMetadata[] {
-  const allPosts = getAllPosts()
+export async function getFeaturedPosts(limit: number = 3): Promise<PostMetadata[]> {
+  const allPosts = await getAllPosts()
   return allPosts.slice(0, limit)
-} 
+}

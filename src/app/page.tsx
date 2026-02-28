@@ -3,8 +3,10 @@ import { getAllPosts } from '@/lib/markdown'
 import { ArrowRight, Code, Lightbulb, Users, Sparkles, Target } from 'lucide-react'
 import SpotlightText from '@/components/SpotlightText'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
-  const posts = getAllPosts().slice(0, 3)
+  const posts = (await getAllPosts()).slice(0, 3)
 
   return (
     <div className="min-h-screen">

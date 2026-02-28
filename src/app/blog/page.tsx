@@ -2,13 +2,15 @@ import Link from 'next/link'
 import { getAllPosts } from '@/lib/markdown'
 import { Calendar, Clock, ArrowRight, Search, BookOpen, Clock10 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Blog',
   description: 'Artigos sobre desenvolvimento de software, liderança técnica e inovação tecnológica.',
 }
 
-export default function BlogPage() {
-  const posts = getAllPosts()
+export default async function BlogPage() {
+  const posts = await getAllPosts()
 
   return (
     <div className="min-h-screen">

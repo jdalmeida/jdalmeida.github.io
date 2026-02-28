@@ -3,22 +3,17 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ArrowLeft, Clock, Tag, Calendar, User } from 'lucide-react'
-import { getPostBySlug, getAllPostSlugs } from '@/lib/markdown'
+import { getPostBySlug } from '@/lib/markdown'
 import type { Metadata } from 'next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+
+export const dynamic = 'force-dynamic'
 
 interface PageProps {
   params: {
     slug: string
   }
-}
-
-export async function generateStaticParams() {
-  const posts = getAllPostSlugs()
-  return posts.map((post) => ({
-    slug: post.params.slug,
-  }))
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
