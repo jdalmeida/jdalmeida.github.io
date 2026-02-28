@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { Menu, X, Github, Linkedin, Mail, Sparkles } from 'lucide-react'
 import { ThemeToggle } from './ThemeToggle'
+import Image from 'next/image'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -39,11 +40,11 @@ export function Header() {
             href="/" 
             className="group relative font-bold text-2xl text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300"
           >
-            <span className="relative z-10 flex items-center">
-              <Sparkles size={24} className="mr-2 text-primary-500 dark:text-primary-400 group-hover:rotate-12 transition-transform duration-300" />
+            <span className="relative z-10 flex items-center text-gray-200">
+              <Image src="/favicon.svg" alt="Logo" width={24} height={24} className="mr-2" />
               João de Almeida
             </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-purple-400/20 dark:from-primary-400/30 dark:to-purple-400/30 rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-transparent dark:from-primary-400/30 dark:to-transparent rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
           </Link>
 
           {/* Desktop Navigation com efeitos */}
@@ -91,9 +92,9 @@ export function Header() {
             ))}
             
             {/* Theme Toggle */}
-            <div className="ml-4 slide-in-up animate-delay-700">
+            {/* <div className="ml-4 slide-in-up animate-delay-700">
               <ThemeToggle />
-            </div>
+            </div> */}
           </div>
 
           {/* Mobile menu button com animação */}
@@ -128,7 +129,7 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 className={`
-                  block px-4 py-3 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium 
+                  block px-4 py-3 text-gray-200 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium 
                   transition-all duration-300 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30
                   slide-in-left animate-delay-${index * 100}
                 `}
@@ -152,7 +153,7 @@ export function Header() {
                     target={social.href.startsWith('mailto:') ? undefined : '_blank'}
                     rel={social.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
                     className={`
-                      group p-3 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400
+                      group p-3 text-gray-200 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400
                       transition-all duration-300 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30
                       slide-in-up animate-delay-${(index + 4) * 100}
                     `}

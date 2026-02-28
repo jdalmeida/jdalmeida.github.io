@@ -5,10 +5,11 @@ import { useEffect, useRef } from 'react'
 interface Particle {
   x: number
   y: number
+  baseX: number
+  baseY: number
   vx: number
   vy: number
   size: number
-  opacity: number
   color: string
 }
 
@@ -16,6 +17,7 @@ export function ParticleBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const animationRef = useRef<number>()
   const particlesRef = useRef<Particle[]>([])
+  const mouseRef = useRef({ x: -1000, y: -1000, radius: 150 })
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -24,24 +26,35 @@ export function ParticleBackground() {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    let width = window.innerWidth
+    let height = window.innerHeight
+
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      width = window.innerWidth
+      height = window.innerHeight
+      canvas.width = width
+      canvas.height = height
+      createParticles()
     }
 
     const createParticles = () => {
       const particles: Particle[] = []
-      const particleCount = Math.min(150, Math.floor((window.innerWidth * window.innerHeight) / 8000))
+      const particleCount = Math.min(200, Math.floor((width * height) / 9000))
+      
+      const colors = ['#6366f1', '#818cf8', '#c7d2fe', '#06b6d4', '#2dd4bf']
 
       for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * width
+        const y = Math.random() * height
         particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.3,
-          vy: (Math.random() - 0.5) * 0.3,
+          x,
+          y,
+          baseX: x,
+          baseY: y,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
           size: Math.random() * 2 + 0.5,
-          opacity: Math.random() * 0.3 + 0.1,
-          color: `hsl(${220 + Math.random() * 40}, 70%, ${60 + Math.random() * 20}%)`
+          color: colors[Math.floor(Math.random() * colors.length)]
         })
       }
 
@@ -49,21 +62,42 @@ export function ParticleBackground() {
     }
 
     const drawParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.clearRect(0, 0, width, height)
 
       particlesRef.current.forEach((particle, index) => {
-        // Update position
-        particle.x += particle.vx
-        particle.y += particle.vy
+        // Drift movement
+        particle.baseX += particle.vx
+        particle.baseY += particle.vy
 
         // Wrap around edges
-        if (particle.x < 0) particle.x = canvas.width
-        if (particle.x > canvas.width) particle.x = 0
-        if (particle.y < 0) particle.y = canvas.height
-        if (particle.y > canvas.height) particle.y = 0
+        if (particle.baseX < 0) particle.baseX = width
+        if (particle.baseX > width) particle.baseX = 0
+        if (particle.baseY < 0) particle.baseY = height
+        if (particle.baseY > height) particle.baseY = 0
+
+        // Mouse interaction physics
+        const dx = mouseRef.current.x - particle.baseX
+        const dy = mouseRef.current.y - particle.baseY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        
+        const forceDirectionX = dx / distance
+        const forceDirectionY = dy / distance
+        const maxDistance = mouseRef.current.radius
+        const force = (maxDistance - distance) / maxDistance
+        const directionX = forceDirectionX * force * 5
+        const directionY = forceDirectionY * force * 5
+
+        if (distance < maxDistance) {
+          particle.x = particle.baseX - directionX * 20
+          particle.y = particle.baseY - directionY * 20
+        } else {
+          // Return to base position smoothly
+          particle.x += (particle.baseX - particle.x) * 0.1
+          particle.y += (particle.baseY - particle.y) * 0.1
+        }
 
         // Draw particle
-        ctx.globalAlpha = particle.opacity
+        ctx.globalAlpha = 0.6
         ctx.fillStyle = particle.color
         ctx.beginPath()
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
@@ -71,12 +105,12 @@ export function ParticleBackground() {
 
         // Draw connections
         particlesRef.current.slice(index + 1).forEach(otherParticle => {
-          const dx = particle.x - otherParticle.x
-          const dy = particle.y - otherParticle.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
+          const cDx = particle.x - otherParticle.x
+          const cDy = particle.y - otherParticle.y
+          const cDistance = Math.sqrt(cDx * cDx + cDy * cDy)
 
-          if (distance < 120) {
-            const opacity = (120 - distance) / 120 * 0.1
+          if (cDistance < 120) {
+            const opacity = (120 - cDistance) / 120 * 0.15
             ctx.globalAlpha = opacity
             ctx.strokeStyle = particle.color
             ctx.lineWidth = 0.5
@@ -94,19 +128,27 @@ export function ParticleBackground() {
       animationRef.current = requestAnimationFrame(animate)
     }
 
-    resizeCanvas()
-    createParticles()
-    animate()
-
-    const handleResize = () => {
-      resizeCanvas()
-      createParticles()
+    const handleMouseMove = (event: MouseEvent) => {
+      mouseRef.current.x = event.x
+      mouseRef.current.y = event.y
+    }
+    
+    const handleMouseLeave = () => {
+      mouseRef.current.x = -1000
+      mouseRef.current.y = -1000
     }
 
-    window.addEventListener('resize', handleResize)
+    resizeCanvas()
+    animate()
+
+    window.addEventListener('resize', resizeCanvas)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseleave', handleMouseLeave)
 
     return () => {
-      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('resize', resizeCanvas)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseleave', handleMouseLeave)
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current)
       }
@@ -116,8 +158,7 @@ export function ParticleBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 opacity-40 dark:opacity-20"
-      style={{ mixBlendMode: 'multiply' }}
+      className="fixed inset-0 pointer-events-none z-0 mix-blend-screen opacity-50 dark:opacity-30 transition-opacity duration-1000"
     />
   )
-} 
+}

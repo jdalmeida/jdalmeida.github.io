@@ -3,14 +3,14 @@
   <defs>
     <!-- Background gradient -->
     <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1E40AF;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3730A3;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#e2ff00;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e2ff00;stop-opacity:1" />
     </linearGradient>
     
     <!-- Text gradient -->
     <linearGradient id="textGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#F8FAFC;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d2dd00;stop-opacity:1" />
     </linearGradient>
   </defs>
   
@@ -24,5 +24,5 @@
         font-weight="600" 
         font-size="12" 
         text-anchor="middle" 
-        dominant-baseline="central">&lt;/&gt;</text>
+        dominant-baseline="central">&lt;J&gt;</text>
 </svg> 

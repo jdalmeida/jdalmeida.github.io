@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Oswald:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,7 +9,7 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-black text-gray-900 dark:text-gray-100 font-sans;
+    @apply bg-background text-gray-900 dark:text-gray-100 font-sans;
     background-attachment: fixed;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
@@ -52,17 +52,15 @@
   }
   
   .btn-primary {
-    @apply relative bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 dark:from-primary-600 dark:to-primary-700 dark:hover:from-primary-500 dark:hover:to-primary-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl dark:shadow-primary-500/25 transition-all duration-300 transform hover:-translate-y-1 hover:scale-105;
-    background-size: 200% 200%;
-    animation: gradient-shift 3s ease infinite;
+    @apply relative bg-primary-500 hover:bg-primary-600 dark:bg-primary-500 dark:hover:bg-primary-400 text-gray-950 font-display font-bold uppercase tracking-wider py-4 px-8 shadow-lg hover:shadow-xl dark:shadow-primary-500/20 transition-all duration-300 transform hover:-translate-y-1;
   }
   
   .btn-secondary {
-    @apply relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm hover:bg-white/90 dark:hover:bg-gray-800/90 text-gray-900 dark:text-gray-100 font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl dark:shadow-gray-900/25 transition-all duration-300 transform hover:-translate-y-1 border border-gray-200/50 dark:border-gray-700/50;
+    @apply relative bg-transparent hover:bg-white/5 text-gray-100 font-display font-medium uppercase tracking-widest py-4 px-8 shadow-none transition-all duration-300 border border-gray-700 hover:border-gray-500;
   }
   
   .glass-card {
-    @apply bg-white/70 dark:bg-gray-800/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/20 hover:shadow-2xl dark:hover:shadow-gray-900/25 transition-all duration-500 hover:bg-white/80 dark:hover:bg-gray-800/80;
+    @apply bg-white/5 dark:bg-gray-900/40 backdrop-blur-xl border border-white/10 dark:border-gray-800/50 hover:bg-white/10 dark:hover:bg-gray-800/60 transition-all duration-500;
   }
   
   .card {
@@ -70,15 +68,11 @@
   }
   
   .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 via-purple-600 to-primary-500 dark:from-primary-400 dark:via-purple-400 dark:to-primary-300 bg-clip-text text-transparent;
-    background-size: 200% 200%;
-    animation: gradient-shift 4s ease infinite;
+    @apply bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 bg-clip-text text-transparent;
   }
 
-  .hero-gradient {
-    @apply bg-gradient-to-br from-primary-500/10 via-purple-500/10 to-indigo-500/10 dark:from-primary-900/20 dark:via-purple-900/20 dark:to-indigo-900/20;
-    background-size: 400% 400%;
-    animation: gradient-shift 8s ease infinite;
+  .text-neon {
+    @apply text-primary-500 drop-shadow-[0_0_8px_rgba(226,255,0,0.5)];
   }
 
   .floating-element {
@@ -101,15 +95,6 @@
     animation: slideInRight 0.8s ease-out forwards;
   }
 
-  .glow-effect {
-    @apply relative;
-  }
-
-  .glow-effect::before {
-    content: '';
-    @apply absolute -inset-1 bg-gradient-to-r from-primary-400 to-purple-400 dark:from-primary-500 dark:to-purple-500 rounded-2xl blur opacity-20 dark:opacity-30 group-hover:opacity-40 dark:group-hover:opacity-50 transition-opacity duration-500;
-  }
-
   .typing-effect::after {
     content: '|';
     animation: blink 1s infinite;
@@ -124,22 +109,15 @@
 
   /* Dark mode specific improvements */
   .dark .glass-card {
-    box-shadow: 
-      0 20px 25px -5px rgba(0, 0, 0, 0.3), 
-      0 10px 10px -5px rgba(0, 0, 0, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: none;
   }
 
   .dark .btn-primary {
-    box-shadow: 
-      0 10px 15px -3px rgba(59, 130, 246, 0.3), 
-      0 4px 6px -2px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 4px 14px 0 rgba(226, 255, 0, 0.39);
   }
 
   .dark .btn-primary:hover {
-    box-shadow: 
-      0 20px 25px -5px rgba(59, 130, 246, 0.4), 
-      0 10px 10px -5px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 6px 20px rgba(226, 255, 0, 0.23);
   }
 }
 
@@ -179,8 +157,25 @@
 
   .bg-pattern-dark {
     background-image: 
-      radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.15) 1px, transparent 0);
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0);
     background-size: 50px 50px;
+  }
+
+  .noise-overlay {
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
+    width: 200%;
+    height: 200vh;
+    background: transparent url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Dissolve_Noise_Texture.png') repeat 0 0;
+    background-repeat: repeat;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    animation: noise 0.5s infinite;
   }
 }
 
@@ -375,52 +370,19 @@
 }
 
 .dark .prose blockquote {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgb(96 165 250); /* primary-400 */
+  background: #f4ff5a10;
+  border-color: #f4ff5a; /* primary-400 */
 }
 
 .dark .prose code:not([class*="language-"]) {
-  background: rgba(31, 41, 55, 0.8); /* gray-800 with opacity */
-  color: rgb(96 165 250); /* primary-400 */
-  border-color: rgba(75, 85, 99, 0.5); /* gray-600 with opacity */
+  background: #f4ff5a10; /* gray-800 with opacity */
+  color: #f4ff5a; /* primary-400 */
+  border-color: #f4ff5a66; /* gray-600 with opacity */
 }
 
 .dark .prose pre {
-  background: rgb(3, 7, 18); /* gray-950 */
-  border-color: rgb(31, 41, 55); /* gray-800 */
+  background: #f4ff5a10; /* gray-950 */
+  border-color: #f4ff5a; /* gray-800 */
 }
 
-/* Spotlight Effect for Name */
-.spotlight-effect {
-  --mouse-x: 50%;
-  --mouse-y: 50%;
-  position: relative;
-  transition: all 0.3s ease;
-  background: radial-gradient(
-    circle 300px at var(--mouse-x) var(--mouse-y),
-    #60a5fa 0%,
-    #3b82f6 15%,
-    #9333ea 35%,
-    #ec4899 55%,
-    #f56565 75%,
-    #101010 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-.dark .spotlight-effect {
-  background: radial-gradient(
-    circle 300px at var(--mouse-x) var(--mouse-y),
-    #3b82f6 0%,
-    #60a5fa 15%,
-    #a855f7 35%,
-    #f472b6 55%,
-    #fb923c 75%,
-    #ffffff 100%
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-} 
+/* Removed spotlight effect to align with minimal brutalist design */

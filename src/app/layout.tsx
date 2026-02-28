@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import '../styles/globals.css'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { ParticleBackground } from '@/components/ParticleBackground'
 import { SoundEffects } from '@/components/SoundEffects'
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -68,34 +67,27 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="scroll-smooth">
-      <body className="antialiased overflow-x-hidden">
+      <body className="antialiased overflow-x-hidden dark">
         <Analytics />
         <SpeedInsights />
-        {/* Particle Background */}
-        <ParticleBackground />
-        
         {/* Sound Effects */}
         <SoundEffects />
 
-        {/* Background Elements */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-black transition-colors duration-300"></div>
+        {/* Minimalist Matte Background with Subtle Topo or Grid Pattern */}
+        <div className="fixed inset-0 -z-10 overflow-hidden bg-background">
+          <div className="noise-overlay"></div>
+          
           <div 
-            className="absolute inset-0 opacity-30 dark:opacity-10 transition-opacity duration-300"
+            className="absolute inset-0 opacity-[0.03] dark:opacity-10 pointer-events-none"
             style={{
-              backgroundImage: `
-                radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.15) 1px, transparent 0)
-              `,
-              backgroundSize: '50px 50px'
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
           ></div>
         </div>
 
-        {/* Floating Decorative Elements */}
-        <div className="fixed inset-0 -z-5 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary-200/20 dark:bg-primary-400/10 rounded-full blur-3xl floating-element transition-colors duration-300"></div>
-          <div className="absolute top-3/4 right-1/4 w-24 h-24 bg-purple-200/20 dark:bg-purple-400/10 rounded-full blur-3xl floating-element animate-delay-300 transition-colors duration-300"></div>
-          <div className="absolute bottom-1/4 left-1/3 w-20 h-20 bg-indigo-200/20 dark:bg-indigo-400/10 rounded-full blur-3xl floating-element animate-delay-500 transition-colors duration-300"></div>
+        {/* Very subtle glow for depth only */}
+        <div className="fixed inset-0 -z-5 overflow-hidden pointer-events-none opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-[30vw] h-[30vw] max-w-sm max-h-sm bg-primary-500/5 rounded-full blur-[100px]"></div>
         </div>
 
         <div className="flex min-h-screen flex-col relative">
@@ -112,14 +104,14 @@ export default function RootLayout({
         {/* Scroll Progress Bar */}
         <div 
           id="progress-bar" 
-          className="fixed top-0 left-0 z-[999] h-1 bg-gradient-to-r from-primary-500 to-purple-500 dark:from-primary-400 dark:to-purple-400 transition-transform duration-300 origin-left scale-x-0"
+          className="fixed top-0 left-0 z-[999] h-1 bg-primary-500 dark:bg-primary-500 transition-transform duration-300 origin-left scale-x-0"
         ></div>
 
         {/* Scroll Progress Indicator */}
-        <div className="fixed top-0 left-0 right-0 z-[999] h-1 bg-gray-200/50 dark:bg-gray-700/50 transition-colors duration-300">
+        <div className="fixed top-0 left-0 right-0 z-[999] h-1 bg-gray-200/20 dark:bg-gray-800/50 transition-colors duration-300">
           <div 
             id="scroll-progress" 
-            className="h-full bg-gradient-to-r from-primary-500 to-purple-500 dark:from-primary-400 dark:to-purple-400 transition-transform duration-150 origin-left scale-x-0"
+            className="h-full bg-primary-500 dark:bg-primary-500 transition-transform duration-150 origin-left scale-x-0"
           ></div>
         </div>
 
