@@ -14,7 +14,7 @@ export function SoundEffects() {
 
     // Initialize audio context on first user interaction
     const initAudio = () => {
-      if (!audioContextRef.current && !isEnabledRef.current) {
+      if (!audioContextRef.current) {
         try {
           audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)()
           isEnabledRef.current = true
@@ -27,9 +27,21 @@ export function SoundEffects() {
 
     // Sound generation function
     const createSound = (frequency: number, type: OscillatorType = 'sine', duration: number = 0.1, volume: number = 1) => {
+      // Se o contexto ainda não foi inicializado por uma interação do usuário (clique/tecla),
+      // não tocamos nada para evitar o aviso do navegador "AudioContext was not allowed to start".
+      // O listener global no `document` com `{ capture: true }` garante que o contexto
+      // seja inicializado ANTES de qualquer onClick do React.
       if (!audioContextRef.current || !isEnabledRef.current) return
 
       try {
+        // Tentar resumir se estiver suspenso (necessário em muitos navegadores)
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume().catch(() => {})
+        }
+
+        // Se ainda está suspenso, não adianta tocar agora.
+        if (audioContextRef.current.state === 'suspended') return
+
         const oscillator = audioContextRef.current.createOscillator()
         const gainNode = audioContextRef.current.createGain()
 
@@ -52,17 +64,50 @@ export function SoundEffects() {
     // Enable audio on first interaction
     const enableAudio = () => {
       initAudio()
-      document.removeEventListener('click', enableAudio)
-      document.removeEventListener('keydown', enableAudio)
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        audioContextRef.current.resume().catch(() => {})
+      }
+      document.removeEventListener('click', enableAudio, { capture: true })
+      document.removeEventListener('keydown', enableAudio, { capture: true })
     }
 
-    // Add initialization listeners
-    document.addEventListener('click', enableAudio)
-    document.addEventListener('keydown', enableAudio)
+    // Add initialization listeners in capture phase so it fires before React events
+    document.addEventListener('click', enableAudio, { capture: true })
+    document.addEventListener('keydown', enableAudio, { capture: true })
 
     // Expose sound functions globally for easy access
     ;(window as any).playSound = {
-      hover: () => createSound(800, 'sine', 0.1, 0.05),
+      hover: () => {
+        if (!audioContextRef.current || !isEnabledRef.current) return
+        if (audioContextRef.current.state === 'suspended') return
+        try {
+          const ctx = audioContextRef.current
+          const now = ctx.currentTime
+
+          // Layer 1: soft descending sweep (main body)
+          const osc1 = ctx.createOscillator()
+          const gain1 = ctx.createGain()
+          osc1.type = 'sine'
+          osc1.frequency.setValueAtTime(1200, now)
+          osc1.frequency.exponentialRampToValueAtTime(800, now + 0.08)
+          gain1.gain.setValueAtTime(0.045, now)
+          gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.09)
+          osc1.connect(gain1).connect(ctx.destination)
+          osc1.start(now)
+          osc1.stop(now + 0.1)
+
+          // Layer 2: faint high harmonic for sparkle
+          const osc2 = ctx.createOscillator()
+          const gain2 = ctx.createGain()
+          osc2.type = 'triangle'
+          osc2.frequency.setValueAtTime(1800, now)
+          gain2.gain.setValueAtTime(0.015, now)
+          gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.06)
+          osc2.connect(gain2).connect(ctx.destination)
+          osc2.start(now)
+          osc2.stop(now + 0.07)
+        } catch {}
+      },
       click: () => {
         createSound(600, 'square', 0.1, 0.05)
         setTimeout(() => createSound(800, 'sine', 0.1, 0.03), 50)
@@ -79,8 +124,8 @@ export function SoundEffects() {
     }
 
     return () => {
-      document.removeEventListener('click', enableAudio)
-      document.removeEventListener('keydown', enableAudio)
+      document.removeEventListener('click', enableAudio, { capture: true })
+      document.removeEventListener('keydown', enableAudio, { capture: true })
       if (audioContextRef.current) {
         audioContextRef.current.close()
       }
