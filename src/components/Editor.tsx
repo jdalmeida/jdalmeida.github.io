@@ -44,7 +44,7 @@ export default function Editor({ markdown, onChange }: EditorProps) {
       className={isDark ? 'dark-theme dark-editor' : ''}
       markdown={markdown}
       onChange={onChange}
-      contentEditableClassName="prose prose-lg dark:prose-invert max-w-none focus:outline-none"
+      contentEditableClassName="prose prose-lg prose-invert max-w-none focus:outline-none"
       plugins={[
         headingsPlugin(),
         listsPlugin(),

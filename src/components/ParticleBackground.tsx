@@ -158,7 +158,7 @@ export function ParticleBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0 mix-blend-screen opacity-50 dark:opacity-30 transition-opacity duration-1000"
+      className="fixed inset-0 pointer-events-none z-0 mix-blend-screen opacity-30 transition-opacity duration-1000"
     />
   )
 }

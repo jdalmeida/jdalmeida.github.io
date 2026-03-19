@@ -197,7 +197,7 @@ export default function AdminPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="Senha do editor"
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70"
+              className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-gray-900/70"
               required
             />
             <button type="submit" className="btn-primary w-full">
@@ -215,7 +215,7 @@ export default function AdminPage() {
   return (
     <div className="container py-10">
       <div className="flex items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Admin de Artigos</h1>
+        <h1 className="text-3xl font-bold text-gray-100">Admin de Artigos</h1>
         <button onClick={handleLogout} className="btn-secondary">
           Sair
         </button>
@@ -226,13 +226,13 @@ export default function AdminPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         <div className="xl:col-span-1 glass-card p-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Artigos</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-100">Artigos</h2>
           {loading ? <p className="text-sm text-gray-500">Carregando...</p> : null}
 
           <div className="space-y-3 max-h-[70vh] overflow-auto pr-2">
             {posts.map((post) => (
-              <div key={post.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-                <p className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{post.title}</p>
+              <div key={post.id} className="border border-gray-700 rounded-xl p-4">
+                <p className="font-semibold text-gray-100 line-clamp-2">{post.title}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   {post.published ? 'Publicado' : 'Rascunho'} · {new Date(post.updatedAt).toLocaleString('pt-BR')}
                 </p>
@@ -260,7 +260,7 @@ export default function AdminPage() {
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
                 placeholder="Título"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-700 bg-gray-900/70 text-white"
                 required
               />
               <input
@@ -268,7 +268,7 @@ export default function AdminPage() {
                 value={form.slug}
                 onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value.toLowerCase() }))}
                 placeholder="slug-do-artigo"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-700 bg-gray-900/70 text-white"
                 required
               />
             </div>
@@ -277,7 +277,7 @@ export default function AdminPage() {
               value={form.excerpt}
               onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))}
               placeholder="Resumo"
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
+              className="w-full px-4 py-3 rounded-xl border border-gray-700 bg-gray-900/70 text-white"
               rows={2}
               required
             />
@@ -288,27 +288,27 @@ export default function AdminPage() {
                 value={form.tagsInput}
                 onChange={(event) => setForm((prev) => ({ ...prev, tagsInput: event.target.value }))}
                 placeholder="tags separadas por vírgula"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-700 bg-gray-900/70 text-white"
               />
               <input
                 type="text"
                 value={form.author}
                 onChange={(event) => setForm((prev) => ({ ...prev, author: event.target.value }))}
                 placeholder="Autor"
-                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 text-white"
+                className="flex-1 min-w-[240px] px-4 py-3 rounded-xl border border-gray-700 bg-gray-900/70 text-white"
               />
             </div>
 
             <div className="flex flex-col w-full h-[600px] mb-4">
               {/* Header com Toggle */}
-              <div className="flex items-center justify-between bg-gray-100 dark:bg-gray-800/80 px-4 py-3 border border-b-0 border-gray-300 dark:border-gray-700 rounded-t-xl">
-                <div className="font-semibold text-gray-700 dark:text-gray-200">
+              <div className="flex items-center justify-between bg-gray-800/80 px-4 py-3 border border-b-0 border-gray-700 rounded-t-xl">
+                <div className="font-semibold text-gray-200">
                   {showPreview ? 'Preview (Visualizar)' : 'Markdown (Escrever)'}
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowPreview(!showPreview)}
-                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                  className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg border border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600 transition-colors"
                 >
                   {showPreview ? (
                     <>
@@ -325,17 +325,17 @@ export default function AdminPage() {
               </div>
 
               {/* Corpo principal do Editor / Preview */}
-              <div className="flex-1 min-h-0 border border-gray-300 dark:border-gray-700 bg-white/80 dark:bg-gray-900/70 rounded-b-xl overflow-hidden shadow-sm flex flex-col">
+              <div className="flex-1 min-h-0 border border-gray-700 bg-gray-900/70 rounded-b-xl overflow-hidden shadow-sm flex flex-col">
                 {!showPreview ? (
                   <textarea
                     value={form.content}
                     onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
                     placeholder="Escreva seu artigo em markdown..."
-                    className="flex-1 w-full bg-transparent p-4 resize-none font-mono text-[13px] sm:text-sm text-gray-900 dark:text-gray-100 focus:outline-none"
+                    className="flex-1 w-full bg-transparent p-4 resize-none font-mono text-[13px] sm:text-sm text-gray-100 focus:outline-none"
                   />
                 ) : (
-                  <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6 bg-white dark:bg-gray-950">
-                    <div className="prose prose-lg max-w-none prose-headings:text-gray-200 dark:prose-headings:text-gray-100 prose-a:text-primary-600 dark:prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-200 dark:prose-strong:text-gray-100 prose-code:text-primary-600 dark:prose-code:text-primary-400 prose-pre:bg-gray-900 dark:prose-pre:bg-gray-950 prose-pre:text-gray-100 dark:prose-pre:text-gray-200 prose-p:text-gray-200 dark:prose-p:text-gray-300 prose-li:text-gray-200 dark:prose-li:text-gray-300 prose-blockquote:border-primary-500 dark:prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50/50 dark:prose-blockquote:bg-primary-900/20 prose-table:w-full prose-table:table-auto prose-thead:bg-gray-100 dark:prose-thead:bg-gray-300 prose-th:px-4 prose-th:py-2 prose-th:font-semibold prose-th:text-left prose-tr:border-b prose-tr:border-gray-200 dark:prose-tr:border-gray-700 prose-td:px-4 prose-td:py-2">
+                  <div className="flex-1 w-full overflow-y-auto p-4 sm:p-6 bg-gray-950">
+                    <div className="prose prose-lg max-w-none prose-headings:text-gray-100 prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-100 prose-code:text-primary-400 prose-pre:bg-gray-950 prose-pre:text-gray-200 prose-p:text-gray-300 prose-li:text-gray-300 prose-blockquote:border-primary-400 prose-blockquote:bg-primary-900/20 prose-table:w-full prose-table:table-auto prose-thead:bg-gray-300 prose-th:px-4 prose-th:py-2 prose-th:font-semibold prose-th:text-left prose-tr:border-b prose-tr:border-gray-700 prose-td:px-4 prose-td:py-2">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {form.content || '*Nenhum conteúdo adicionado.*'}
                       </ReactMarkdown>
@@ -345,7 +345,7 @@ export default function AdminPage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <label className="flex items-center gap-2 text-sm text-gray-300">
               <input
                 type="checkbox"
                 checked={form.published}

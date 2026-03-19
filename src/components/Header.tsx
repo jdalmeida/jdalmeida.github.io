@@ -29,7 +29,7 @@ export function Header() {
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         isScrolled 
-          ? 'bg-gray-900/80 backdrop-blur-xl shadow-lg border-b border-white/20 dark:border-gray-700/30' 
+          ? 'bg-gray-900/80 backdrop-blur-xl shadow-lg border-b border-gray-700/30' 
           : 'bg-transparent'
       }`}
     >
@@ -38,13 +38,13 @@ export function Header() {
           {/* Logo com efeito especial */}
           <Link 
             href="/" 
-            className="group relative font-bold text-2xl text-gray-900 dark:text-gray-100 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-300"
+            className="group relative font-bold text-2xl text-gray-100 hover:text-primary-400 transition-all duration-300"
           >
             <span className="relative z-10 flex items-center text-gray-200">
               <Image src="/favicon.svg" alt="Logo" width={24} height={24} className="mr-2" />
               João de Almeida
             </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-transparent dark:from-primary-400/30 dark:to-transparent rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-400/30 to-transparent rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
           </Link>
 
           {/* Desktop Navigation com efeitos */}
@@ -54,14 +54,14 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 className={`
-                  relative px-4 py-2 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium 
+                  relative px-4 py-2 text-gray-300 hover:text-primary-400 font-medium 
                   transition-all duration-300 rounded-xl group overflow-hidden
                   slide-in-up animate-delay-${index * 100}
                 `}
               >
                 <span className="relative z-10">{item.name}</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/30 dark:to-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary-500 to-purple-500 dark:from-primary-400 dark:to-purple-400 group-hover:w-full group-hover:left-0 transition-all duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-primary-900/30 to-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute bottom-0 left-1/2 w-0 h-0.5 bg-gradient-to-r from-primary-400 to-purple-400 group-hover:w-full group-hover:left-0 transition-all duration-300"></div>
               </Link>
             ))}
           </nav>
@@ -79,15 +79,15 @@ export function Header() {
                 target={social.href.startsWith('mailto:') ? undefined : '_blank'}
                 rel={social.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
                 className={`
-                  group relative p-3 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400
+                  group relative p-3 text-gray-300 hover:text-primary-400
                   transition-all duration-300 rounded-xl
                   slide-in-up animate-delay-${(index + 4) * 100}
                 `}
                 aria-label={social.label}
               >
                 <social.icon size={20} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-100 to-purple-100 dark:from-primary-900/30 dark:to-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
-                <div className="absolute inset-0 ring-2 ring-primary-400/0 group-hover:ring-primary-400/50 dark:group-hover:ring-primary-400/60 transition-all duration-300 rounded-xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-900/30 to-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                <div className="absolute inset-0 ring-2 ring-primary-400/0 group-hover:ring-primary-400/60 transition-all duration-300 rounded-xl"></div>
               </a>
             ))}
             
@@ -100,9 +100,9 @@ export function Header() {
           {/* Mobile menu button com animação */}
           <button
             className={`
-              md:hidden relative p-3 text-gray-600 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400
+              md:hidden relative p-3 text-gray-300 hover:text-primary-400
               transition-all duration-300 rounded-xl group
-              ${isMenuOpen ? 'bg-primary-50 dark:bg-primary-900/30' : ''}
+              ${isMenuOpen ? 'bg-primary-900/30' : ''}
             `}
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Toggle menu"
@@ -114,7 +114,7 @@ export function Header() {
                 <Menu size={24} className="group-hover:scale-110 transition-transform duration-300" />
               )}
             </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary-100 to-purple-100 dark:from-primary-900/30 dark:to-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-primary-900/30 to-purple-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
           </button>
         </div>
 
@@ -129,8 +129,8 @@ export function Header() {
                 key={item.name}
                 href={item.href}
                 className={`
-                  block px-4 py-3 text-gray-200 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 font-medium 
-                  transition-all duration-300 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30
+                  block px-4 py-3 text-gray-300 hover:text-primary-400 font-medium 
+                  transition-all duration-300 rounded-xl hover:bg-primary-900/30
                   slide-in-left animate-delay-${index * 100}
                 `}
                 onClick={() => setIsMenuOpen(false)}
@@ -140,7 +140,7 @@ export function Header() {
             ))}
             
             {/* Mobile Social Links */}
-            <div className="pt-4 border-t border-gray-200/50 dark:border-gray-700/50">
+            <div className="pt-4 border-t border-gray-700/50">
               <div className="flex items-center justify-center space-x-4">
                 {[
                   { icon: Github, href: 'https://github.com/jdalmeida', label: 'GitHub' },
@@ -153,8 +153,8 @@ export function Header() {
                     target={social.href.startsWith('mailto:') ? undefined : '_blank'}
                     rel={social.href.startsWith('mailto:') ? undefined : 'noopener noreferrer'}
                     className={`
-                      group p-3 text-gray-200 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400
-                      transition-all duration-300 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30
+                      group p-3 text-gray-300 hover:text-primary-400
+                      transition-all duration-300 rounded-xl hover:bg-primary-900/30
                       slide-in-up animate-delay-${(index + 4) * 100}
                     `}
                     aria-label={social.label}

@@ -47,7 +47,7 @@ export function ThemeToggle() {
 
   return (
     <div className="relative">
-      <div className="flex items-center bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-gray-200/50 dark:border-gray-700/50 rounded-2xl p-1 shadow-lg dark:shadow-gray-900/25">
+      <div className="flex items-center bg-gray-800/80 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-1 shadow-lg shadow-gray-900/25">
         {themes.map((t) => {
           const IconComponent = t.icon
           const isActive = theme === t.value
@@ -59,8 +59,8 @@ export function ThemeToggle() {
               className={`
                 relative p-3 rounded-xl transition-all duration-300 group
                 ${isActive 
-                  ? 'bg-primary-500 dark:bg-primary-600 text-white shadow-lg transform scale-105 shadow-primary-500/25 dark:shadow-primary-600/30' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50 dark:hover:bg-gray-700/50'
+                  ? 'bg-primary-600 text-white shadow-lg transform scale-105 shadow-primary-600/30' 
+                  : 'text-gray-400 hover:text-primary-400 hover:bg-gray-700/50'
                 }
               `}
               aria-label={`Mudar para tema ${t.label.toLowerCase()}`}
@@ -74,7 +74,7 @@ export function ThemeToggle() {
               />
               
               {isActive && (
-                <div className="absolute inset-0 bg-primary-500 dark:bg-primary-600 rounded-xl animate-pulse opacity-20 dark:opacity-30"></div>
+                <div className="absolute inset-0 bg-primary-600 rounded-xl animate-pulse opacity-30"></div>
               )}
             </button>
           )
@@ -83,7 +83,7 @@ export function ThemeToggle() {
       
       {/* Floating indicator */}
       <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-        <div className="w-1 h-1 bg-primary-500 dark:bg-primary-400 rounded-full opacity-60"></div>
+        <div className="w-1 h-1 bg-primary-400 rounded-full opacity-60"></div>
       </div>
     </div>
   )
