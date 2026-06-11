@@ -1,12 +1,14 @@
----
-title: "Contexto é o novo código"
-date: "2026-06-11"
-excerpt: "Como criei um ETL com camada de dados, dei Skills ao agente e construí um sistema de contexto com RLM e memória. O código que importa em 2026 não é lógica — é contexto."
-tags: ["IA", "agentes", "contexto", "ETL", "skills", "RLM", "arquitetura"]
-author: "João de Almeida"
----
+import 'dotenv/config'
+import { neon } from '@neondatabase/serverless'
 
-No começo de 2026, uma frase começou a circular no Vale do Silício:
+const databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL not set')
+}
+
+const sql = neon(databaseUrl)
+
+const CONTENT = `No começo de 2026, uma frase começou a circular no Vale do Silício:
 
 > "O modelo é o componente menos importante do seu sistema de IA."
 
@@ -100,4 +102,21 @@ Com essa arquitetura rodando, as perguntas que antes levariam horas agora levam 
 
 ---
 
-*E você, como tá lidando com contexto nos seus projetos de IA? Já construiu Skills ou uma camada de dados pra agentes? Me conta — adoro trocar ideia sobre isso.*
+*E você, como tá lidando com contexto nos seus projetos de IA? Já construiu Skills ou uma camada de dados pra agentes? Me conta — adoro trocar ideia sobre isso.*`
+
+async function main() {
+  console.log('Atualizando artigo no banco...')
+  await sql`
+    UPDATE posts SET
+      title = 'Contexto é o novo código',
+      excerpt = 'Como criei um ETL com camada de dados, dei Skills ao agente e construí um sistema de contexto com RLM e memória. O código que importa em 2026 não é lógica — é contexto.',
+      content = ${CONTENT},
+      tags = ${JSON.stringify(['IA', 'agentes', 'contexto', 'ETL', 'skills', 'RLM', 'arquitetura'])},
+      published = false,
+      updated_at = ${new Date().toISOString()}
+    WHERE slug = 'contexto-e-o-novo-codigo'
+  `
+  console.log('✅ Artigo atualizado no banco (published=false)')
+}
+
+main().catch(console.error)
