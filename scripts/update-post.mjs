@@ -1,12 +1,14 @@
----
-title: "Contexto é o novo código"
-date: "2026-06-11"
-excerpt: "Por que o bottleneck da inteligência artificial não é o modelo — é o contexto. E o que isso significa para quem constrói software hoje."
-tags: ["IA", "MCP", "agentes", "contexto", "arquitetura"]
-author: "João de Almeida"
----
+import 'dotenv/config'
+import { neon } from '@neondatabase/serverless'
 
-No começo de 2026, um pessoal do Vale do Silício começou a repetir uma frase que soou estranha no início:
+const databaseUrl = process.env.DATABASE_URL
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL not set')
+}
+
+const sql = neon(databaseUrl)
+
+const CONTENT = `No começo de 2026, um pessoal do Vale do Silício começou a repetir uma frase que soou estranha no início:
 
 > "O modelo é o componente menos importante do seu sistema de IA."
 
@@ -85,4 +87,17 @@ Tudo o mais é boilerplate.
 
 ---
 
-*E você, como tá lidando com contexto nos seus projetos de IA? Já esbarrou nesse problema? Me conta — adoro trocar ideia sobre isso.*
+*E você, como tá lidando com contexto nos seus projetos de IA? Já esbarrou nesse problema? Me conta — adoro trocar ideia sobre isso.*`
+
+async function main() {
+  console.log('Atualizando post no banco...')
+  await sql`
+    UPDATE posts SET
+      content = ${CONTENT},
+      updated_at = ${new Date().toISOString()}
+    WHERE slug = 'contexto-e-o-novo-codigo'
+  `
+  console.log('✅ Post atualizado no banco com sucesso!')
+}
+
+main().catch(console.error)
