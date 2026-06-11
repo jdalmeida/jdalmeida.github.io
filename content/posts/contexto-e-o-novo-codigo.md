@@ -16,16 +16,16 @@ Parece contraintuitivo, né? A gente passou anos comparando benchmarks, fazendo 
 
 Imagina que você tem um agente de IA brilhante — raciocínio de ponta, capacidade de análise, tudo. E você pergunta:
 
-> "Por que a gente tá pagando mais caro pra transportadora errada?"
+> "Por que o faturamento de março caiu 15% em relação a fevereiro?"
 
 O agente não sabe responder. Não porque é burro. Porque ele não sabe:
 
-- Que a transportadora X tem cláusula de reajuste trimestral no contrato
-- Que a rota Y tem restrição de horário por causa do cliente final
-- Que o financeiro bloqueou pagamento da nota fiscal Z por divergência
-- Que aquele campo "observação" no sistema é onde o motorista relata problema de acesso
+- Que o cliente X, responsável por 20% da receita, renovou com desconto de 35% porque o comercial fez uma exceção verbal
+- Que 60 notas fiscais ficaram retidas no financeiro por divergência de cadastro
+- Que o vendedor Y bateu a meta de vendas mas 80% veio de um único contrato com margem negativa
+- Que aquele campo "observação" no CRM é onde o suporte relata insatisfação de clientes que ninguém mais lê
 
-Tudo isso tá **em algum lugar**. Num PDF. Num e-mail. Numa mensagem de WhatsApp. Num campo obscuro que só quem opera todo dia conhece.
+Tudo isso tá **em algum lugar**. Num PDF de contrato. Num e-mail do comercial. Numa mensagem no Slack. Num campo obscuro que só quem opera todo dia conhece.
 
 O modelo é brilhante. Mas ele tá cego.
 
@@ -41,7 +41,7 @@ Não é RAG básico jogando tudo num vector DB. É um pipeline que:
 
 - **Extrai** dados de ERPs, CRMs, planilhas, PDFs, e-mails, bancos de dados
 - **Transforma** em formato que o agente consegue raciocionar — não só buscar, mas **entender**
-- **Carrega** numa camada unificada onde cada entidade (transportadora, rota, contrato, SLA) tem seu próprio contexto enriquecido
+- **Carrega** numa camada unificada onde cada entidade (cliente, contrato, nota fiscal, oportunidade) tem seu próprio contexto enriquecido
 
 A diferença entre isso e um RAG tradicional? RAG busca documentos. **Camada de dados entrega conhecimento estruturado.** O agente não precisa "achar" a informação — ela já tá organizada, limpa e pronta pra uso.
 
@@ -51,10 +51,10 @@ Dados estruturados não bastam. O agente precisa saber **como usar** esses dados
 
 Skills são, na prática, instruções estruturadas que ensinam o agente a operar no domínio da empresa. Não é um prompt genérico — é um documento que explica:
 
-- **O que cada entidade significa** (o que é uma tabela de frete, como funciona um SLA, o que é reajuste contratual)
-- **Como cruzar dados** (se o usuário perguntar sobre performance, olha X, Y e Z)
-- **Quais são as regras de negócio** (transportadora com SLA abaixo de 85% entra em alerta, reajuste é trimestral, etc.)
-- **Como formatar a resposta** (o operacional quer números, o financeiro quer impacto em R$)
+- **O que cada entidade significa** (o que é um pipeline de vendas, como funciona o ciclo de faturamento, o que é margem por contrato)
+- **Como cruzar dados** (se o usuário perguntar sobre faturamento, olha notas fiscais, contratos ativos e projeção de vendas)
+- **Quais são as regras de negócio** (desconto acima de 20% precisa de aprovação, cliente com pagamento atrasado entra em bloqueio, meta é mensal por vendedor)
+- **Como formatar a resposta** (o comercial quer pipeline, o financeiro quer impacto em R$, o diretor quer resumo executivo)
 
 É como dar um onboarding pro agente. Em vez de ele chegar cru e tentar adivinhar, ele já entra sabendo como a empresa funciona.
 
@@ -64,7 +64,7 @@ Aqui é onde a coisa fica realmente interessante. O agente não usa um contexto 
 
 **RLM (Retrieval of Local Memory)** — O contexto da empresa. Tudo que o agente precisa saber sobre o domínio, os dados, as regras. É buscado no momento certo, pro problema certo. Não é tudo de uma vez — é cirúrgico.
 
-**Memória do usuário** — O agente constrói, ao longo das conversas, um perfil de quem tá interagindo. O João sempre pergunta sobre fretes da região sul. A Maria quer resumo executivo, não dados brutos. O Carlos quer saber o impacto financeiro primeiro. O agente **aprende** com o usuário e personaliza a resposta.
+**Memória do usuário** — O agente constrói, ao longo das conversas, um perfil de quem tá interagindo. O João sempre pergunta sobre faturamento do trimestre. A Maria quer resumo executivo, não dados brutos. O Carlos quer saber o impacto em vendas primeiro. O agente **aprende** com o usuário e personaliza a resposta.
 
 **Skill estruturada** — O "como fazer". Dado o contexto da empresa (RLM) e o contexto do usuário (memória), a Skill define como o agente deve agir, que dados consultar, como formatar a resposta.
 
@@ -74,17 +74,17 @@ As três juntas significam que o agente não responde igual pra todo mundo. Ele 
 
 Com essa arquitetura rodando, as perguntas que antes levariam horas agora levam segundos:
 
-> "Quais transportadoras estão performando abaixo do SLA?"
+> "Por que o faturamento caiu em março?"
 
-→ O agente consulta a camada de dados, cruza com as regras da Skill, e entrega o resultado formatado pro perfil do usuário.
+→ O agente consulta a camada de dados, cruza contratos, notas fiscais e projeções, e entrega: "O cliente X renovou com 35% de desconto e 60 NFs ficaram retidas. Juntos, isso representa R$ 48K do delta."
 
-> "Por que a gente usa a transportadora X se a Z é mais barata?"
+> "Qual vendedor teve melhor margem no trimestre?"
 
-→ Ele não só compara preços — ele entende o contexto contratual, o histórico de performance, e explica o trade-off.
+→ Ele não só soma vendas — cruza com custo, descontos concedidos e tipo de contrato. Descobre que quem bateu a meta na verdade teve a pior margem.
 
-> "Como as tabelas de frete se comportaram nos últimos 6 meses?"
+> "Como o pipeline de vendas pro fechamento do mês?"
 
-→ Identifica padrões, reajustes não aplicados, rotas com cobrança errada. Tudo via linguagem natural.
+→ Puxa oportunidades abertas, probabilidade histórica por estágio, e compara com o mesmo período do ano anterior. Tudo via linguagem natural.
 
 ## O que eu aprendi
 
