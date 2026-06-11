@@ -1,18 +1,18 @@
-import { createHash, randomBytes } from 'crypto'
+import { createHash, randomBytes } from "node:crypto";
 
 export function hashToken(token: string) {
-  return createHash('sha256').update(token).digest('hex')
+	return createHash("sha256").update(token).digest("hex");
 }
 
 export function createSessionToken() {
-  return randomBytes(32).toString('hex')
+	return randomBytes(32).toString("hex");
 }
 
 export function getAdminPassword() {
-  const password = process.env.ADMIN_PASSWORD
-  if (!password) {
-    throw new Error('ADMIN_PASSWORD não definido. Configure no .env.local')
-  }
+	const password = process.env.ADMIN_PASSWORD;
+	if (!password) {
+		throw new Error("ADMIN_PASSWORD não definido. Configure no .env.local");
+	}
 
-  return password
+	return password;
 }

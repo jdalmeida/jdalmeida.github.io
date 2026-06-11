@@ -1,12 +1,12 @@
-import 'dotenv/config'
-import { neon } from '@neondatabase/serverless'
+import "dotenv/config";
+import { neon } from "@neondatabase/serverless";
 
-const databaseUrl = process.env.DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
-  throw new Error('DATABASE_URL not set')
+	throw new Error("DATABASE_URL not set");
 }
 
-const sql = neon(databaseUrl)
+const sql = neon(databaseUrl);
 
 const CONTENT = `No começo de 2026, um pessoal do Vale do Silício começou a repetir uma frase que soou estranha no início:
 
@@ -89,50 +89,52 @@ Tudo o mais é boilerplate.
 
 ---
 
-*E você, como tá lidando com contexto nos seus projetos de IA? Já esbarrou nesse problema? Me conta — adoro trocar ideia sobre isso.*`
+*E você, como tá lidando com contexto nos seus projetos de IA? Já esbarrou nesse problema? Me conta — adoro trocar ideia sobre isso.*`;
 
 async function main() {
-  // Check if post already exists
-  const existing = await sql`SELECT id FROM posts WHERE slug = 'contexto-e-o-novo-codigo'`
-  
-  if (existing.length > 0) {
-    console.log('Post já existe, atualizando...')
-    await sql`
+	// Check if post already exists
+	const existing =
+		await sql`SELECT id FROM posts WHERE slug = 'contexto-e-o-novo-codigo'`;
+
+	if (existing.length > 0) {
+		console.log("Post já existe, atualizando...");
+		await sql`
       UPDATE posts SET
         title = 'Contexto é o novo código',
         excerpt = 'Por que o bottleneck da inteligência artificial não é o modelo — é o contexto. E o que isso significa para quem constrói software hoje.',
         content = ${CONTENT},
-        tags = ${JSON.stringify(['IA', 'MCP', 'agentes', 'contexto', 'arquitetura'])},
+        tags = ${JSON.stringify(["IA", "MCP", "agentes", "contexto", "arquitetura"])},
         author = 'João de Almeida',
         published = true,
-        published_at = ${new Date('2026-06-11').toISOString()},
+        published_at = ${new Date("2026-06-11").toISOString()},
         updated_at = ${new Date().toISOString()}
       WHERE slug = 'contexto-e-o-novo-codigo'
-    `
-    console.log('✅ Post atualizado com sucesso!')
-  } else {
-    console.log('Inserindo novo post...')
-    await sql`
+    `;
+		console.log("✅ Post atualizado com sucesso!");
+	} else {
+		console.log("Inserindo novo post...");
+		await sql`
       INSERT INTO posts (slug, title, excerpt, content, tags, author, published, published_at, created_at, updated_at)
       VALUES (
         'contexto-e-o-novo-codigo',
         'Contexto é o novo código',
         'Por que o bottleneck da inteligência artificial não é o modelo — é o contexto. E o que isso significa para quem constrói software hoje.',
         ${CONTENT},
-        ${JSON.stringify(['IA', 'MCP', 'agentes', 'contexto', 'arquitetura'])},
+        ${JSON.stringify(["IA", "MCP", "agentes", "contexto", "arquitetura"])},
         'João de Almeida',
         true,
-        ${new Date('2026-06-11').toISOString()},
+        ${new Date("2026-06-11").toISOString()},
         ${new Date().toISOString()},
         ${new Date().toISOString()}
       )
-    `
-    console.log('✅ Post inserido com sucesso!')
-  }
-  
-  // Verify
-  const result = await sql`SELECT id, slug, title, published FROM posts WHERE slug = 'contexto-e-o-novo-codigo'`
-  console.log('Post no banco:', result[0])
+    `;
+		console.log("✅ Post inserido com sucesso!");
+	}
+
+	// Verify
+	const result =
+		await sql`SELECT id, slug, title, published FROM posts WHERE slug = 'contexto-e-o-novo-codigo'`;
+	console.log("Post no banco:", result[0]);
 }
 
-main().catch(console.error)
+main().catch(console.error);

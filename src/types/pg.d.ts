@@ -1,5 +1,5 @@
-declare module 'pg' {
-  export class Pool {
-    constructor(config?: Record<string, unknown>)
-  }
+declare module "pg" {
+	export class Pool {
+		constructor(config?: Record<string, unknown>);
+	}
 }

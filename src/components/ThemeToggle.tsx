@@ -1,90 +1,94 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Sun, Moon, Monitor } from 'lucide-react'
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
-type Theme = 'light' | 'dark' | 'system'
+type Theme = "light" | "dark" | "system";
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>('system')
-  const [mounted, setMounted] = useState(false)
+	const [theme, setTheme] = useState<Theme>("system");
+	const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true)
-    const savedTheme = localStorage.getItem('theme') as Theme
-    if (savedTheme) {
-      setTheme(savedTheme)
-      applyTheme(savedTheme)
-    } else {
-      applyTheme('system')
-    }
-  }, [])
+	const applyTheme = useCallback((newTheme: Theme) => {
+		const root = document.documentElement;
 
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement
-    
-    if (newTheme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      root.classList.toggle('dark', systemTheme === 'dark')
-    } else {
-      root.classList.toggle('dark', newTheme === 'dark')
-    }
-  }
+		if (newTheme === "system") {
+			const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
+				.matches
+				? "dark"
+				: "light";
+			root.classList.toggle("dark", systemTheme === "dark");
+		} else {
+			root.classList.toggle("dark", newTheme === "dark");
+		}
+	}, []);
 
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme)
-    localStorage.setItem('theme', newTheme)
-    applyTheme(newTheme)
-  }
+	useEffect(() => {
+		setMounted(true);
+		const savedTheme = localStorage.getItem("theme") as Theme;
+		if (savedTheme) {
+			setTheme(savedTheme);
+			applyTheme(savedTheme);
+		} else {
+			applyTheme("system");
+		}
+	}, [applyTheme]);
 
-  if (!mounted) return null
+	const handleThemeChange = (newTheme: Theme) => {
+		setTheme(newTheme);
+		localStorage.setItem("theme", newTheme);
+		applyTheme(newTheme);
+	};
 
-  const themes = [
-    { value: 'light', icon: Sun, label: 'Claro' },
-    { value: 'dark', icon: Moon, label: 'Escuro' },
-    { value: 'system', icon: Monitor, label: 'Sistema' }
-  ] as const
+	if (!mounted) return null;
 
-  return (
-    <div className="relative">
-      <div className="flex items-center bg-gray-800/80 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-1 shadow-lg shadow-gray-900/25">
-        {themes.map((t) => {
-          const IconComponent = t.icon
-          const isActive = theme === t.value
-          
-          return (
-            <button
-              key={t.value}
-              onClick={() => handleThemeChange(t.value)}
-              className={`
+	const themes = [
+		{ value: "light", icon: Sun, label: "Claro" },
+		{ value: "dark", icon: Moon, label: "Escuro" },
+		{ value: "system", icon: Monitor, label: "Sistema" },
+	] as const;
+
+	return (
+		<div className="relative">
+			<div className="flex items-center bg-gray-800/80 backdrop-blur-xl border border-gray-700/50 rounded-2xl p-1 shadow-lg shadow-gray-900/25">
+				{themes.map((t) => {
+					const IconComponent = t.icon;
+					const isActive = theme === t.value;
+
+					return (
+						<button
+							key={t.value}
+							onClick={() => handleThemeChange(t.value)}
+							className={`
                 relative p-3 rounded-xl transition-all duration-300 group
-                ${isActive 
-                  ? 'bg-primary-600 text-white shadow-lg transform scale-105 shadow-primary-600/30' 
-                  : 'text-gray-400 hover:text-primary-400 hover:bg-gray-700/50'
-                }
+                ${
+									isActive
+										? "bg-primary-600 text-white shadow-lg transform scale-105 shadow-primary-600/30"
+										: "text-gray-400 hover:text-primary-400 hover:bg-gray-700/50"
+								}
               `}
-              aria-label={`Mudar para tema ${t.label.toLowerCase()}`}
-            >
-              <IconComponent 
-                size={18} 
-                className={`
+							aria-label={`Mudar para tema ${t.label.toLowerCase()}`}
+						>
+							<IconComponent
+								size={18}
+								className={`
                   transition-all duration-300 
-                  ${isActive ? 'rotate-0 scale-110' : 'group-hover:scale-110 group-hover:rotate-12'}
+                  ${isActive ? "rotate-0 scale-110" : "group-hover:scale-110 group-hover:rotate-12"}
                 `}
-              />
-              
-              {isActive && (
-                <div className="absolute inset-0 bg-primary-600 rounded-xl animate-pulse opacity-30"></div>
-              )}
-            </button>
-          )
-        })}
-      </div>
-      
-      {/* Floating indicator */}
-      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
-        <div className="w-1 h-1 bg-primary-400 rounded-full opacity-60"></div>
-      </div>
-    </div>
-  )
-} 
+							/>
+
+							{isActive && (
+								<div className="absolute inset-0 bg-primary-600 rounded-xl animate-pulse opacity-30"></div>
+							)}
+						</button>
+					);
+				})}
+			</div>
+
+			{/* Floating indicator */}
+			<div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
+				<div className="w-1 h-1 bg-primary-400 rounded-full opacity-60"></div>
+			</div>
+		</div>
+	);
+}

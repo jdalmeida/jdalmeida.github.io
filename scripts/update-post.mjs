@@ -1,12 +1,12 @@
-import 'dotenv/config'
-import { neon } from '@neondatabase/serverless'
+import "dotenv/config";
+import { neon } from "@neondatabase/serverless";
 
-const databaseUrl = process.env.DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
-  throw new Error('DATABASE_URL not set')
+	throw new Error("DATABASE_URL not set");
 }
 
-const sql = neon(databaseUrl)
+const sql = neon(databaseUrl);
 
 const CONTENT = `No começo de 2026, um pessoal do Vale do Silício começou a repetir uma frase que soou estranha no início:
 
@@ -87,17 +87,17 @@ Tudo o mais é boilerplate.
 
 ---
 
-*E você, como tá lidando com contexto nos seus projetos de IA? Já esbarrou nesse problema? Me conta — adoro trocar ideia sobre isso.*`
+*E você, como tá lidando com contexto nos seus projetos de IA? Já esbarrou nesse problema? Me conta — adoro trocar ideia sobre isso.*`;
 
 async function main() {
-  console.log('Atualizando post no banco...')
-  await sql`
+	console.log("Atualizando post no banco...");
+	await sql`
     UPDATE posts SET
       content = ${CONTENT},
       updated_at = ${new Date().toISOString()}
     WHERE slug = 'contexto-e-o-novo-codigo'
-  `
-  console.log('✅ Post atualizado no banco com sucesso!')
+  `;
+	console.log("✅ Post atualizado no banco com sucesso!");
 }
 
-main().catch(console.error)
+main().catch(console.error);
