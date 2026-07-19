@@ -23,7 +23,7 @@ export function HackathonDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto principal do evento"
-					src="/uploads/hackathon1.jpg"
+					src="/uploads/hackathon1.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -32,7 +32,7 @@ export function HackathonDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto do evento"
-					src="/uploads/hackathon2.jpg"
+					src="/uploads/hackathon2.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -40,7 +40,7 @@ export function HackathonDetails() {
 					id="g-hackathon-va-v"
 					radius={14}
 					placeholder="Vídeo (mp4) ou foto"
-					src="/uploads/hackathon3.mp4"
+					src="https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/hackathon3.mp4"
 				/>
 			</div>
 		</div>

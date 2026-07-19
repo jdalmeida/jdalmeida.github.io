@@ -23,7 +23,7 @@ export function AmchamSXDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto principal do evento"
-					src="/uploads/sx1.jpg"
+					src="/uploads/sx1.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -32,7 +32,7 @@ export function AmchamSXDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto do evento"
-					src="/uploads/sx2.jpg"
+					src="/uploads/sx2.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -40,7 +40,7 @@ export function AmchamSXDetails() {
 					id="g-amcham-sx-v"
 					radius={14}
 					placeholder="Vídeo (mp4) ou foto"
-					src="/uploads/sx3.mp4"
+					src="https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/sx3.mp4"
 				/>
 			</div>
 		</div>

@@ -23,7 +23,7 @@ export function TechstarsDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto principal do evento"
-					src="/uploads/sw_lajeado1.JPG"
+					src="/uploads/sw_lajeado1.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -32,7 +32,7 @@ export function TechstarsDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto do evento"
-					src="/uploads/sw_lajeado2.jpg"
+					src="/uploads/sw_lajeado2.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -40,7 +40,7 @@ export function TechstarsDetails() {
 					id="g-techstars-sw-v"
 					radius={14}
 					placeholder="Vídeo (mp4) ou foto"
-					src="/uploads/sw_lajeado3.jpg"
+					src="/uploads/sw_lajeado3.webp"
 				/>
 			</div>
 		</div>

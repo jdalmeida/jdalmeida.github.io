@@ -205,7 +205,7 @@ export function HomeClient({ posts }: { posts: Post[] }) {
 							}}
 						>
 							<img
-								src="/logo_collage.png"
+								src="/logo_collage.webp"
 								alt="Colagem de Logos </J>"
 								className="w-full h-auto object-contain drop-shadow-[0_12px_28px_rgba(43,35,26,0.14)] select-none"
 							/>
@@ -414,7 +414,7 @@ export function HomeClient({ posts }: { posts: Post[] }) {
 					<div className="font-mono text-text-caption tracking-widest uppercase text-green-700 mb-[14px]">
 						( 03 — na estrada )
 					</div>
-					<h2 className="font-display font-semibold text-text-display-2 text-text-heading mb-[14px]">
+					<h2 className="font-display font-semibold text-text-display-2 text-3xl text-text-heading mb-[14px]">
 						Eventos &amp; credenciais
 					</h2>
 					<p className="text-text-body-lg leading-[1.65] m-0 text-justify" style={{ textWrap: "pretty" }}>
@@ -664,7 +664,7 @@ export function HomeClient({ posts }: { posts: Post[] }) {
 					<div className="font-mono text-text-caption tracking-widest uppercase text-green-700 mb-[14px]">
 						( 04 — contato )
 					</div>
-					<h2 className="font-display font-semibold text-text-display-1 text-text-heading mb-[18px]">
+					<h2 className="font-display font-semibold text-text-display-1 text-3xl text-text-heading mb-[18px]">
 						Diga olá.
 					</h2>
 					<p className="text-text-body-lg text-text-body mb-11">
@@ -701,9 +701,9 @@ export function HomeClient({ posts }: { posts: Post[] }) {
 			</section>
 
 			{/* Signature Collage */}
-			<div className="w-full flex justify-center pt-8 pb-24 px-6 border-t-[1.5px] border-border-subtle max-w-[820px] mx-auto">
+			<div className="w-full flex justify-center pt-8 pb-24 px-6 border-t-[1.5px] border-border-subtle rounded-md max-w-[820px] mx-auto">
 				<img
-					src="/signature_collage.png"
+					src="/signature_collage.webp"
 					alt="Signature Collage"
 					className="w-full max-w-[620px] h-auto object-contain select-none opacity-90 hover:opacity-100 transition-opacity duration-300"
 				/>

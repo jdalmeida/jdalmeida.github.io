@@ -23,7 +23,7 @@ export function SouthSummitDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto principal do evento"
-					src="/uploads/ss_brazil1.jpg"
+					src="/uploads/ss_brazil1.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -32,7 +32,7 @@ export function SouthSummitDetails() {
 					shape="rounded"
 					radius={14}
 					placeholder="Foto do evento"
-					src="/uploads/ss_brazil2.jpg"
+					src="/uploads/ss_brazil2.webp"
 				/>
 			</div>
 			<div className="h-[170px]">
@@ -40,7 +40,7 @@ export function SouthSummitDetails() {
 					id="g-south-summit-v"
 					radius={14}
 					placeholder="Vídeo (mp4) ou foto"
-					src="/uploads/ss_brazil3.mp4"
+					src="https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/ss_brazil3.mp4"
 				/>
 			</div>
 		</div>
