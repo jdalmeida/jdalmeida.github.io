@@ -17,11 +17,14 @@ export const metadata = {
 
 export default function ContatoPage() {
 	return (
-		<div className="container py-12">
-			<div className="max-w-4xl mx-auto">
+		<div className="font-serif text-text-body py-12 px-6">
+			<div className="max-w-[760px] mx-auto">
+				{/* Header */}
 				<div className="text-center mb-12">
-					<h1 className="text-4xl font-bold text-gray-100 mb-4">Contato</h1>
-					<p className="text-xl text-gray-300">
+					<h1 className="font-display font-semibold text-text-display-2 text-text-heading mb-4">
+						Contato
+					</h1>
+					<p className="text-text-body-lg text-text-muted">
 						Vamos conversar sobre tecnologia, projetos ou oportunidades
 					</p>
 				</div>
@@ -29,10 +32,10 @@ export default function ContatoPage() {
 				<div className="grid md:grid-cols-2 gap-12">
 					<div className="space-y-8">
 						<div>
-							<h2 className="text-2xl font-bold text-gray-100 mb-6">
+							<h2 className="font-serif font-bold text-text-h2 text-text-heading mb-6">
 								Entre em contato
 							</h2>
-							<p className="text-gray-300 mb-8">
+							<p className="text-text-body leading-relaxed mb-8">
 								Estou sempre aberto para novas conversas, seja para discutir
 								projetos, trocar ideias sobre tecnologia ou explorar
 								oportunidades de colaboração.
@@ -42,18 +45,18 @@ export default function ContatoPage() {
 						<div className="space-y-6">
 							{/* Email */}
 							<div className="flex items-start space-x-4">
-								<div className="w-12 h-12 bg-primary-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-									<Mail className="text-primary-400" size={20} />
+								<div className="w-12 h-12 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center flex-shrink-0">
+									<Mail className="text-accent-primary" size={20} />
 								</div>
 								<div>
-									<h3 className="font-semibold text-gray-100 mb-1">Email</h3>
+									<h3 className="font-semibold text-text-heading mb-1">Email</h3>
 									<a
 										href="mailto:joao@allpines.com.br"
-										className="text-primary-400 hover:text-primary-300 transition-colors"
+										className="text-accent-secondary hover:text-terracotta-700 transition-colors font-mono"
 									>
 										joao@allpines.com.br
 									</a>
-									<p className="text-gray-400 text-sm mt-1">
+									<p className="text-text-muted text-text-small mt-1">
 										A melhor forma de me contactar
 									</p>
 								</div>
@@ -61,21 +64,21 @@ export default function ContatoPage() {
 
 							{/* LinkedIn */}
 							<div className="flex items-start space-x-4">
-								<div className="w-12 h-12 bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-									<Linkedin className="text-blue-400" size={20} />
+								<div className="w-12 h-12 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center flex-shrink-0">
+									<Linkedin className="text-accent-primary" size={20} />
 								</div>
 								<div>
-									<h3 className="font-semibold text-gray-100 mb-1">LinkedIn</h3>
+									<h3 className="font-semibold text-text-heading mb-1">LinkedIn</h3>
 									<a
 										href="https://linkedin.com/in/joao-de-almeida9"
 										target="_blank"
 										rel="noopener noreferrer"
-										className="text-blue-400 hover:text-blue-300 transition-colors inline-flex items-center"
+										className="text-accent-secondary hover:text-terracotta-700 transition-colors font-mono inline-flex items-center"
 									>
 										/in/joao-de-almeida9
-										<ExternalLink size={14} className="ml-1" />
+										<ExternalLink size={12} className="ml-1" />
 									</a>
-									<p className="text-gray-400 text-sm mt-1">
+									<p className="text-text-muted text-text-small mt-1">
 										Conecte-se comigo profissionalmente
 									</p>
 								</div>
@@ -83,21 +86,21 @@ export default function ContatoPage() {
 
 							{/* GitHub */}
 							<div className="flex items-start space-x-4">
-								<div className="w-12 h-12 bg-gray-700/50 rounded-lg flex items-center justify-center flex-shrink-0">
-									<Github className="text-gray-300" size={20} />
+								<div className="w-12 h-12 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center flex-shrink-0">
+									<Github className="text-accent-primary" size={20} />
 								</div>
 								<div>
-									<h3 className="font-semibold text-gray-100 mb-1">GitHub</h3>
+									<h3 className="font-semibold text-text-heading mb-1">GitHub</h3>
 									<a
 										href="https://github.com/jdalmeida"
 										target="_blank"
 										rel="noopener noreferrer"
-										className="text-gray-300 hover:text-gray-100 transition-colors inline-flex items-center"
+										className="text-accent-secondary hover:text-terracotta-700 transition-colors font-mono inline-flex items-center"
 									>
 										github.com/jdalmeida
-										<ExternalLink size={14} className="ml-1" />
+										<ExternalLink size={12} className="ml-1" />
 									</a>
-									<p className="text-gray-400 text-sm mt-1">
+									<p className="text-text-muted text-text-small mt-1">
 										Veja meus projetos e contribuições
 									</p>
 								</div>
@@ -105,15 +108,15 @@ export default function ContatoPage() {
 
 							{/* Localização */}
 							<div className="flex items-start space-x-4">
-								<div className="w-12 h-12 bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-									<MapPin className="text-green-400" size={20} />
+								<div className="w-12 h-12 bg-green-100 border border-green-300 rounded-lg flex items-center justify-center flex-shrink-0">
+									<MapPin className="text-accent-primary" size={20} />
 								</div>
 								<div>
-									<h3 className="font-semibold text-gray-100 mb-1">
+									<h3 className="font-semibold text-text-heading mb-1">
 										Localização
 									</h3>
-									<p className="text-gray-300">Santa Cruz do Sul, RS</p>
-									<p className="text-gray-400 text-sm mt-1">Brasil (GMT-3)</p>
+									<p className="text-text-body">Santa Cruz do Sul, RS</p>
+									<p className="text-text-muted text-text-small mt-1 font-mono">Brasil (GMT-3)</p>
 								</div>
 							</div>
 						</div>
@@ -122,12 +125,12 @@ export default function ContatoPage() {
 					{/* Right Column */}
 					<div className="space-y-8">
 						{/* Allpines Info */}
-						<div className="glass-card p-6">
+						<div className="grain-overlay bg-surface-card border border-border-subtle rounded-[var(--radius-md)_var(--radius-sm)_var(--radius-md)_var(--radius-sm)] p-6 shadow-[var(--shadow-sm)]">
 							<div className="flex items-center mb-4">
-								<Building2 className="text-primary-400 mr-3" size={24} />
-								<h3 className="text-xl font-bold text-gray-100">Allpines</h3>
+								<Building2 className="text-accent-primary mr-3" size={24} />
+								<h3 className="text-xl font-bold text-text-heading">Allpines</h3>
 							</div>
-							<p className="text-gray-300 mb-4">
+							<p className="text-text-body text-text-small mb-4 leading-relaxed">
 								Como CTO da Allpines, lidero projetos de transformação digital e
 								desenvolvimento de software.
 							</p>
@@ -135,36 +138,36 @@ export default function ContatoPage() {
 								href="https://allpines.com.br"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="inline-flex items-center text-primary-400 hover:text-primary-300 font-medium transition-colors"
+								className="inline-flex items-center text-accent-secondary hover:text-terracotta-700 font-medium transition-colors"
 							>
 								Conheça a Allpines
-								<ExternalLink size={16} className="ml-2" />
+								<ExternalLink size={14} className="ml-2" />
 							</a>
 						</div>
 
 						{/* Response Time */}
-						<div className="glass-card p-6">
+						<div className="grain-overlay bg-surface-card border border-border-subtle rounded-[var(--radius-md)_var(--radius-sm)_var(--radius-md)_var(--radius-sm)] p-6 shadow-[var(--shadow-sm)]">
 							<div className="flex items-center mb-4">
-								<Clock className="text-blue-400 mr-3" size={24} />
-								<h3 className="text-xl font-bold text-gray-100">
+								<Clock className="text-accent-primary mr-3" size={24} />
+								<h3 className="text-xl font-bold text-text-heading">
 									Tempo de Resposta
 								</h3>
 							</div>
-							<p className="text-gray-300 mb-4">
-								Normalmente respondo emails dentro de 24-48 horas. Para assuntos
+							<p className="text-text-body text-text-small mb-4 leading-relaxed">
+								Normalmente respondo e-mails dentro de 24-48 horas. Para assuntos
 								urgentes, mencione no assunto.
 							</p>
-							<div className="text-sm text-gray-400">
+							<div className="text-text-small text-text-muted font-mono">
 								<p>• Segunda a Sexta: Até 24h</p>
 								<p>• Fins de Semana: Até 48h</p>
 							</div>
 						</div>
 
 						{/* Topics */}
-						<div className="glass-card p-6">
+						<div className="grain-overlay bg-surface-card border border-border-subtle rounded-[var(--radius-md)_var(--radius-sm)_var(--radius-md)_var(--radius-sm)] p-6 shadow-[var(--shadow-sm)]">
 							<div className="flex items-center mb-4">
-								<MessageCircle className="text-purple-400 mr-3" size={24} />
-								<h3 className="text-xl font-bold text-gray-100">
+								<MessageCircle className="text-accent-primary mr-3" size={24} />
+								<h3 className="text-xl font-bold text-text-heading">
 									Vamos conversar sobre
 								</h3>
 							</div>
@@ -179,9 +182,9 @@ export default function ContatoPage() {
 								].map((topic) => (
 									<div
 										key={topic}
-										className="flex items-center text-sm text-gray-300"
+										className="flex items-center text-text-small text-text-body"
 									>
-										<div className="w-2 h-2 bg-primary-400 rounded-full mr-3"></div>
+										<div className="w-1.5 h-1.5 bg-accent-primary rounded-full mr-3"></div>
 										{topic}
 									</div>
 								))}
@@ -191,11 +194,11 @@ export default function ContatoPage() {
 				</div>
 
 				{/* Call to Action */}
-				<div className="mt-16 text-center glass-card p-8">
-					<h2 className="text-2xl font-bold text-gray-100 mb-4">
+				<div className="mt-16 text-center grain-overlay bg-surface-card border border-border-subtle rounded-[var(--radius-md)_var(--radius-sm)_var(--radius-md)_var(--radius-sm)] shadow-[var(--shadow-sm)] p-8">
+					<h2 className="font-serif font-bold text-text-h2 text-text-heading mb-4">
 						Pronto para começar nossa conversa?
 					</h2>
-					<p className="text-gray-300 mb-6">
+					<p className="text-text-body mb-6 leading-relaxed max-w-lg mx-auto">
 						Seja qual for o assunto, estou ansioso para trocar ideias e conhecer
 						mais sobre seus projetos.
 					</p>
@@ -203,7 +206,7 @@ export default function ContatoPage() {
 						href="mailto:joao@allpines.com.br?subject=Olá João! Gostaria de conversar sobre..."
 						className="btn-primary"
 					>
-						Enviar Email
+						Enviar E-mail
 					</a>
 				</div>
 			</div>

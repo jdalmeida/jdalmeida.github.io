@@ -11,6 +11,28 @@ module.exports = {
 			colors: {
 				background: "hsl(var(--background))",
 				foreground: "hsl(var(--foreground))",
+				ink: {
+					300: "var(--ink-300)",
+					500: "var(--ink-500)",
+					700: "var(--ink-700)",
+					900: "var(--ink-900)",
+				},
+				paper: {
+					50: "var(--paper-50)",
+					100: "var(--paper-100)",
+					200: "var(--paper-200)",
+					300: "var(--paper-300)",
+				},
+				terracotta: {
+					300: "var(--terracotta-300)",
+					500: "var(--terracotta-500)",
+					700: "var(--terracotta-700)",
+				},
+				gold: {
+					200: "var(--gold-200)",
+					400: "var(--gold-400)",
+					600: "var(--gold-600)",
+				},
 				primary: {
 					50: "#fdffe5",
 					100: "#fbffc7",
@@ -77,10 +99,10 @@ module.exports = {
 				},
 			},
 			fontFamily: {
-				sans: ["Inter", "system-ui", "sans-serif"],
-				mono: ["JetBrains Mono", "ui-monospace", "monospace"],
-				display: ["Oswald", "system-ui", "sans-serif"],
-				serif: ["Playfair Display", "serif"],
+				sans: ["Vollkorn", "Georgia", "serif"],
+				mono: ["Space Mono", "ui-monospace", "monospace"],
+				display: ["Caveat", "cursive"],
+				serif: ["Vollkorn", "Georgia", "serif"],
 			},
 			animation: {
 				gradient: "gradient 8s linear infinite",

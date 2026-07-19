@@ -150,9 +150,9 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## 👨‍💻 Autor
 
 **João de Almeida**  
-CTO @ Allpines  
+Software Engineer  
 [Email](mailto:joao@allpines.com.br) • [GitHub](https://github.com/jdalmeida) • [LinkedIn](https://linkedin.com/in/joao-de-almeida9)
 
 ---
 
-Feito com ❤️ usando Next.js e Tailwind CSS 
+Feito com ❤️ usando Next.js e Tailwind CSS
