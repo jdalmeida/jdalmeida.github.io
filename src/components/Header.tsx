@@ -41,8 +41,8 @@ export function Header() {
 	return (
 		<header
 			className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-				isScrolled
-					? "bg-surface-page/95 backdrop-blur-md border-b-[1.5px] border-border-subtle shadow-sm"
+				(isScrolled || isMenuOpen)
+					? "bg-background/95 backdrop-blur-md border-b-[1.5px] border-border-subtle shadow-sm"
 					: "bg-transparent border-b-[1.5px] border-transparent"
 			}`}
 			style={{ height: "70px" }}
@@ -95,13 +95,13 @@ export function Header() {
 
 			{/* Mobile Navigation Dropdown */}
 			{isMenuOpen && (
-				<div className="md:hidden absolute top-[70px] left-0 right-0 bg-surface-page border-b-[1.5px] border-border-subtle shadow-md p-6 flex flex-col gap-4 font-serif">
+				<div className="md:hidden absolute top-[70px] left-0 right-0 bg-background border-b-[1.5px] border-border-subtle shadow-md p-6 flex flex-col gap-4 font-serif">
 					{navigation.map((item) => (
 						<a
 							key={item.name}
 							href={item.href}
 							onClick={(e) => handleScrollTo(e, item.href)}
-							className="text-text-body hover:text-text-heading text-lg py-2 border-b border-border-subtle/50"
+							className="text-text-body hover:text-text-heading text-lg py-2 border-b border-border/50"
 						>
 							{item.name}
 						</a>

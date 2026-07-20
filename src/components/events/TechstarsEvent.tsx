@@ -9,8 +9,8 @@ export const TechstarsMetadata = {
 	localCurto: "Lajeado",
 	papel: "Developer",
 	num: "Nº 003",
-	cor: "var(--green-700)",
-	corEscura: "var(--green-900)",
+	cor: "#39c463",
+	corEscura: "#1f6f43",
 	nota: "54 horas para tirar uma ideia do papel: time montado na sexta, pitch no domingo.",
 };
 

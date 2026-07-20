@@ -9,8 +9,8 @@ export const HackathonMetadata = {
 	localCurto: "Venâncio Aires",
 	papel: "Dev & Leader",
 	num: "Nº 004",
-	cor: "var(--gold-600)",
-	corEscura: "#75561F",
+	cor: "#1f46bf",
+	corEscura: "#0e1b62",
 	nota: "Onde as startups viraram parte da minha vida.",
 };
 

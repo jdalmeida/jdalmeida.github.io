@@ -11,6 +11,16 @@ module.exports = {
 			colors: {
 				background: "hsl(var(--background))",
 				foreground: "hsl(var(--foreground))",
+				"surface-page": "var(--surface-page)",
+				"surface-card": "var(--surface-card)",
+				"surface-sunken": "var(--surface-sunken)",
+				"surface-inverse": "var(--surface-inverse)",
+				"text-heading": "var(--text-heading)",
+				"text-body": "var(--text-body)",
+				"text-muted": "var(--text-muted)",
+				"text-inverse": "var(--text-inverse)",
+				"border-subtle": "var(--border-subtle)",
+				"border-strong": "var(--border-strong)",
 				ink: {
 					300: "var(--ink-300)",
 					500: "var(--ink-500)",
