@@ -42,6 +42,19 @@ Use the same token in the VXP project. Vercel routes these paths to the Go Funct
 
 Send the token in the `Authorization: Bearer <token>` header. The API needs PostgreSQL because drafts do not exist in the Markdown archive.
 
+## Event photos
+
+The event gallery draws each photo in a cell of at most 360 CSS pixels, so it serves resized copies instead of the originals in `public/uploads`.
+
+Run the script after adding a photo. It writes a 480px and a 960px copy next to each original and skips the ones that are already up to date.
+
+```bash
+pip install pillow
+python3 scripts/generate-image-variants.py
+```
+
+The widths must match `imageVariantWidths` in `site/render.go`, which builds the `srcset` of the gallery.
+
 ## Checks
 
 Run all Go checks before a deployment.

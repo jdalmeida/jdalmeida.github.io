@@ -1123,6 +1123,24 @@ video {
   object-fit: cover;
 }
 
+.event-gallery img {
+  background: var(--paper-200);
+}
+
+/* Os vídeos rodam como cartão-postal animado: sem barra, sem botão de play. */
+.event-gallery video {
+  pointer-events: none;
+}
+
+.event-gallery video::-webkit-media-controls,
+.event-gallery video::-webkit-media-controls-enclosure,
+.event-gallery video::-webkit-media-controls-panel,
+.event-gallery video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .contact {
   min-height: 750px;
   display: grid;

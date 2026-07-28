@@ -84,7 +84,7 @@ func TestSecurityHeaders(t *testing.T) {
 	}
 }
 
-func TestEventVideoAutoplayAndLoop(t *testing.T) {
+func TestEventVideoPlaysWithoutPlayerUI(t *testing.T) {
 	t.Setenv("DATABASE_URL", "")
 	response := httptest.NewRecorder()
 	New().ServeHTTP(
@@ -94,15 +94,87 @@ func TestEventVideoAutoplayAndLoop(t *testing.T) {
 
 	body := response.Body.String()
 	for _, attribute := range []string{
-		"autoplay",
+		"<video autoplay",
 		"loop",
 		"muted",
 		"playsinline",
-		`data-autoplay-video`,
+		`preload="none"`,
+		`disablepictureinpicture`,
+		// site.js only attaches the source once the photos are done loading.
+		`data-autoplay-video data-video-src="https://`,
 	} {
 		if !strings.Contains(body, attribute) {
 			t.Fatalf("event video does not contain %q", attribute)
 		}
+	}
+	for _, forbidden := range []string{" controls", "<source "} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("event video still contains the player UI marker %q", forbidden)
+		}
+	}
+}
+
+func TestEventPhotosUseResizedCopies(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
+	response := httptest.NewRecorder()
+	New().ServeHTTP(
+		response,
+		httptest.NewRequest(http.MethodGet, "/partials/events/south-summit", nil),
+	)
+
+	body := response.Body.String()
+	for _, want := range []string{
+		`src="/uploads/ss_brazil1-960.webp"`,
+		`srcset="/uploads/ss_brazil1-480.webp 480w, /uploads/ss_brazil1-960.webp 960w"`,
+		`sizes="` + gallerySizes + `"`,
+		`fetchpriority="high"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("event gallery does not contain %q", want)
+		}
+	}
+	if strings.Contains(body, `src="/uploads/ss_brazil1.webp"`) {
+		t.Fatal("event gallery still loads the full size photo")
+	}
+	if strings.Contains(body, `loading="lazy"`) {
+		t.Fatal("event gallery photos are lazy, so they start loading late")
+	}
+}
+
+func TestImageVariantsExist(t *testing.T) {
+	for _, event := range events {
+		photos := append([]string{}, event.Images...)
+		if hasVariants(event.Video) {
+			photos = append(photos, event.Video)
+		}
+		for _, photo := range photos {
+			if !hasVariants(photo) {
+				t.Fatalf("photo %q is outside /uploads, so it has no resized copies", photo)
+			}
+			for _, width := range imageVariantWidths {
+				path := "../public" + variantPath(photo, width)
+				if _, err := os.Stat(path); err != nil {
+					t.Fatalf("missing %s: run scripts/generate-image-variants.py", path)
+				}
+			}
+		}
+	}
+}
+
+func TestBadgesCarryTheGalleryPreload(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
+	response := httptest.NewRecorder()
+	New().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	body := response.Body.String()
+	if !strings.Contains(body, `data-gallery-sizes="`+gallerySizes+`"`) {
+		t.Fatal("the badge stack does not carry the gallery sizes")
+	}
+	if count := strings.Count(body, "data-gallery-preload="); count != len(events) {
+		t.Fatalf("preload attributes = %d, want %d", count, len(events))
+	}
+	if !strings.Contains(body, "/uploads/ss_brazil1-480.webp 480w") {
+		t.Fatal("the badge preload does not list the resized copies")
 	}
 }
 

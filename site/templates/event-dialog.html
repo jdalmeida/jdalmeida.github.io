@@ -32,17 +32,26 @@
         <div class="event-gallery">
           {{ range $index, $image := .Event.Images }}
           <figure class="gallery-image image-{{ $index }}">
-            <img src="{{ $image }}" alt="Registro de {{ $.Event.Name }}" loading="lazy">
+            <img src="{{ imageSrc $image }}"
+                 srcset="{{ imageSrcSet $image }}"
+                 sizes="{{ gallerySizes }}"
+                 alt="Registro de {{ $.Event.Name }}"
+                 decoding="async"
+                 fetchpriority="{{ if eq $index 0 }}high{{ else }}auto{{ end }}">
           </figure>
           {{ end }}
           {{ if .Event.Video }}
           <figure class="gallery-media">
             {{ if isImage .Event.Video }}
-            <img src="{{ .Event.Video }}" alt="Registro de {{ .Event.Name }}" loading="lazy">
+            <img src="{{ imageSrc .Event.Video }}"
+                 srcset="{{ imageSrcSet .Event.Video }}"
+                 sizes="{{ gallerySizes }}"
+                 alt="Registro de {{ .Event.Name }}"
+                 decoding="async">
             {{ else }}
-            <video autoplay loop muted playsinline controls preload="auto" data-autoplay-video>
-              <source src="{{ .Event.Video }}" type="video/mp4">
-            </video>
+            <video autoplay loop muted playsinline preload="none" tabindex="-1" aria-hidden="true"
+                   disablepictureinpicture disableremoteplayback
+                   data-autoplay-video data-video-src="{{ .Event.Video }}"></video>
             {{ end }}
           </figure>
           {{ end }}
