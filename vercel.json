@@ -19,6 +19,14 @@
       "destination": "/api/index?__path=/partials/:path*"
     },
     {
+      "source": "/api/articles",
+      "destination": "/api/index?__path=/api/articles"
+    },
+    {
+      "source": "/api/articles/:path*",
+      "destination": "/api/index?__path=/api/articles/:path*"
+    },
+    {
       "source": "/admin",
       "destination": "/api/index?__path=/admin"
     },

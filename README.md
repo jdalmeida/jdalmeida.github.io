@@ -25,6 +25,23 @@ Open [http://localhost:3000](http://localhost:3000).
 
 The app reads Markdown files from `content/posts` when PostgreSQL is not available. The editor needs PostgreSQL.
 
+## Article API
+
+The portfolio exposes an authenticated JSON API for VXP. The API lists and reads all articles, including drafts.
+
+It also creates drafts and publishes them. Set `PORTFOLIO_API_TOKEN` to a random secret.
+
+Use the same token in the VXP project. Vercel routes these paths to the Go Function:
+
+| Method | Path | Action |
+| --- | --- | --- |
+| `GET` | `/api/articles` | List articles by status |
+| `GET` | `/api/articles/{id-or-slug}` | Read one article |
+| `POST` | `/api/articles/drafts` | Create or update a draft |
+| `POST` | `/api/articles/{id}/publish` | Publish a draft |
+
+Send the token in the `Authorization: Bearer <token>` header. The API needs PostgreSQL because drafts do not exist in the Markdown archive.
+
 ## Checks
 
 Run all Go checks before a deployment.

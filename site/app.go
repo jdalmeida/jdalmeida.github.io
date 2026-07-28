@@ -54,6 +54,7 @@ func New() http.Handler {
 	mux.HandleFunc("GET /sobre", app.sectionRedirect("sobre"))
 	mux.HandleFunc("GET /contato", app.sectionRedirect("contato"))
 	mux.HandleFunc("GET /healthz", app.health)
+	app.registerArticleAPIRoutes(mux)
 
 	mux.HandleFunc("GET /admin", app.adminPage)
 	mux.HandleFunc("POST /admin/login", app.adminLogin)
@@ -545,8 +546,31 @@ func validatePostForm(r *http.Request) (PostInput, string) {
 		Author:    strings.TrimSpace(r.FormValue("author")),
 		Published: r.FormValue("published") == "true",
 	}
+	return validatePostInput(input)
+}
+
+func validatePostInput(input PostInput) (PostInput, string) {
+	input.Slug = strings.TrimSpace(strings.ToLower(input.Slug))
+	input.Title = strings.TrimSpace(input.Title)
+	input.Excerpt = strings.TrimSpace(input.Excerpt)
+	input.Content = strings.TrimSpace(input.Content)
+	input.Author = strings.TrimSpace(input.Author)
+	tags := make([]string, 0, len(input.Tags))
+	for _, tag := range input.Tags {
+		tag = strings.TrimSpace(tag)
+		if tag != "" {
+			tags = append(tags, tag)
+		}
+	}
+	input.Tags = tags
+	if input.ID < 0 {
+		return input, "O identificador do artigo não é válido."
+	}
 	if len(input.Title) < 3 {
 		return input, "O título deve ter no mínimo três caracteres."
+	}
+	if len(input.Title) > 255 {
+		return input, "O título deve ter no máximo 255 caracteres."
 	}
 	if !slugPattern.MatchString(input.Slug) || len(input.Slug) > 180 {
 		return input, "O endereço deve usar letras minúsculas, números e hifens."
@@ -554,11 +578,28 @@ func validatePostForm(r *http.Request) (PostInput, string) {
 	if len(input.Excerpt) < 10 {
 		return input, "O resumo deve ter no mínimo dez caracteres."
 	}
+	if len(input.Excerpt) > 1000 {
+		return input, "O resumo deve ter no máximo 1.000 caracteres."
+	}
 	if input.Content == "" {
 		return input, "O artigo não pode ficar vazio."
 	}
+	if len(input.Content) > 400000 {
+		return input, "O artigo deve ter no máximo 400.000 caracteres."
+	}
 	if input.Author == "" {
 		input.Author = "João de Almeida"
+	}
+	if len(input.Author) > 120 {
+		return input, "O nome do autor deve ter no máximo 120 caracteres."
+	}
+	if len(input.Tags) > 20 {
+		return input, "O artigo deve ter no máximo 20 tags."
+	}
+	for _, tag := range input.Tags {
+		if len(tag) > 80 {
+			return input, "Cada tag deve ter no máximo 80 caracteres."
+		}
 	}
 	return input, ""
 }

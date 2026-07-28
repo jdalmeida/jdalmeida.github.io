@@ -29,6 +29,7 @@ type publicStore interface {
 type adminStore interface {
 	ListAll(context.Context) ([]Post, error)
 	GetByID(context.Context, int) (*Post, error)
+	GetBySlug(context.Context, string) (*Post, error)
 	Save(context.Context, PostInput) (*Post, error)
 	Delete(context.Context, int) error
 	CreateSession(context.Context, string, time.Time) error
@@ -143,6 +144,17 @@ func (s *postgresStore) GetByID(ctx context.Context, id int) (*Post, error) {
 		WHERE id = $1
 		LIMIT 1
 	`, id)
+	return scanPost(row)
+}
+
+func (s *postgresStore) GetBySlug(ctx context.Context, slug string) (*Post, error) {
+	row := s.db.QueryRowContext(ctx, `
+		SELECT id, slug, title, excerpt, content, tags, author, published,
+		       published_at, created_at, updated_at
+		FROM posts
+		WHERE slug = $1
+		LIMIT 1
+	`, slug)
 	return scanPost(row)
 }
 
