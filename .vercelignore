@@ -1,0 +1,8 @@
+.agents
+.git
+.next
+artifacts
+node_modules
+scripts
+skills-lock.json
+tsconfig.tsbuildinfo

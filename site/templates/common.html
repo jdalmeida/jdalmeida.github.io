@@ -1,0 +1,119 @@
+{{ define "head" }}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ .Title }}</title>
+  <meta name="description" content="{{ .Description }}">
+  <meta name="theme-color" content="#f3ecda">
+  <meta name="author" content="João de Almeida">
+  <meta property="og:type" content="{{ if .Post }}article{{ else }}website{{ end }}">
+  <meta property="og:title" content="{{ .Title }}">
+  <meta property="og:description" content="{{ .Description }}">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:url" content="{{ .Canonical }}">
+  <meta property="og:site_name" content="João de Almeida">
+  <meta name="twitter:card" content="summary">
+  <link rel="canonical" href="{{ .Canonical }}">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Space+Mono:wght@400;700&family=Vollkorn:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=20260727-2">
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous" defer></script>
+  <script src="/site.js?v=20260727-2" defer></script>
+</head>
+{{ end }}
+
+{{ define "site-header" }}
+<header class="site-header" data-site-header>
+  <div class="nav-shell">
+    <a class="brand" href="/" aria-label="João de Almeida, página inicial">
+      <img src="/assets/logo-signature.png" alt="" width="80" height="54">
+    </a>
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-toggle>
+      <span></span><span></span>
+      <span class="sr-only">Abrir menu</span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Navegação principal" data-site-nav>
+      <a href="/#sobre">Sobre</a>
+      <a href="/#artigos">Artigos</a>
+      <a href="/#eventos">Eventos</a>
+      <a class="nav-cta" href="/#contato">Diga olá</a>
+    </nav>
+  </div>
+</header>
+{{ end }}
+
+{{ define "site-footer" }}
+<footer class="site-footer">
+  <div class="footer-shell">
+    <img class="footer-mark" src="/assets/logo-signature.png" alt="Almeida" width="47" height="32">
+    <p>© {{ .Year }} joão de almeida — feito à mão</p>
+  </div>
+</footer>
+<div class="reading-progress" aria-hidden="true" data-reading-progress></div>
+{{ end }}
+
+{{ define "badge" }}
+<div class="event-badge" style="{{ eventStyle . }}">
+  <div class="badge-top">
+    <span class="badge-slot"></span>
+    <strong>{{ .Name }}</strong>
+    <small>{{ .ShortPlace }} · {{ .Year }}</small>
+  </div>
+  <div class="badge-name">
+    <span>credencial</span>
+    <strong>João Gabriel</strong>
+    <em>de Almeida</em>
+  </div>
+  <div class="badge-role">{{ .Role }}</div>
+</div>
+{{ end }}
+
+{{ define "post-list" }}
+<div class="post-list" id="post-list">
+  {{ if .Posts }}
+    {{ range .Posts }}
+    <article class="post-row">
+      <a href="/blog/{{ .Slug }}">
+        <div class="post-meta">
+          <time datetime="{{ .PublishedAt.Format "2006-01-02" }}">{{ formatShortDate .PublishedAt }}</time>
+          <span>{{ .ReadTime }} min</span>
+        </div>
+        <h2>{{ .Title }}</h2>
+        <p>{{ .Excerpt }}</p>
+        <span class="post-arrow" aria-hidden="true">↗</span>
+      </a>
+    </article>
+    {{ end }}
+  {{ else }}
+    <div class="empty-state">
+      <span>( arquivo vazio )</span>
+      <h2>Nenhum artigo nesta categoria.</h2>
+      <p>Escolha outra categoria para continuar.</p>
+    </div>
+  {{ end }}
+</div>
+{{ end }}
+
+{{ define "blog-results" }}
+<div id="blog-results" class="blog-results">
+  <nav class="tag-filter" aria-label="Filtrar artigos">
+    <a href="/blog"
+       class="{{ if eq .SelectedTag "" }}is-active{{ end }}"
+       hx-get="/partials/posts"
+       hx-target="#blog-results"
+       hx-swap="outerHTML"
+       hx-push-url="/blog">todos</a>
+    {{ range .Tags }}
+    <a href="/blog?tag={{ . }}"
+       class="{{ if eq $.SelectedTag . }}is-active{{ end }}"
+       hx-get="/partials/posts?tag={{ . }}"
+       hx-target="#blog-results"
+       hx-swap="outerHTML"
+       hx-push-url="/blog?tag={{ . }}">{{ lower . }}</a>
+    {{ end }}
+  </nav>
+  {{ template "post-list" . }}
+</div>
+{{ end }}

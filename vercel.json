@@ -1,0 +1,62 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/index?__path=/"
+    },
+    {
+      "source": "/blog",
+      "destination": "/api/index?__path=/blog"
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "/api/index?__path=/blog/:path*"
+    },
+    {
+      "source": "/partials/:path*",
+      "destination": "/api/index?__path=/partials/:path*"
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/index?__path=/admin"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/api/index?__path=/admin/:path*"
+    },
+    {
+      "source": "/sobre",
+      "destination": "/api/index?__path=/sobre"
+    },
+    {
+      "source": "/contato",
+      "destination": "/api/index?__path=/contato"
+    },
+    {
+      "source": "/healthz",
+      "destination": "/api/index?__path=/healthz"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/uploads/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}

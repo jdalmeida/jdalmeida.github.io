@@ -1,0 +1,217 @@
+{{ define "admin-shell-head" }}
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ .Title }}</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Space+Mono:wght@400;700&family=Vollkorn:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=20260727">
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous" defer></script>
+  <script src="/site.js?v=20260727" defer></script>
+</head>
+{{ end }}
+
+{{ define "admin-login-form" }}
+<form class="login-form"
+      hx-post="/admin/login"
+      hx-target="#login-form"
+      hx-swap="outerHTML">
+  <img src="/assets/logo-signature.png" alt="João Almeida" width="132" height="76">
+  <p class="eyebrow">( acesso reservado )</p>
+  <h1>Editor de artigos</h1>
+  <p>Use a senha definida no ambiente do aplicativo.</p>
+  {{ if .Error }}<div class="form-error" role="alert">{{ .Error }}</div>{{ end }}
+  <label for="password">Senha</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+  <button class="button button-primary" type="submit">
+    <span class="button-label">Entrar</span>
+    <span class="htmx-indicator">Aguarde...</span>
+  </button>
+  <a href="/">← voltar ao site</a>
+</form>
+{{ end }}
+
+{{ define "admin-login" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "admin-shell-head" . }}
+<body class="admin-body">
+  <main class="login-page">
+    <div class="login-art" aria-hidden="true">
+      <img src="/logo_collage.webp" alt="">
+    </div>
+    <div id="login-form">{{ template "admin-login-form" . }}</div>
+  </main>
+</body>
+</html>
+{{ end }}
+
+{{ define "admin-unavailable" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "admin-shell-head" . }}
+<body class="admin-body">
+  <main class="error-page">
+    <p class="eyebrow">( editor indisponível )</p>
+    <h1>O banco de dados não está conectado.</h1>
+    <p>{{ .Error }}</p>
+    <a class="button button-primary" href="/">Voltar ao site</a>
+  </main>
+</body>
+</html>
+{{ end }}
+
+{{ define "admin-post-list" }}
+<div class="admin-post-list" id="admin-post-list">
+  <input id="admin-csrf" type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+  {{ if .Posts }}
+    {{ range .Posts }}
+    <article class="admin-post-card">
+      <button class="admin-post-open"
+              type="button"
+              hx-get="/admin/posts/{{ .ID }}/edit"
+              hx-target="#editor-panel"
+              hx-swap="innerHTML">
+        <span class="status-dot {{ if .Published }}published{{ end }}"></span>
+        <span>
+          <strong>{{ .Title }}</strong>
+          <small>{{ if .Published }}Publicado{{ else }}Rascunho{{ end }} · {{ formatShortDate .UpdatedAt }}</small>
+        </span>
+      </button>
+      <button class="icon-button danger"
+              type="button"
+              aria-label="Excluir {{ .Title }}"
+              hx-delete="/admin/posts/{{ .ID }}"
+              hx-include="#admin-csrf"
+              hx-target="#admin-post-list"
+              hx-swap="outerHTML"
+              hx-confirm="Excluir este artigo?">×</button>
+    </article>
+    {{ end }}
+  {{ else }}
+    <p class="admin-empty">Nenhum artigo.</p>
+  {{ end }}
+</div>
+{{ end }}
+
+{{ define "admin-editor" }}
+<section class="editor-panel" id="editor-panel">
+  <header class="editor-header">
+    <div>
+      <p class="eyebrow">{{ if .EditPost.ID }}( editar artigo ){{ else }}( novo artigo ){{ end }}</p>
+      <h2>{{ if .EditPost.ID }}{{ .EditPost.Title }}{{ else }}Nova página{{ end }}</h2>
+    </div>
+    <button class="button button-quiet"
+            type="button"
+            hx-get="/admin/posts/new"
+            hx-target="#editor-panel"
+            hx-swap="innerHTML">Limpar</button>
+  </header>
+  {{ if .Error }}<div class="form-error" role="alert">{{ .Error }}</div>{{ end }}
+  <form class="editor-form"
+        id="article-form"
+        hx-post="/admin/posts/save"
+        hx-target="#editor-panel"
+        hx-swap="innerHTML">
+    <input id="editor-csrf" type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+    <input type="hidden" name="id" value="{{ .EditPost.ID }}">
+    <div class="field-grid two">
+      <label>
+        <span>Título</span>
+        <input name="title" value="{{ .EditPost.Title }}" required data-title-input>
+      </label>
+      <label>
+        <span>Endereço</span>
+        <input name="slug" value="{{ .EditPost.Slug }}" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" data-slug-input>
+      </label>
+    </div>
+    <label>
+      <span>Resumo</span>
+      <textarea name="excerpt" rows="3" required>{{ .EditPost.Excerpt }}</textarea>
+    </label>
+    <div class="field-grid two">
+      <label>
+        <span>Categorias</span>
+        <input name="tags" value="{{ join .EditPost.Tags ", " }}" placeholder="IA, software, contexto">
+      </label>
+      <label>
+        <span>Autor</span>
+        <input name="author" value="{{ .EditPost.Author }}" required>
+      </label>
+    </div>
+    <div class="markdown-workspace">
+      <div class="workspace-bar">
+        <span>Markdown</span>
+        <button type="button"
+                hx-post="/admin/preview"
+                hx-include="#post-content,#editor-csrf"
+                hx-target="#preview-pane"
+                hx-swap="innerHTML">Atualizar prévia ↗</button>
+      </div>
+      <div class="workspace-columns">
+        <label class="markdown-field">
+          <span class="sr-only">Conteúdo do artigo</span>
+          <textarea id="post-content" name="content" required spellcheck="true">{{ .EditPost.Content }}</textarea>
+        </label>
+        <div class="preview-pane" id="preview-pane">
+          <p class="preview-placeholder">Selecione “Atualizar prévia” para ver o artigo.</p>
+        </div>
+      </div>
+    </div>
+    <footer class="editor-actions">
+      <label class="publish-check">
+        <input name="published" type="checkbox" value="true" {{ if .EditPost.Published }}checked{{ end }}>
+        <span>Publicar artigo</span>
+      </label>
+      <button class="button button-primary" type="submit">
+        <span class="button-label">{{ if .EditPost.ID }}Salvar mudanças{{ else }}Criar artigo{{ end }}</span>
+        <span class="htmx-indicator">Salvando...</span>
+      </button>
+    </footer>
+  </form>
+</section>
+{{ end }}
+
+{{ define "admin" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "admin-shell-head" . }}
+<body class="admin-body">
+  <header class="admin-header">
+    <a href="/" class="brand" aria-label="Abrir o site">
+      <img src="/assets/logo-signature.png" alt="" width="104" height="59">
+    </a>
+    <div>
+      <span>Editor</span>
+      <a href="/" target="_blank">Ver site ↗</a>
+      <form method="post" action="/admin/logout" hx-post="/admin/logout">
+        <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+        <button type="submit">Sair</button>
+      </form>
+    </div>
+  </header>
+  <main class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-heading">
+        <div>
+          <p class="eyebrow">( arquivo )</p>
+          <h1>Artigos</h1>
+        </div>
+        <button class="new-post-button"
+                type="button"
+                aria-label="Novo artigo"
+                hx-get="/admin/posts/new"
+                hx-target="#editor-panel"
+                hx-swap="innerHTML">+</button>
+      </div>
+      {{ template "admin-post-list" . }}
+    </aside>
+    {{ template "admin-editor" . }}
+  </main>
+  <div class="admin-toast {{ if .Message }}is-visible{{ end }}" role="status" data-admin-toast>{{ .Message }}</div>
+</body>
+</html>
+{{ end }}

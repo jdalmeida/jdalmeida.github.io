@@ -1,0 +1,23 @@
+{{ define "blog" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "head" . }}
+<body class="paper">
+  {{ template "site-header" . }}
+  <main id="topo" class="page-main">
+    <header class="archive-header">
+      <div>
+        <p class="eyebrow">( caderno aberto )</p>
+        <h1>Artigos</h1>
+      </div>
+      <p>Reflexões e notas sobre engenharia de software, inteligência artificial e o ofício de construir coisas digitais.</p>
+      <img src="/assets/postcard.png" alt="" width="180" height="132">
+    </header>
+    <section class="archive-shell" aria-label="Arquivo de artigos">
+      {{ template "blog-results" . }}
+    </section>
+  </main>
+  {{ template "site-footer" . }}
+</body>
+</html>
+{{ end }}

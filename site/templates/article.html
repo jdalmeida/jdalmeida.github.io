@@ -1,0 +1,38 @@
+{{ define "article" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "head" . }}
+<body class="paper">
+  {{ template "site-header" . }}
+  <main id="topo" class="article-main">
+    <article>
+      <a class="back-link" href="/blog"><span aria-hidden="true">←</span> voltar ao arquivo</a>
+      <header class="article-header">
+        <div class="article-tags">
+          {{ range .Post.Tags }}<span>{{ . }}</span>{{ end }}
+        </div>
+        <h1>{{ .Post.Title }}</h1>
+        <p class="article-deck">{{ .Post.Excerpt }}</p>
+        <div class="article-byline">
+          <span>por {{ .Post.Author }}</span>
+          <time datetime="{{ .Post.PublishedAt.Format "2006-01-02" }}">{{ formatDate .Post.PublishedAt }}</time>
+          <span>{{ .Post.ReadTime }} min de leitura</span>
+        </div>
+      </header>
+      <div class="article-rule"><span></span><img src="/assets/logo-mark.png" alt="" width="38" height="38"><span></span></div>
+      <div class="prose">{{ safeHTML .Post.HTML }}</div>
+      <footer class="article-footer">
+        <p class="eyebrow">( fim da nota )</p>
+        <h2>Vamos continuar a conversa?</h2>
+        <p>Envie uma ideia, uma pergunta ou um contraponto.</p>
+        <div>
+          <a class="button button-primary" href="mailto:joao@allpines.com.br?subject={{ .Post.Title }}">Enviar um e-mail</a>
+          <a class="button button-quiet" href="/blog">Ler outro artigo</a>
+        </div>
+      </footer>
+    </article>
+  </main>
+  {{ template "site-footer" . }}
+</body>
+</html>
+{{ end }}

@@ -1,0 +1,17 @@
+{{ define "not-found" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "head" . }}
+<body class="paper">
+  {{ template "site-header" . }}
+  <main class="error-page">
+    <img src="/assets/blueprint-plane.png" alt="" width="240" height="180">
+    <p class="eyebrow">( erro 404 )</p>
+    <h1>Esta página saiu do mapa.</h1>
+    <p>O endereço pode ter mudado ou nunca ter existido.</p>
+    <a class="button button-primary" href="/">Voltar ao início</a>
+  </main>
+  {{ template "site-footer" . }}
+</body>
+</html>
+{{ end }}

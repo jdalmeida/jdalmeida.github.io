@@ -1,0 +1,154 @@
+{{ define "home" }}
+<!doctype html>
+<html lang="pt-BR">
+{{ template "head" . }}
+<body class="paper intro-active">
+  <button class="intro-overlay" type="button" aria-label="Pular introdução" data-intro>
+    <span class="intro-signature">
+      {{ template "intro-signature" . }}
+    </span>
+  </button>
+
+  <div class="home-content" data-home-content>
+    {{ template "site-header" . }}
+    <main class="home-main">
+      <section class="home-hero" id="topo" aria-labelledby="hero-title">
+        <div class="home-hero-grid">
+          <div class="home-hero-copy">
+            <p class="home-eyebrow">( Jalmeida - portfólio )</p>
+            <h1 id="hero-title">
+              Construindo software<br>
+              <span>que molda o futuro.</span>
+            </h1>
+            <p class="home-hero-intro">Olá! Meu nome é João. Escrevo sobre IA, software e tudo que me interessa sobre tecnologia. Guardo aqui também as memórias dos lugares por onde passei.</p>
+            <div class="home-hero-actions">
+              <a class="button button-primary" href="#artigos">Leia meus artigos</a>
+              <a class="button button-quiet" href="#eventos">Veja por onde passei</a>
+            </div>
+          </div>
+
+          <div class="home-hero-art">
+            <div class="home-collage-frame">
+              <img class="home-collage-main" src="/logo_collage.webp" width="1448" height="1086" alt="Colagem de Logos </J>">
+            </div>
+            <div class="home-ornaments" aria-hidden="true">
+              <div class="home-ornament home-camellia" data-parallax="0.05">
+                <img src="/assets/camellia.png" alt="">
+              </div>
+              <div class="home-ornament home-blueprint" data-parallax="0.09">
+                <img src="/assets/blueprint.png" alt="">
+              </div>
+              <div class="home-ornament home-envelope" data-parallax="0.14">
+                <img src="/assets/envelope.png" alt="">
+              </div>
+              <div class="home-ornament home-postcard" data-parallax="0.07">
+                <img src="/assets/postcard.png" alt="">
+              </div>
+              <div class="home-ornament home-seal" data-parallax="0.18">
+                <img src="/assets/seal-red.png" alt="">
+              </div>
+              <div class="home-ornament home-fern" data-parallax="0.12">
+                <img src="/assets/fern.png" alt="">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-about" id="sobre" aria-labelledby="about-title">
+        <div class="home-about-copy">
+          <p class="home-eyebrow">( 01 — sobre )</p>
+          <h2 id="about-title">Sobre mim</h2>
+          <p class="home-about-lead">Sou João Gabriel de Almeida, desenvolvedor no interior do Rio Grande do Sul. Gosto de ferramentas que parecem pensadas — algumas linhas de cuidado num lugar que quase ninguém olha.</p>
+          <p>Hoje passo os dias entre código, produto e escrita, tentando entender o que a IA muda no ofício de programar. Spoiler: quase tudo, menos o cuidado.</p>
+          <div class="home-tags" aria-label="Áreas de interesse">
+            <span>produto</span>
+            <span>ia aplicada</span>
+            <span>comunidade</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-writing" id="artigos" aria-labelledby="writing-title">
+        <div class="home-writing-shell">
+          <img class="home-writing-stamp" src="/assets/stamp.png" alt="">
+          <div class="home-writing-heading">
+            <p class="home-eyebrow">( 02 — escrita )</p>
+            <h2 id="writing-title">Artigos</h2>
+            <p>Notas sobre IA, contexto e o ofício de programar.</p>
+          </div>
+          <div class="home-posts">
+            {{ range .Posts }}
+            <article>
+              <a href="/blog/{{ .Slug }}">
+                <div class="home-post-meta">
+                  <time datetime="{{ .PublishedAt.Format "2006-01-02" }}">{{ formatShortDate .PublishedAt }}</time>
+                  <span>{{ .ReadTime }} min</span>
+                </div>
+                <h3>{{ .Title }}</h3>
+                <p>{{ .Excerpt }}</p>
+              </a>
+            </article>
+            {{ end }}
+          </div>
+          <a class="home-blog-link" href="/blog">ver todos no blog ↗</a>
+        </div>
+      </section>
+
+      <section class="home-events" id="eventos" aria-labelledby="events-title">
+        <div class="home-events-heading">
+          <p class="home-eyebrow">( 03 — na estrada )</p>
+          <h2 id="events-title">Eventos &amp; credenciais</h2>
+          <p>Uma pilha de crachás dos lugares por onde passei. Clique numa credencial para abrir o registro completo — com a nota, o local e a galeria de fotos.</p>
+        </div>
+        <div class="badge-stack">
+          {{ range $index, $event := .Events }}
+          <button class="badge-button badge-{{ $index }}"
+                  type="button"
+                  aria-label="Abrir o registro de {{ $event.Name }}"
+                  hx-get="/partials/events/{{ $event.ID }}"
+                  hx-target="#event-layer"
+                  hx-swap="innerHTML">
+            {{ template "badge" $event }}
+          </button>
+          {{ end }}
+        </div>
+        <p class="home-events-hint">↑ clique numa credencial para ver o registro completo</p>
+      </section>
+      <div id="event-layer" aria-live="polite"></div>
+
+      <section class="home-contact" id="contato" aria-labelledby="contact-title">
+        <img class="home-contact-branch" src="/assets/eucalyptus.png" alt="">
+        <p class="home-eyebrow">( 04 — contato )</p>
+        <h2 id="contact-title">Diga olá.</h2>
+        <p>Sem formulário — só uma conversa.</p>
+        <div class="home-contact-links">
+          <a href="https://github.com/jdalmeida" target="_blank" rel="noreferrer">
+            <span>GitHub</span><small>@joaodealmeida ↗</small>
+          </a>
+          <a href="https://linkedin.com/in/joao-de-almeida9" target="_blank" rel="noreferrer">
+            <span>LinkedIn</span><small>joão gabriel de almeida ↗</small>
+          </a>
+          <a href="mailto:joao@allpines.com.br">
+            <span>E-mail</span><small>joao@allpines.com.br ↗</small>
+          </a>
+        </div>
+      </section>
+
+      <figure class="home-signature-end">
+        <img src="/signature_collage.webp" alt="Signature Collage" width="1672" height="941">
+      </figure>
+    </main>
+    {{ template "site-footer" . }}
+  </div>
+
+  <noscript>
+    <style>
+      body { overflow: auto; }
+      .intro-overlay { display: none; }
+      .home-content { opacity: 1; }
+    </style>
+  </noscript>
+</body>
+</html>
+{{ end }}

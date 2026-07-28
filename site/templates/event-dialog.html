@@ -1,0 +1,54 @@
+{{ define "event-dialog" }}
+<dialog class="event-dialog" open aria-labelledby="event-dialog-title" data-event-dialog>
+  <div class="dialog-backdrop" data-dialog-close></div>
+  <article class="dialog-panel">
+    <header class="dialog-header">
+      <p>registro {{ .Event.Number }} · evento</p>
+      <div>
+        <button type="button"
+                aria-label="Registro anterior"
+                hx-get="/partials/events/{{ .Previous }}"
+                hx-target="#event-layer"
+                hx-swap="innerHTML">←</button>
+        <button type="button"
+                aria-label="Próximo registro"
+                hx-get="/partials/events/{{ .Next }}"
+                hx-target="#event-layer"
+                hx-swap="innerHTML">→</button>
+        <button type="button" aria-label="Fechar" data-dialog-close>×</button>
+      </div>
+    </header>
+    <div class="dialog-body">
+      <div class="lanyard-wrap">
+        <div class="lanyard"></div>
+        <div class="lanyard-clip"></div>
+        {{ template "badge" .Event }}
+      </div>
+      <div class="event-record">
+        <p class="eyebrow">{{ .Event.Location }}</p>
+        <h2 id="event-dialog-title">{{ .Event.Name }} <em>{{ .Event.Year }}</em></h2>
+        <p class="event-note">{{ .Event.Note }}</p>
+        <p class="gallery-label">galeria · fotos e vídeos do evento</p>
+        <div class="event-gallery">
+          {{ range $index, $image := .Event.Images }}
+          <figure class="gallery-image image-{{ $index }}">
+            <img src="{{ $image }}" alt="Registro de {{ $.Event.Name }}" loading="lazy">
+          </figure>
+          {{ end }}
+          {{ if .Event.Video }}
+          <figure class="gallery-media">
+            {{ if isImage .Event.Video }}
+            <img src="{{ .Event.Video }}" alt="Registro de {{ .Event.Name }}" loading="lazy">
+            {{ else }}
+            <video autoplay loop muted playsinline controls preload="auto" data-autoplay-video>
+              <source src="{{ .Event.Video }}" type="video/mp4">
+            </video>
+            {{ end }}
+          </figure>
+          {{ end }}
+        </div>
+      </div>
+    </div>
+  </article>
+</dialog>
+{{ end }}
