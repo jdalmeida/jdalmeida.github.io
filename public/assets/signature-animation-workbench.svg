@@ -1,0 +1,778 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 1200 1000"
+   width="1200"
+   height="1000"
+   role="img"
+   aria-labelledby="workbench-title workbench-description"
+   version="1.1"
+   id="svg53"
+   sodipodi:docname="signature-animation-workbench.svg"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview53"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="5.590693"
+     inkscape:cx="991.2009"
+     inkscape:cy="694.09999"
+     inkscape:window-width="1920"
+     inkscape:window-height="1131"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="direction-and-order" />
+  <title
+     id="workbench-title">Mapa da animação da assinatura</title>
+  <desc
+     id="workbench-description">
+    Guias editáveis mostram a ordem, a direção e a largura das máscaras que revelam a assinatura.
+  </desc>
+  <defs
+     id="defs3">
+    <pattern
+       id="grid"
+       width="25"
+       height="25"
+       patternUnits="userSpaceOnUse">
+      <path
+         d="M 25 0 L 0 0 0 25"
+         fill="none"
+         stroke="#2b231a"
+         stroke-opacity=".055"
+         stroke-width="1"
+         id="path1" />
+    </pattern>
+    <marker
+       id="start-dot"
+       viewBox="0 0 10 10"
+       refX="5"
+       refY="5"
+       markerWidth="10"
+       markerHeight="10"
+       markerUnits="userSpaceOnUse">
+      <circle
+         cx="5"
+         cy="5"
+         r="4"
+         fill="#278f78"
+         stroke="#f9f5eb"
+         stroke-width="2"
+         id="circle1" />
+    </marker>
+    <marker
+       id="direction-arrow"
+       viewBox="0 0 12 12"
+       refX="8"
+       refY="6"
+       markerWidth="9"
+       markerHeight="9"
+       markerUnits="userSpaceOnUse"
+       orient="auto">
+      <path
+         d="M 1 1 L 10 6 1 11 3.5 6 Z"
+         fill="#087ea4"
+         stroke="#f9f5eb"
+         stroke-width="1"
+         id="path2" />
+    </marker>
+    <marker
+       id="end-arrow"
+       viewBox="0 0 14 14"
+       refX="11"
+       refY="7"
+       markerWidth="13"
+       markerHeight="13"
+       markerUnits="userSpaceOnUse"
+       orient="auto">
+      <path
+         d="M 1 1 L 12 7 1 13 4 7 Z"
+         fill="#d95d48"
+         stroke="#f9f5eb"
+         stroke-width="1.2"
+         id="path3" />
+    </marker>
+    <style
+       id="style3"><![CDATA[
+      .mask-pen {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation-name: reveal-signature;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+      }
+
+      #mask-01-pen { animation-delay: 0s; animation-duration: .3s; }
+      #mask-02-pen { animation-delay: .25s; animation-duration: .55s; }
+      #mask-03-pen { animation-delay: .75s; animation-duration: .37s; }
+      #mask-04-pen { animation-delay: 1.07s; animation-duration: .2s; }
+      #mask-05-pen { animation-delay: 1.22s; animation-duration: .41s; }
+      #mask-06a-pen { animation-delay: 1.58s; animation-duration: .21s; }
+      #mask-07-pen { animation-delay: 1.9s; animation-duration: .2s; }
+      #mask-08-pen { animation-delay: 2.05s; animation-duration: .28s; }
+      #mask-09-pen { animation-delay: 2.28s; animation-duration: .15s; }
+      #mask-10-pen { animation-delay: 2.38s; animation-duration: .15s; }
+
+      .direction-paths {
+        fill: none;
+        stroke: #087ea4;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 10 7;
+        marker-start: url(#start-dot);
+        marker-mid: url(#direction-arrow);
+        marker-end: url(#end-arrow);
+        animation: direction-flow .75s linear infinite;
+      }
+
+      .mask-coverage {
+        fill: none;
+        stroke: #f4a51c;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-opacity: .2;
+      }
+
+      .sequence-label circle {
+        fill: #fffdf7;
+        stroke: #087ea4;
+        stroke-width: 2;
+      }
+
+      .sequence-label text {
+        fill: #173b48;
+        font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+        font-size: 14px;
+        font-weight: 700;
+        text-anchor: middle;
+        dominant-baseline: central;
+      }
+
+      .technical-text {
+        fill: #4b4339;
+        font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+      }
+
+      @keyframes reveal-signature {
+        to { stroke-dashoffset: 0; }
+      }
+
+      @keyframes direction-flow {
+        to { stroke-dashoffset: -17; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .mask-pen {
+          animation: none;
+          stroke-dashoffset: 0;
+        }
+
+        .direction-paths {
+          animation: none;
+        }
+      }
+    ]]></style>
+    <mask
+       id="reveal-01"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-01-pen"
+         class="mask-pen"
+         href="#guide-01"
+         stroke-width="34.4" />
+    </mask>
+    <mask
+       id="reveal-02"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-02-pen"
+         class="mask-pen"
+         href="#guide-02"
+         stroke-width="32.3" />
+    </mask>
+    <mask
+       id="reveal-03"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-03-pen"
+         class="mask-pen"
+         href="#guide-03"
+         stroke-width="49.2" />
+    </mask>
+    <mask
+       id="reveal-04"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-04-pen"
+         class="mask-pen"
+         href="#guide-04"
+         stroke-width="41.7" />
+    </mask>
+    <mask
+       id="reveal-05"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-05-pen"
+         class="mask-pen"
+         href="#guide-05"
+         stroke-width="35.3" />
+    </mask>
+    <mask
+       id="reveal-06"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-06a-pen"
+         class="mask-pen"
+         href="#guide-06a"
+         stroke-width="33.8"
+         transform="translate(0.33039927,1.3924874)" />
+    </mask>
+    <mask
+       id="reveal-07"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-07-pen"
+         class="mask-pen"
+         href="#guide-07"
+         stroke-width="32.9" />
+    </mask>
+    <mask
+       id="reveal-08"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-08-pen"
+         class="mask-pen"
+         href="#guide-08"
+         stroke-width="38.8" />
+    </mask>
+    <mask
+       id="reveal-09"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-09-pen"
+         class="mask-pen"
+         href="#guide-09"
+         stroke-width="44" />
+    </mask>
+    <mask
+       id="reveal-10"
+       maskUnits="userSpaceOnUse"
+       x="0"
+       y="0"
+       width="1100"
+       height="800">
+      <use
+         id="mask-10-pen"
+         class="mask-pen"
+         href="#guide-10"
+         stroke-width="54" />
+    </mask>
+  </defs>
+  <rect
+     width="1200"
+     height="1000"
+     fill="#f4efe4"
+     id="rect3" />
+  <rect
+     x="32"
+     y="32"
+     width="1136"
+     height="936"
+     rx="18"
+     fill="#faf7ef"
+     stroke="#d8cdbc"
+     stroke-width="2"
+     id="rect4" />
+  <g
+     class="technical-text"
+     aria-label="Legenda"
+     id="g8">
+    <text
+       x="70"
+       y="77"
+       font-size="24"
+       font-weight="700"
+       id="text4">MAPA DA ANIMAÇÃO DA ASSINATURA</text>
+    <text
+       x="70"
+       y="105"
+       font-size="13"
+       id="text5">Edite os paths guide-01 até guide-10. O caminho parte do ponto verde e termina na seta vermelha.</text>
+    <circle
+       cx="742"
+       cy="75"
+       r="5"
+       fill="#278f78"
+       id="circle5" />
+    <text
+       x="756"
+       y="80"
+       font-size="12"
+       id="text6">início</text>
+    <path
+       d="M 823 75 H 863"
+       fill="none"
+       stroke="#087ea4"
+       stroke-width="3"
+       stroke-dasharray="8 6"
+       marker-end="url(#direction-arrow)"
+       id="path6" />
+    <text
+       x="873"
+       y="80"
+       font-size="12"
+       id="text7">direção</text>
+    <path
+       d="M 954 75 H 994"
+       fill="none"
+       stroke="#f4a51c"
+       stroke-opacity=".3"
+       stroke-width="18"
+       stroke-linecap="round"
+       id="path7" />
+    <text
+       x="1004"
+       y="80"
+       font-size="12"
+       id="text8">máscara</text>
+    <path
+       d="M 1082 75 H 1120"
+       fill="none"
+       stroke="#d95d48"
+       stroke-width="3"
+       marker-end="url(#end-arrow)"
+       id="path8" />
+  </g>
+  <g
+     transform="translate(70,145)"
+     id="g50"
+     style="display:inline">
+    <rect
+       x="-20"
+       y="-25"
+       width="1100"
+       height="755"
+       rx="12"
+       fill="url(#grid)"
+       stroke="#ded5c7"
+       id="rect8" />
+    <g
+       inkscape:groupmode="layer"
+       inkscape:label="01 Referência da assinatura"
+       id="signature-reference"
+       transform="translate(-35.25734,-48.309492)"
+       fill="#6e665d"
+       opacity="0.15"
+       style="display:inline">
+      <use
+         href="logo-signature-animated.svg#p1"
+         id="use8" />
+      <use
+         href="logo-signature-animated.svg#p2"
+         id="use9" />
+      <use
+         href="logo-signature-animated.svg#p3"
+         id="use10" />
+      <use
+         href="logo-signature-animated.svg#p4"
+         id="use11" />
+      <use
+         href="logo-signature-animated.svg#p5"
+         id="use12" />
+      <use
+         href="logo-signature-animated.svg#p6"
+         id="use13" />
+      <use
+         href="logo-signature-animated.svg#p7"
+         id="use14" />
+      <use
+         href="logo-signature-animated.svg#p8"
+         id="use15" />
+      <use
+         href="logo-signature-animated.svg#p9"
+         id="use16" />
+      <use
+         href="logo-signature-animated.svg#p10"
+         id="use17" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       inkscape:label="02 Prévia animada"
+       id="animated-preview"
+       transform="translate(-35.25734,-48.309492)"
+       fill="#2b231a"
+       style="display:inline">
+      <use
+         href="logo-signature-animated.svg#p1"
+         mask="url(#reveal-01)"
+         id="use18" />
+      <use
+         href="logo-signature-animated.svg#p2"
+         mask="url(#reveal-02)"
+         id="use19" />
+      <use
+         href="logo-signature-animated.svg#p3"
+         mask="url(#reveal-03)"
+         id="use20" />
+      <use
+         href="logo-signature-animated.svg#p4"
+         mask="url(#reveal-04)"
+         id="use21" />
+      <use
+         href="logo-signature-animated.svg#p5"
+         mask="url(#reveal-05)"
+         id="use22" />
+      <use
+         href="logo-signature-animated.svg#p6"
+         mask="url(#reveal-06)"
+         id="use23" />
+      <use
+         href="logo-signature-animated.svg#p7"
+         mask="url(#reveal-07)"
+         id="use24" />
+      <use
+         href="logo-signature-animated.svg#p8"
+         mask="url(#reveal-08)"
+         id="use25" />
+      <use
+         href="logo-signature-animated.svg#p9"
+         mask="url(#reveal-09)"
+         id="use26" />
+      <use
+         href="logo-signature-animated.svg#p10"
+         mask="url(#reveal-10)"
+         id="use27" />
+    </g>
+    <g
+       transform="translate(-35.25734,-48.309492)"
+       id="g49">
+      <g
+         inkscape:groupmode="layer"
+         inkscape:label="03 Cobertura das máscaras"
+         id="mask-coverage"
+         class="mask-coverage"
+         style="display:inline">
+        <use
+           href="#guide-01"
+           stroke-width="54"
+           id="use28"
+           style="stroke-width:34.4;stroke-dasharray:none" />
+        <use
+           href="#guide-02"
+           stroke-width="74"
+           id="use29"
+           style="stroke-width:32.3;stroke-dasharray:none" />
+        <use
+           href="#guide-03"
+           stroke-width="78"
+           id="use30"
+           style="stroke-width:49.2;stroke-dasharray:none" />
+        <use
+           href="#guide-04"
+           stroke-width="72"
+           id="use31"
+           style="stroke-width:41.7;stroke-dasharray:none" />
+        <use
+           href="#guide-05"
+           stroke-width="80"
+           id="use32"
+           style="stroke-width:35.3;stroke-dasharray:none" />
+        <use
+           href="#guide-06a"
+           stroke-width="88"
+           id="use33"
+           transform="translate(0.33039927,1.3924874)"
+           style="stroke-width:33.8;stroke-dasharray:none" />
+        <use
+           href="#guide-07"
+           stroke-width="92"
+           id="use35"
+           style="display:inline;stroke-width:32.9;stroke-dasharray:none" />
+        <use
+           href="#guide-08"
+           stroke-width="106"
+           id="use36"
+           style="display:inline;stroke-width:38.8;stroke-dasharray:none" />
+        <use
+           href="#guide-09"
+           stroke-width="66"
+           id="use37"
+           style="stroke-width:44;stroke-dasharray:none" />
+        <use
+           href="#guide-10"
+           stroke-width="54"
+           id="use38" />
+      </g>
+      <g
+         inkscape:groupmode="layer"
+         inkscape:label="04 Direção e ordem"
+         id="direction-and-order"
+         class="direction-paths">
+        <path
+           id="guide-01"
+           inkscape:label="01 largura 54 atraso 0s duração .30s"
+           pathLength="1"
+           d="m 50.9,454.1 177,-117.3 C 287.01222,302.31547 372.21496,250.17363 375.84788,249.62869 376.04717,248.63224 521.60032,180.86448 581.8,155.4 L 785.1,77.3 836.9,50"
+           sodipodi:nodetypes="cccccc" />
+        <path
+           id="guide-02"
+           inkscape:label="02 largura 74 atraso .25s duração .55s"
+           pathLength="1"
+           d="m 380.65005,255.54171 c 0.99525,125.32362 -123.62664,272.49465 -163.04986,323.35857 0,0 -24.88577,40.01537 -41.89934,55.6673 -16.32033,15.01415 -58.10066,54.53402 -58.10066,54.53402 L 85.400753,717.10066 C 78.467535,724.28594 72.612425,730.85517 50,747 44.613096,735.56533 54.002608,719.20518 65.731575,702.06522 L 127.8984,637.43148 168.39699,610.20038 238.69991,564.79962 290,531 410,458 540,387 735,290 892,221 940,190"
+           sodipodi:nodetypes="ccsccccccccccccc" />
+        <path
+           id="guide-03"
+           inkscape:label="03 largura 78 atraso .75s duração .37s"
+           pathLength="1"
+           d="M 248,665 C 368.62567,451.43978 454.57177,336.73158 532.76701,219.63374 501.96767,291.75066 470.83394,364.70579 450.29915,440 c -9.76682,44.73474 -22.7273,88.58273 -26.58421,132.06438 -7.83671,59.65184 10.91735,93.13574 60.65132,118.00273"
+           sodipodi:nodetypes="cccsc" />
+        <path
+           id="guide-04"
+           inkscape:label="04 largura 72 atraso 1.07s duração .20s"
+           pathLength="1"
+           d="M 625.16588,189.3672 592,268 522,430 465,565 442.6328,609.16588 462,660 l 7.93101,27.30104"
+           sodipodi:nodetypes="ccccccc" />
+        <path
+           id="guide-05"
+           inkscape:label="05 largura 80 atraso 1.22s duração .41s"
+           pathLength="1"
+           d="m 561.23393,438.69991 c -24.7258,70.53156 -48.82208,136.51256 -73,207.23299 l 49.10066,-95.06617 c 21.56289,-35.05073 33.16972,-65.41175 54.19944,-71.66447 10.36643,15.07342 -6.11388,40.16154 -10.33177,59.82375 l -21.836,61.60302 L 585,555 c 24.91335,-31.84425 40.22656,-61.5027 70.46692,-84.86578 4.07731,34.7984 -23.33651,75.65036 -38.43525,111.2311 -14.19445,11.87173 -56.34536,104.90278 22.53497,47.63185"
+           style="display:inline"
+           sodipodi:nodetypes="cccccccccc" />
+        <path
+           id="guide-06a"
+           inkscape:label="06a largura 88 atraso 1.58s duração .21s"
+           pathLength="1"
+           d="m 684.7301,557.21524 c 108.66118,0.71066 129.40519,-157.81639 73.01036,-86.20697 -13.27639,21.49484 -31.10803,33.9446 -53.90027,66.23393 l -26.46786,58.96551 c -17.46673,51.13358 19.19128,47.24927 34.13421,38.61461 l 28.19567,-22.53591 57.94383,-80.34072 c -13.38863,41.34382 -35.13486,52.57862 -42.2066,119.98295"
+           sodipodi:nodetypes="cccccccc"
+           style="display:inline" />
+        <path
+           id="guide-07"
+           inkscape:label="07 largura 92 atraso 1.90s duração .20s"
+           pathLength="1"
+           d="m 876.66383,534.3479 c -59.07842,2.60905 -74.89117,72.29124 -73.96298,103.90521 18.47193,-1.65544 19.86635,-0.0717 39.8844,-19.74333 31.35552,-36.28181 143.82268,-256.10801 116.40562,-253.52511 -12.40359,1.16851 -104.7098,213.72004 -80.8878,255.6645"
+           sodipodi:nodetypes="cccsc" />
+        <path
+           id="guide-08"
+           inkscape:label="08 largura 106 atraso 2.05s duração .28s"
+           pathLength="1"
+           d="m 894.92442,668.51742 c 19.19345,-38.91657 29.4179,-82.72545 43.91134,-124.20569 l 34.46339,-57.31267 47.06895,-50.63469 c -44.21765,61.5781 -43.57989,132.61226 -66.72384,203.77246 -6.42019,32.7624 25.57958,53.99117 46.38834,-3.24031"
+           style="display:inline"
+           sodipodi:nodetypes="cccccc" />
+        <path
+           id="guide-09"
+           inkscape:label="09 largura 66 atraso 2.28s duração .15s"
+           pathLength="1"
+           d="M 917.10254,596.93195 950,602 l 27.09689,2.40075 25.46601,-7.96739"
+           sodipodi:nodetypes="cccc" />
+        <path
+           id="guide-10"
+           inkscape:label="10 largura 54 atraso 2.38s duração .15s"
+           pathLength="1"
+           d="m 828,486 16.92679,13.25123"
+           sodipodi:nodetypes="cc" />
+      </g>
+      <g
+         inkscape:groupmode="layer"
+         inkscape:label="05 Rótulos da sequência"
+         id="sequence-labels"
+         class="sequence-label"
+         aria-hidden="true"
+         style="display:none">
+        <g
+           transform="translate(51,454)"
+           id="g38">
+          <circle
+             r="15"
+             id="circle38"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text38">01</text>
+        </g>
+        <g
+           transform="translate(380,255)"
+           id="g39">
+          <circle
+             r="15"
+             id="circle39"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text39">02</text>
+        </g>
+        <g
+           transform="translate(248,665)"
+           id="g40">
+          <circle
+             r="15"
+             id="circle40"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text40">03</text>
+        </g>
+        <g
+           transform="translate(636,182)"
+           id="g41">
+          <circle
+             r="15"
+             id="circle41"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text41">04</text>
+        </g>
+        <g
+           transform="translate(553,440)"
+           id="g42">
+          <circle
+             r="15"
+             id="circle42"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text42">05</text>
+        </g>
+        <g
+           transform="translate(770,452)"
+           id="g43">
+          <circle
+             r="17"
+             id="circle43"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text43">6a</text>
+        </g>
+        <g
+           transform="translate(950,368)"
+           id="g45">
+          <circle
+             r="15"
+             id="circle45"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text45">07</text>
+        </g>
+        <g
+           transform="translate(1018,428)"
+           id="g46">
+          <circle
+             r="15"
+             id="circle46"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text46">08</text>
+        </g>
+        <g
+           transform="translate(882,616)"
+           id="g47">
+          <circle
+             r="15"
+             id="circle47"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text47">09</text>
+        </g>
+        <g
+           transform="translate(828,486)"
+           id="g48">
+          <circle
+             r="15"
+             id="circle48"
+             cx="0"
+             cy="0" />
+          <text
+             y="0.5"
+             id="text48">10</text>
+        </g>
+      </g>
+    </g>
+  </g>
+  <g
+     class="technical-text"
+     transform="translate(70 918)"
+     id="g53">
+    <text
+       y="0"
+       font-size="12"
+       id="text50">1. Mova os nós dos paths guide-* para ajustar o gesto.</text>
+    <text
+       y="21"
+       font-size="12"
+       id="text51">2. Inverta os nós de um path para mudar a direção da escrita.</text>
+    <text
+       x="570"
+       y="0"
+       font-size="12"
+       id="text52">3. Ajuste stroke-width nas máscaras e na camada de cobertura.</text>
+    <text
+       x="570"
+       y="21"
+       font-size="12"
+       id="text53">4. Ajuste atraso e duração no bloco CSS mask-*-pen.</text>
+  </g>
+</svg>

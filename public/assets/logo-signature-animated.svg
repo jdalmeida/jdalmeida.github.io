@@ -28,7 +28,6 @@
       #sigg4 { animation-delay: 1.07s; animation-duration: .2s; }
       #sigg5 { animation-delay: 1.22s; animation-duration: .41s; }
       #sigg6a { animation-delay: 1.58s; animation-duration: .21s; }
-      #sigg6b { animation-delay: 1.79s; animation-duration: .16s; }
       #sigg7 { animation-delay: 1.9s; animation-duration: .2s; }
       #sigg8 { animation-delay: 2.05s; animation-duration: .28s; }
       #sigg9 { animation-delay: 2.28s; animation-duration: .15s; }
@@ -47,46 +46,45 @@
     ]]></style>
 
     <mask id="sigm1" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg1" class="sig-guide" pathLength="1" stroke-width="54"
-        d="M 50.9 454.1 L 227.9 336.8 L 405.1 238.3 L 581.8 155.4 L 785.1 77.3 L 836.9 50" />
+      <path id="sigg1" class="sig-guide" pathLength="1" stroke-width="34.4"
+        d="m 50.9,454.1 177,-117.3 C 287.01222,302.31547 372.21496,250.17363 375.84788,249.62869 376.04717,248.63224 521.60032,180.86448 581.8,155.4 L 785.1,77.3 836.9,50" />
     </mask>
     <mask id="sigm2" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg2" class="sig-guide" pathLength="1" stroke-width="74"
-        d="M 380 255 L 355 330 L 320 420 L 277 500 L 240 550 L 215 575 L 164 622 L 115 667 L 75 708 L 50 747 L 90 722 L 150 663 L 210 605 L 240 570 L 290 531 L 410 458 L 540 387 L 735 290 L 892 221 L 940 190" />
+      <path id="sigg2" class="sig-guide" pathLength="1" stroke-width="32.3"
+        d="m 380.65005,255.54171 c 0.99525,125.32362 -123.62664,272.49465 -163.04986,323.35857 0,0 -24.88577,40.01537 -41.89934,55.6673 -16.32033,15.01415 -58.10066,54.53402 -58.10066,54.53402 L 85.400753,717.10066 C 78.467535,724.28594 72.612425,730.85517 50,747 44.613096,735.56533 54.002608,719.20518 65.731575,702.06522 L 127.8984,637.43148 168.39699,610.20038 238.69991,564.79962 290,531 410,458 540,387 735,290 892,221 940,190" />
     </mask>
     <mask id="sigm3" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg3" class="sig-guide" pathLength="1" stroke-width="78"
-        d="M 248 665 L 312 550 L 380 430 L 460 310 L 528 214 L 492 330 L 462 440 L 438 550 L 428 618 L 446 662 L 490 684 L 552 660" />
+      <path id="sigg3" class="sig-guide" pathLength="1" stroke-width="49.2"
+        d="M 248,665 C 368.62567,451.43978 454.57177,336.73158 532.76701,219.63374 501.96767,291.75066 470.83394,364.70579 450.29915,440 c -9.76682,44.73474 -22.7273,88.58273 -26.58421,132.06438 -7.83671,59.65184 10.91735,93.13574 60.65132,118.00273" />
     </mask>
     <mask id="sigm4" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg4" class="sig-guide" pathLength="1" stroke-width="72"
-        d="M 636 182 L 592 268 L 522 430 L 465 565 L 450 620 L 462 660 L 502 673 L 548 648" />
+      <path id="sigg4" class="sig-guide" pathLength="1" stroke-width="41.7"
+        d="M 625.16588,189.3672 592,268 522,430 465,565 442.6328,609.16588 462,660 l 7.93101,27.30104" />
     </mask>
     <mask id="sigm5" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg5" class="sig-guide" pathLength="1" stroke-width="80"
-        d="M 553 440 L 520 535 L 480 652 L 520 550 L 556 478 L 582 448 L 566 545 L 550 640 L 565 660 L 585 555 L 618 490 L 652 458 L 660 510 L 640 600 L 632 655 L 640 668 L 668 676 L 692 648 L 700 615" />
+      <path id="sigg5" class="sig-guide" pathLength="1" stroke-width="35.3"
+        d="m 561.23393,438.69991 c -24.7258,70.53156 -48.82208,136.51256 -73,207.23299 l 49.10066,-95.06617 c 21.56289,-35.05073 33.16972,-65.41175 54.19944,-71.66447 10.36643,15.07342 -6.11388,40.16154 -10.33177,59.82375 l -21.836,61.60302 L 585,555 c 24.91335,-31.84425 40.22656,-61.5027 70.46692,-84.86578 4.07731,34.7984 -23.33651,75.65036 -38.43525,111.2311 -14.19445,11.87173 -56.34536,104.90278 22.53497,47.63185" />
     </mask>
     <mask id="sigm6" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg6a" class="sig-guide" pathLength="1" stroke-width="88"
-        d="M 770 452 L 700 462 L 650 520 L 640 595 L 662 662 L 705 692 L 750 675 L 712 592 L 735 508 L 758 462" />
-      <path id="sigg6b" class="sig-guide" pathLength="1" stroke-width="66"
-        d="M 762 470 L 778 482 L 783 544 L 795 602 L 809 648 L 838 658 L 852 610 L 856 570" />
+      <path id="sigg6a" class="sig-guide" pathLength="1" stroke-width="33.8"
+        transform="translate(0.33039927,1.3924874)"
+        d="m 684.7301,557.21524 c 108.66118,0.71066 129.40519,-157.81639 73.01036,-86.20697 -13.27639,21.49484 -31.10803,33.9446 -53.90027,66.23393 l -26.46786,58.96551 c -17.46673,51.13358 19.19128,47.24927 34.13421,38.61461 l 28.19567,-22.53591 57.94383,-80.34072 c -13.38863,41.34382 -35.13486,52.57862 -42.2066,119.98295" />
     </mask>
     <mask id="sigm7" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg7" class="sig-guide" pathLength="1" stroke-width="92"
-        d="M 950 368 L 912 460 L 875 545 L 838 568 L 795 575 L 778 625 L 806 662 L 852 648 L 870 608 L 845 660 L 815 682 L 792 668" />
+      <path id="sigg7" class="sig-guide" pathLength="1" stroke-width="32.9"
+        d="m 876.66383,534.3479 c -59.07842,2.60905 -74.89117,72.29124 -73.96298,103.90521 18.47193,-1.65544 19.86635,-0.0717 39.8844,-19.74333 31.35552,-36.28181 143.82268,-256.10801 116.40562,-253.52511 -12.40359,1.16851 -104.7098,213.72004 -80.8878,255.6645" />
     </mask>
     <mask id="sigm8" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg8" class="sig-guide" pathLength="1" stroke-width="106"
-        d="M 1018 428 L 978 515 L 938 605 L 912 668 L 950 585 L 985 500 L 1000 468 L 990 540 L 995 640 L 1010 685 L 1058 690 L 1092 645 L 1096 612" />
+      <path id="sigg8" class="sig-guide" pathLength="1" stroke-width="38.8"
+        d="m 894.92442,668.51742 c 19.19345,-38.91657 29.4179,-82.72545 43.91134,-124.20569 l 34.46339,-57.31267 47.06895,-50.63469 c -44.21765,61.5781 -43.57989,132.61226 -66.72384,203.77246 -6.42019,32.7624 25.57958,53.99117 46.38834,-3.24031" />
     </mask>
     <mask id="sigm9" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
-      <path id="sigg9" class="sig-guide" pathLength="1" stroke-width="66"
-        d="M 882 616 L 950 602 L 1020 594 L 1055 596" />
+      <path id="sigg9" class="sig-guide" pathLength="1" stroke-width="44"
+        d="M 917.10254,596.93195 950,602 l 27.09689,2.40075 25.46601,-7.96739" />
     </mask>
     <mask id="sigm10" maskUnits="userSpaceOnUse" x="0" y="0" width="1100" height="800">
       <path id="sigg10" class="sig-guide" pathLength="1" stroke-width="54"
-        d="M 828 486 L 846 520" />
+        d="m 828,486 16.92679,13.25123" />
     </mask>
   </defs>
   <g

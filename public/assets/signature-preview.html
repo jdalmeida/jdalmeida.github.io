@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas da assinatura</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3ecde;
+      --paper-light: #fcf8ef;
+      --paper-line: #d8cbb8;
+      --ink: #2b231a;
+      --ink-soft: #6e6254;
+      --blue: #087ea4;
+      --green: #278f78;
+      --amber: #e9a126;
+      --red: #c95843;
+      --shadow: 0 24px 70px rgb(56 42 27 / 13%);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(rgb(43 35 26 / 3%) 1px, transparent 1px),
+        linear-gradient(90deg, rgb(43 35 26 / 3%) 1px, transparent 1px),
+        var(--paper);
+      background-size: 24px 24px;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1440px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 36px 0 44px;
+    }
+
+    .header {
+      margin-bottom: 22px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .eyebrow,
+    .status,
+    .control-label,
+    .sequence,
+    .note {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .eyebrow {
+      margin: 0 0 9px;
+      color: var(--blue);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 5vw, 68px);
+      font-weight: 400;
+      letter-spacing: -.04em;
+      line-height: .95;
+    }
+
+    .status {
+      margin: 0;
+      padding: 9px 12px;
+      border: 1px solid var(--paper-line);
+      border-radius: 999px;
+      background: rgb(255 253 247 / 70%);
+      color: var(--ink-soft);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 290px;
+      gap: 18px;
+    }
+
+    .stage,
+    .panel {
+      border: 1px solid var(--paper-line);
+      background: rgb(255 253 247 / 84%);
+      box-shadow: var(--shadow);
+    }
+
+    .stage {
+      min-width: 0;
+      border-radius: 18px 6px 18px 6px;
+      overflow: hidden;
+    }
+
+    .stage-head {
+      min-height: 52px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--paper-line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .stage-head p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 13px;
+    }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: var(--ink-soft);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend i {
+      width: 24px;
+      height: 3px;
+      display: inline-block;
+      border-radius: 999px;
+      background: var(--ink);
+    }
+
+    .legend .mask {
+      height: 10px;
+      background: rgb(233 161 38 / 38%);
+    }
+
+    .legend .guide {
+      background: var(--blue);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      min-height: 540px;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 46%, rgb(255 255 255 / 92%), rgb(250 246 236 / 62%) 56%, transparent 78%);
+    }
+
+    canvas {
+      width: min(100%, 1100px);
+      height: auto;
+      display: block;
+    }
+
+    .loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgb(252 248 239 / 88%);
+      color: var(--ink-soft);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+      letter-spacing: .06em;
+      transition: opacity 180ms ease;
+    }
+
+    .loading.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .timeline {
+      padding: 17px 18px 19px;
+      border-top: 1px solid var(--paper-line);
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .timeline-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .button {
+      min-height: 38px;
+      padding: 8px 13px;
+      border: 1px solid var(--ink);
+      border-radius: 4px 10px 4px 10px;
+      color: var(--paper-light);
+      background: var(--ink);
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      color: var(--ink);
+      border-color: var(--paper-line);
+      background: transparent;
+    }
+
+    .button:hover {
+      translate: 0 -1px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--blue);
+    }
+
+    .time {
+      min-width: 88px;
+      color: var(--ink-soft);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .panel {
+      padding: 20px;
+      border-radius: 6px 18px 6px 18px;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 24px;
+      font-weight: 400;
+    }
+
+    .control-group {
+      padding: 15px 0;
+      border-top: 1px solid var(--paper-line);
+    }
+
+    .control-label {
+      margin: 0 0 10px;
+      display: block;
+      color: var(--ink-soft);
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .check {
+      margin: 9px 0;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 14px;
+    }
+
+    .check input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--blue);
+    }
+
+    .speed-row {
+      display: grid;
+      grid-template-columns: 1fr 46px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .speed-value {
+      color: var(--ink-soft);
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .sequence {
+      max-height: 312px;
+      margin: 0;
+      padding: 0;
+      overflow: auto;
+      list-style: none;
+      font-size: 10px;
+    }
+
+    .sequence li {
+      padding: 8px 2px;
+      border-top: 1px dotted var(--paper-line);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .sequence strong {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    .note {
+      margin: 15px 0 0;
+      padding: 12px;
+      border: 1px solid rgb(39 143 120 / 24%);
+      border-radius: 4px;
+      color: #326858;
+      background: rgb(39 143 120 / 7%);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .source-link {
+      margin-top: 14px;
+      color: var(--blue);
+      display: inline-block;
+      font-size: 13px;
+    }
+
+    #path-lab {
+      position: fixed;
+      top: -1000px;
+      left: -1000px;
+      width: 1100px;
+      height: 800px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0 24px;
+      }
+
+      .panel h2,
+      .panel .note,
+      .panel .source-link {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        width: min(100% - 20px, 1440px);
+        padding-top: 20px;
+      }
+
+      .header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .stage-head,
+      .legend {
+        align-items: start;
+      }
+
+      .stage-head {
+        flex-direction: column;
+      }
+
+      .canvas-wrap {
+        min-height: 360px;
+        padding: 8px;
+      }
+
+      .timeline {
+        grid-template-columns: 1fr auto;
+      }
+
+      .timeline-actions {
+        grid-column: 1 / -1;
+      }
+
+      .panel {
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div>
+        <p class="eyebrow">( laboratório de movimento )</p>
+        <h1>Prévia da assinatura</h1>
+      </div>
+      <p class="status" id="status">Lendo o SVG ajustado…</p>
+    </header>
+
+    <div class="layout">
+      <section class="stage" aria-labelledby="canvas-title">
+        <header class="stage-head">
+          <p id="canvas-title">Resultado antes da aplicação no site</p>
+          <div class="legend" aria-hidden="true">
+            <span><i></i> assinatura</span>
+            <span><i class="mask"></i> máscara</span>
+            <span><i class="guide"></i> guia</span>
+          </div>
+        </header>
+
+        <div class="canvas-wrap">
+          <canvas id="signature-canvas" width="1100" height="760">
+            O navegador não oferece suporte ao canvas.
+          </canvas>
+          <div class="loading" id="loading">Preparando os traços…</div>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-actions">
+            <button class="button" id="replay" type="button">Repetir</button>
+            <button class="button secondary" id="toggle-play" type="button">Pausar</button>
+          </div>
+          <input id="timeline" type="range" min="0" max="1000" value="0" aria-label="Posição da animação">
+          <output class="time" id="time">0,00 / 0,00 s</output>
+        </div>
+      </section>
+
+      <aside class="panel" aria-labelledby="controls-title">
+        <h2 id="controls-title">Controles</h2>
+
+        <div class="control-group">
+          <label class="control-label" for="speed">Velocidade</label>
+          <div class="speed-row">
+            <input id="speed" type="range" min="0.25" max="2" step="0.25" value="1">
+            <output class="speed-value" id="speed-value">1×</output>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Camadas</span>
+          <label class="check"><input id="show-reference" type="checkbox"> Mostrar referência</label>
+          <label class="check"><input id="show-mask" type="checkbox"> Mostrar máscara</label>
+          <label class="check"><input id="show-guides" type="checkbox"> Mostrar guias</label>
+          <label class="check"><input id="loop" type="checkbox" checked> Repetir automaticamente</label>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Sequência carregada</span>
+          <ol class="sequence" id="sequence"></ol>
+        </div>
+
+        <p class="note" id="six-b-note">O canvas usa somente os elementos com a classe mask-pen.</p>
+        <button class="button secondary" id="reload" type="button">Recarregar SVG</button>
+        <a class="source-link" href="/assets/signature-animation-workbench.svg" target="_blank" rel="noreferrer">abrir mapa técnico ↗</a>
+      </aside>
+    </div>
+  </main>
+
+  <svg id="path-lab" viewBox="0 0 1100 800" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <script src="/assets/signature-preview.js" defer></script>
+</body>
+</html>

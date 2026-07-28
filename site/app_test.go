@@ -129,10 +129,26 @@ func TestAnimatedSignatureSVG(t *testing.T) {
 	response := httptest.NewRecorder()
 	New().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/", nil))
 	body := response.Body.String()
-	if guides := strings.Count(body, `class="intro-sig-guide"`); guides != 11 {
-		t.Fatalf("guide count = %d, want 11", guides)
+	if guides := strings.Count(body, `class="intro-sig-guide"`); guides != 10 {
+		t.Fatalf("guide count = %d, want 10", guides)
 	}
 	if masks := strings.Count(body, `mask="url(#intro-sigm`); masks != 10 {
 		t.Fatalf("mask count = %d, want 10", masks)
+	}
+	if strings.Contains(body, "intro-sigg6b") {
+		t.Fatal("obsolete intro guide 06b is present")
+	}
+	for _, want := range []string{
+		`id="intro-sigg1" class="intro-sig-guide" pathLength="1" stroke-width="34.4"`,
+		`id="intro-sigg6a" class="intro-sig-guide" pathLength="1" stroke-width="33.8"`,
+		`transform="translate(0.33039927,1.3924874)"`,
+		`logo-signature-animated.svg?v=5#p1`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("signature intro does not contain %q", want)
+		}
+	}
+	if strings.Contains(string(source), "sigg6b") {
+		t.Fatal("obsolete signature guide 06b is present")
 	}
 }

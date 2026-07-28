@@ -40,3 +40,4 @@ Thumbs.db
 
 .vercel
 *.mp4
+public/assets/*.svg.*.svg
