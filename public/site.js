@@ -91,9 +91,10 @@
           }),
       ),
     );
+    // The timeout keeps a slow photo from holding the video back for long.
     return Promise.race([
       loaded,
-      new Promise((resolve) => window.setTimeout(resolve, 1500)),
+      new Promise((resolve) => window.setTimeout(resolve, 900)),
     ]);
   };
 

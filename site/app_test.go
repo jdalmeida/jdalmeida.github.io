@@ -114,6 +114,56 @@ func TestEventVideoPlaysWithoutPlayerUI(t *testing.T) {
 	}
 }
 
+func TestEventVideoShowsThePosterWhileItLoads(t *testing.T) {
+	original := events[0].Poster
+	events[0].Poster = "/uploads/ss_brazil3-poster.webp"
+	t.Cleanup(func() { events[0].Poster = original })
+
+	t.Setenv("DATABASE_URL", "")
+	handler := New()
+
+	dialog := httptest.NewRecorder()
+	handler.ServeHTTP(
+		dialog,
+		httptest.NewRequest(http.MethodGet, "/partials/events/south-summit", nil),
+	)
+	if !strings.Contains(dialog.Body.String(), `poster="/uploads/ss_brazil3-poster.webp"`) {
+		t.Fatal("the video does not carry the poster")
+	}
+
+	home := httptest.NewRecorder()
+	handler.ServeHTTP(home, httptest.NewRequest(http.MethodGet, "/", nil))
+	if !strings.Contains(home.Body.String(), "/uploads/ss_brazil3-poster.webp") {
+		t.Fatal("the badge preload does not warm the poster")
+	}
+}
+
+func TestVideoOrigins(t *testing.T) {
+	origins := videoOrigins([]Event{
+		{Video: "https://blob.example.com/a.mp4"},
+		{Video: "https://blob.example.com/b.mp4"},
+		{Video: "/uploads/local.webp"},
+		{Video: ""},
+	})
+	if len(origins) != 1 || origins[0] != "https://blob.example.com" {
+		t.Fatalf("origins = %v, want one entry for the blob host", origins)
+	}
+
+	t.Setenv("DATABASE_URL", "")
+	handler := New()
+	home := httptest.NewRecorder()
+	handler.ServeHTTP(home, httptest.NewRequest(http.MethodGet, "/", nil))
+	if !strings.Contains(home.Body.String(), `<link rel="preconnect" href="https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com">`) {
+		t.Fatal("the home page does not preconnect to the video host")
+	}
+
+	blog := httptest.NewRecorder()
+	handler.ServeHTTP(blog, httptest.NewRequest(http.MethodGet, "/blog", nil))
+	if strings.Contains(blog.Body.String(), "vercel-storage.com") {
+		t.Fatal("the blog page preconnects to a host it never uses")
+	}
+}
+
 func TestEventPhotosUseResizedCopies(t *testing.T) {
 	t.Setenv("DATABASE_URL", "")
 	response := httptest.NewRecorder()

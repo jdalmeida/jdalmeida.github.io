@@ -50,6 +50,7 @@
                  decoding="async">
             {{ else }}
             <video autoplay loop muted playsinline preload="none" tabindex="-1" aria-hidden="true"
+                   {{ with .Event.Poster }}poster="{{ . }}"{{ end }}
                    disablepictureinpicture disableremoteplayback
                    data-autoplay-video data-video-src="{{ .Event.Video }}"></video>
             {{ end }}

@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -43,6 +44,7 @@ func newRenderer() *renderer {
 		"imageSrcSet":    imageSrcSet,
 		"gallerySizes":   func() string { return gallerySizes },
 		"galleryPreload": galleryPreload,
+		"videoOrigins":   videoOrigins,
 		"join":           strings.Join,
 		"lower":          strings.ToLower,
 	}
@@ -116,7 +118,7 @@ func imageSrcSet(path string) string {
 // galleryPreload joins the srcset of every photo in an event, separated by a
 // pipe. site.js reads it to warm the gallery while the badge is hovered.
 func galleryPreload(event Event) string {
-	sources := make([]string, 0, len(event.Images)+1)
+	sources := make([]string, 0, len(event.Images)+2)
 	for _, image := range event.Images {
 		if candidates := imageSrcSet(image); candidates != "" {
 			sources = append(sources, candidates)
@@ -125,7 +127,33 @@ func galleryPreload(event Event) string {
 	if candidates := imageSrcSet(event.Video); candidates != "" {
 		sources = append(sources, candidates)
 	}
+	// A single candidate with no descriptor is a valid srcset, so the poster
+	// rides along with the photos.
+	if event.Poster != "" {
+		sources = append(sources, event.Poster)
+	}
 	return strings.Join(sources, "|")
+}
+
+// videoOrigins lists the distinct hosts serving event videos. The home page
+// preconnects to them, so the handshake is already paid for when a dialog opens
+// and the player asks for the first bytes.
+func videoOrigins(events []Event) []string {
+	origins := make([]string, 0, 1)
+	seen := make(map[string]bool, 1)
+	for _, event := range events {
+		parsed, err := url.Parse(event.Video)
+		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+			continue
+		}
+		origin := parsed.Scheme + "://" + parsed.Host
+		if seen[origin] {
+			continue
+		}
+		seen[origin] = true
+		origins = append(origins, origin)
+	}
+	return origins
 }
 
 func formatDate(value time.Time) string {
