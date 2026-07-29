@@ -110,12 +110,12 @@ def ffmpeg_binary() -> str:
     return binary
 
 
-def build(source: Path, output_dir: Path) -> None:
+def build(source: Path, output_dir: Path, max_width: int, crf: int) -> None:
     binary = ffmpeg_binary()
     output_dir.mkdir(parents=True, exist_ok=True)
     video = output_dir / f"{source.stem}.mp4"
     poster = output_dir / f"{source.stem}-poster.webp"
-    scale = f"scale='min({MAX_WIDTH},iw)':-2"
+    scale = f"scale='min({max_width},iw)':-2"
 
     subprocess.run(
         [
@@ -124,7 +124,7 @@ def build(source: Path, output_dir: Path) -> None:
             "-an",
             "-vf", scale,
             "-c:v", "libx264", "-profile:v", "high", "-preset", PRESET,
-            "-crf", str(CRF), "-pix_fmt", "yuv420p",
+            "-crf", str(crf), "-pix_fmt", "yuv420p",
             "-movflags", "+faststart",
             str(video),
         ],
@@ -157,12 +157,16 @@ def main() -> int:
     builder = commands.add_parser("build", help="grava o MP4 da web e o pôster")
     builder.add_argument("sources", nargs="+", type=Path, help="arquivos originais")
     builder.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
+    builder.add_argument("--max-width", type=int, default=MAX_WIDTH)
+    # Menos CRF, mais qualidade e mais bytes. Suba para 23 quando o clipe tiver
+    # muito movimento e o resultado ficar borrado.
+    builder.add_argument("--crf", type=int, default=CRF)
 
     arguments = parser.parse_args()
     if arguments.command == "check":
         return 0 if all([check(source) for source in arguments.sources]) else 1
     for source in arguments.sources:
-        build(source, arguments.output_dir)
+        build(source, arguments.output_dir, arguments.max_width, arguments.crf)
     return 0
 
 
