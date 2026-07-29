@@ -3610,8 +3610,42 @@ body.intro-active {
   }
 
   .home-events .badge-stack {
-    min-height: 710px;
-    align-content: flex-start;
+    display: grid;
+    min-height: 0;
+    margin-top: 44px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 14px;
+  }
+
+  .home-events .badge-button,
+  .home-events .event-badge {
+    width: 100%;
+    margin: 0;
+  }
+
+  .home-events .event-badge {
+    height: auto;
+    min-height: 300px;
+  }
+
+  .home-events .badge-0,
+  .home-events .badge-1,
+  .home-events .badge-2,
+  .home-events .badge-3 {
+    transform: none;
+  }
+
+  .home-events .badge-button:hover,
+  .home-events .badge-button:focus-visible {
+    transform: translateY(-6px) scale(1.02);
+  }
+
+  .home-events .badge-top strong {
+    font-size: 10.5px;
+  }
+
+  .home-events .badge-name strong {
+    font-size: 28px;
   }
 
   .home-contact-links a {
