@@ -77,19 +77,75 @@
     document.body.classList.remove("dialog-open");
   };
 
+  const galleryImagesSettled = (root) => {
+    const pending = Array.from(root.querySelectorAll(".event-gallery img")).filter(
+      (image) => !image.complete,
+    );
+    if (pending.length === 0) return Promise.resolve();
+    const loaded = Promise.all(
+      pending.map(
+        (image) =>
+          new Promise((resolve) => {
+            image.addEventListener("load", resolve, { once: true });
+            image.addEventListener("error", resolve, { once: true });
+          }),
+      ),
+    );
+    return Promise.race([
+      loaded,
+      new Promise((resolve) => window.setTimeout(resolve, 1500)),
+    ]);
+  };
+
+  // The videos only start downloading after the photos, so the gallery fills in
+  // first instead of sharing the connection with a few megabytes of MP4.
   const startAutoplayVideos = (root = document) => {
-    root.querySelectorAll("[data-autoplay-video]").forEach((video) => {
-      video.defaultMuted = true;
-      video.muted = true;
-      video.loop = true;
-      const playRequest = video.play();
-      playRequest?.catch(() => {
-        video.addEventListener("canplay", () => video.play().catch(() => {}), {
-          once: true,
+    const videos = Array.from(root.querySelectorAll("[data-autoplay-video]"));
+    if (videos.length === 0) return;
+    galleryImagesSettled(root).then(() => {
+      videos.forEach((video) => {
+        video.defaultMuted = true;
+        video.muted = true;
+        video.loop = true;
+        const source = video.dataset.videoSrc;
+        if (source && !video.src) {
+          video.preload = "auto";
+          video.src = source;
+        }
+        const playRequest = video.play();
+        playRequest?.catch(() => {
+          video.addEventListener("canplay", () => video.play().catch(() => {}), {
+            once: true,
+          });
         });
       });
     });
   };
+
+  // Warming the gallery while the badge is hovered means the photos are usually
+  // decoded by the time the dialog opens.
+  const preloadGallery = (button) => {
+    if (!button || button.dataset.galleryWarm) return;
+    const sources = button.dataset.galleryPreload;
+    if (!sources) return;
+    button.dataset.galleryWarm = "true";
+    const sizes =
+      button.closest("[data-gallery-sizes]")?.dataset.gallerySizes || "";
+    sources.split("|").forEach((srcset) => {
+      const image = new Image();
+      image.decoding = "async";
+      if (sizes) image.sizes = sizes;
+      image.srcset = srcset;
+    });
+  };
+
+  ["pointerenter", "focusin", "touchstart"].forEach((name) => {
+    document.addEventListener(
+      name,
+      (event) => preloadGallery(event.target.closest?.("[data-gallery-preload]")),
+      { capture: true, passive: true },
+    );
+  });
 
   document.addEventListener("click", (event) => {
     if (event.target.closest("[data-dialog-close]")) closeDialog();
