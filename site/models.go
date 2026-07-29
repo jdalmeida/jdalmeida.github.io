@@ -89,7 +89,8 @@ var events = []Event{
 		DarkColor:  "#370c3b",
 		Note:       "Três dias no Cais Mauá entre startups, palcos e café. Uma credencial do lado de quem faz o evento acontecer.",
 		Images:     []string{"/uploads/ss_brazil1.webp", "/uploads/ss_brazil2.webp"},
-		Video:      "https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/ss_brazil3.mp4",
+		Video:      "https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/ss_brazil3-web.mp4",
+		Poster:     "/uploads/ss_brazil3-web-poster.webp",
 	},
 	{
 		ID:         "amcham-sx",
@@ -103,7 +104,8 @@ var events = []Event{
 		DarkColor:  "#091747",
 		Note:       "Um encontro anual sobre inovação e negócios, com boas palestras e muitas conexões.",
 		Images:     []string{"/uploads/sx1.webp", "/uploads/sx2.webp"},
-		Video:      "https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/sx3.mp4",
+		Video:      "https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/sx3-web.mp4",
+		Poster:     "/uploads/sx3-web-poster.webp",
 	},
 	{
 		ID:         "techstars-sw",
@@ -131,6 +133,7 @@ var events = []Event{
 		DarkColor:  "#0e1b62",
 		Note:       "O evento onde as startups viraram parte da minha vida.",
 		Images:     []string{"/uploads/hackathon1.webp", "/uploads/hackathon2.webp"},
-		Video:      "https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/hackathon3.mp4",
+		Video:      "https://j7lpolirgh0ipp7n.public.blob.vercel-storage.com/hackathon3-web.mp4",
+		Poster:     "/uploads/hackathon3-web-poster.webp",
 	},
 }
