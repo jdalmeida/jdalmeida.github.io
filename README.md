@@ -55,6 +55,24 @@ python3 scripts/generate-image-variants.py
 
 The widths must match `imageVariantWidths` in `site/render.go`, which builds the `srcset` of the gallery.
 
+## Event videos
+
+The gallery videos are silent loops hosted on Vercel Blob. The CDN answers Range requests, so the browser already streams them — but only when the MP4 carries its `moov` index before the video data. Phones and most editors write the index at the end, and then the browser has to download the whole file before the first frame.
+
+Check what is online today. The command reads only the first kilobytes.
+
+```bash
+python3 scripts/optimize-event-videos.py check https://<blob-host>/ss_brazil3.mp4
+```
+
+Rebuild a video from the original file. The command needs `ffmpeg` in the `PATH` or in `FFMPEG_BIN`.
+
+```bash
+python3 scripts/optimize-event-videos.py build ~/videos/ss_brazil3.mov
+```
+
+It writes an MP4 with the index in front, scaled to 720px, without the audio track the gallery never plays, plus a WebP poster in `public/uploads`. Upload the MP4 to the blob store and set `Poster` on the event in `site/models.go` to the poster path. The gallery draws the poster while the video downloads.
+
 ## Checks
 
 Run all Go checks before a deployment.

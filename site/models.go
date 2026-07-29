@@ -34,6 +34,10 @@ type Event struct {
 	Note       string
 	Images     []string
 	Video      string
+	// Poster is the first frame of Video, served from /uploads. The gallery
+	// draws it while the video downloads. Written by
+	// scripts/optimize-event-videos.py.
+	Poster string
 }
 
 // PageData contains the shared data for a rendered page or fragment.
