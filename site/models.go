@@ -45,6 +45,7 @@ type PageData struct {
 	Title       string
 	Description string
 	Canonical   string
+	Origin      string
 	Path        string
 	Year        int
 	Posts       []Post

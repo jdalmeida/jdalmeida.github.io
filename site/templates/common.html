@@ -12,7 +12,36 @@
   <meta property="og:locale" content="pt_BR">
   <meta property="og:url" content="{{ .Canonical }}">
   <meta property="og:site_name" content="João de Almeida">
+  <meta property="og:image" content="{{ .Origin }}/assets/logo-mark.png">
   <meta name="twitter:card" content="summary">
+  <meta name="twitter:image" content="{{ .Origin }}/assets/logo-mark.png">
+  {{ if .Post }}
+  {{ if not .Post.PublishedAt.IsZero }}<meta property="article:published_time" content="{{ .Post.PublishedAt.Format "2006-01-02" }}">{{ end }}
+  <meta property="article:author" content="{{ .Post.Author }}">
+  {{ range .Post.Tags }}<meta property="article:tag" content="{{ . }}">{{ end }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": {{ .Post.Title }},
+    "description": {{ .Post.Excerpt }},
+    {{ if not .Post.PublishedAt.IsZero }}"datePublished": {{ .Post.PublishedAt.Format "2006-01-02" }},{{ end }}
+    "author": { "@type": "Person", "name": {{ .Post.Author }}, "url": {{ .Origin }} },
+    "mainEntityOfPage": {{ .Canonical }},
+    "inLanguage": "pt-BR"
+  }
+  </script>
+  {{ else if eq .Path "/" }}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "João de Almeida",
+    "url": {{ .Origin }},
+    "sameAs": ["https://github.com/jdalmeida", "https://linkedin.com/in/joao-de-almeida9"]
+  }
+  </script>
+  {{ end }}
   <link rel="canonical" href="{{ .Canonical }}">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">

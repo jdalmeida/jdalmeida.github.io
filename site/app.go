@@ -39,7 +39,7 @@ func New() http.Handler {
 	app := &application{
 		renderer: newRenderer(),
 		store:    &hybridStore{primary: primary, fallback: fallback},
-		origin:   envOrDefault("SITE_URL", "https://jdalmeida.github.io"),
+		origin:   envOrDefault("SITE_URL", "https://joao.allpines.com.br"),
 	}
 	if primary != nil {
 		app.admin = primary
@@ -54,6 +54,9 @@ func New() http.Handler {
 	mux.HandleFunc("GET /sobre", app.sectionRedirect("sobre"))
 	mux.HandleFunc("GET /contato", app.sectionRedirect("contato"))
 	mux.HandleFunc("GET /healthz", app.health)
+	mux.HandleFunc("GET /robots.txt", app.robots)
+	mux.HandleFunc("GET /sitemap.xml", app.sitemap)
+	mux.HandleFunc("GET /llms.txt", app.llms)
 	app.registerArticleAPIRoutes(mux)
 
 	mux.HandleFunc("GET /admin", app.adminPage)
@@ -464,6 +467,7 @@ func (a *application) renderAdminEditorError(w http.ResponseWriter, r *http.Requ
 
 func (a *application) pageData(r *http.Request, data PageData) PageData {
 	data.Path = r.URL.Path
+	data.Origin = strings.TrimRight(a.origin, "/")
 	data.Year = time.Now().Year()
 	data.IsHTMX = data.IsHTMX || isHTMX(r)
 	if data.Canonical == "" {

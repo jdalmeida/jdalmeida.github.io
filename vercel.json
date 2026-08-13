@@ -45,6 +45,18 @@
     {
       "source": "/healthz",
       "destination": "/api/index?__path=/healthz"
+    },
+    {
+      "source": "/robots.txt",
+      "destination": "/api/index?__path=/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/api/index?__path=/sitemap.xml"
+    },
+    {
+      "source": "/llms.txt",
+      "destination": "/api/index?__path=/llms.txt"
     }
   ],
   "headers": [
