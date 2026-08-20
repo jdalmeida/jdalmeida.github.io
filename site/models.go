@@ -33,7 +33,11 @@ type Event struct {
 	DarkColor  string
 	Note       string
 	Images     []string
-	Video      string
+	// Focus moves the crop of a gallery photo, by path, when the frame is
+	// tighter than the photo. A photo without an entry is cropped from the
+	// middle, as the browser does by default.
+	Focus map[string]string
+	Video string
 	// Poster is the first frame of Video, served from /uploads. The gallery
 	// draws it while the video downloads. Written by
 	// scripts/optimize-event-videos.py.
@@ -90,7 +94,10 @@ var events = []Event{
 		DarkColor:  "#0a3a2c",
 		Note:       "Raízes locais, soluções globais. Um fim de semana no Living Vales para tirar do papel uma solução com cara do Vale do Rio Pardo.",
 		Images:     []string{"/uploads/inovathon1.webp", "/uploads/inovathon2.webp"},
-		Video:      "/uploads/inovathon3.webp",
+		// A roda de mãos dadas é larga e eu estou na ponta direita dela, de
+		// terno: no recorte alto da galeria, o meio da foto me deixa de fora.
+		Focus: map[string]string{"/uploads/inovathon1.webp": "88% 50%"},
+		Video: "/uploads/inovathon3.webp",
 	},
 	{
 		ID:         "south-summit",
