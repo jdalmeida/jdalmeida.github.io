@@ -106,6 +106,14 @@
           <button class="badge-button badge-{{ $index }}"
                   type="button"
                   aria-label="Abrir o registro de {{ $event.Name }}"
+                  data-lanyard-event
+                  data-event-id="{{ $event.ID }}"
+                  data-event-name="{{ $event.Name }}"
+                  data-event-place="{{ $event.ShortPlace }}"
+                  data-event-year="{{ $event.Year }}"
+                  data-event-role="{{ $event.Role }}"
+                  data-event-color="{{ $event.Color }}"
+                  data-event-dark-color="{{ $event.DarkColor }}"
                   data-gallery-preload="{{ galleryPreload $event }}"
                   hx-get="/partials/events/{{ $event.ID }}"
                   hx-target="#event-layer"
@@ -114,6 +122,9 @@
           </button>
           {{ end }}
         </div>
+        <div class="desktop-lanyard desktop-lanyard-home"
+             data-lanyard-home
+             aria-label="Credenciais interativas"></div>
         <p class="home-events-hint">↑ clique numa credencial para ver o registro completo</p>
       </section>
       <div id="event-layer" aria-live="polite"></div>

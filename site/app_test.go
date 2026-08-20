@@ -76,8 +76,12 @@ func TestSecurityHeaders(t *testing.T) {
 
 	handler.ServeHTTP(response, request)
 
-	if response.Header().Get("Content-Security-Policy") == "" {
+	policy := response.Header().Get("Content-Security-Policy")
+	if policy == "" {
 		t.Fatal("Content-Security-Policy header is missing")
+	}
+	if !strings.Contains(policy, "'wasm-unsafe-eval'") {
+		t.Fatal("Content-Security-Policy does not permit the Rapier WebAssembly module")
 	}
 	if response.Header().Get("X-Content-Type-Options") != "nosniff" {
 		t.Fatal("X-Content-Type-Options header is incorrect")
@@ -225,6 +229,66 @@ func TestBadgesCarryTheGalleryPreload(t *testing.T) {
 	}
 	if !strings.Contains(body, "/uploads/ss_brazil1-480.webp 480w") {
 		t.Fatal("the badge preload does not list the resized copies")
+	}
+}
+
+func TestHomeProvidesDesktopLanyardDataAndMobileFallback(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
+	response := httptest.NewRecorder()
+	New().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/", nil))
+	body := response.Body.String()
+
+	if strings.Count(body, `data-lanyard-event`) != len(events) {
+		t.Fatal("the home page does not provide one Lanyard event for each credential")
+	}
+	for _, value := range []string{
+		`data-lanyard-home`,
+		`data-event-name="South Summit Brazil"`,
+		`data-event-color="#fd525b"`,
+		`hx-get="/partials/events/south-summit"`,
+		`class="event-badge"`,
+	} {
+		if !strings.Contains(body, value) {
+			t.Fatalf("the home page does not contain %q", value)
+		}
+	}
+}
+
+func TestEventDialogProvidesDesktopLanyardAndMobileFallback(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
+	response := httptest.NewRecorder()
+	New().ServeHTTP(
+		response,
+		httptest.NewRequest(http.MethodGet, "/partials/events/south-summit", nil),
+	)
+	body := response.Body.String()
+
+	for _, value := range []string{
+		`data-lanyard-dialog`,
+		`data-event-id="south-summit"`,
+		`class="lanyard-wrap"`,
+		`class="event-badge"`,
+	} {
+		if !strings.Contains(body, value) {
+			t.Fatalf("the event dialog does not contain %q", value)
+		}
+	}
+}
+
+func TestLanyardStaticFilesAreServed(t *testing.T) {
+	t.Setenv("DATABASE_URL", "")
+	t.Chdir("..")
+	handler := New()
+	for _, path := range []string{
+		"/lanyard-loader.js",
+		"/build/lanyard-desktop.js",
+		"/build/lanyard-desktop.css",
+	} {
+		response := httptest.NewRecorder()
+		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))
+		if response.Code != http.StatusOK {
+			t.Fatalf("GET %s status = %d, want 200", path, response.Code)
+		}
 	}
 }
 

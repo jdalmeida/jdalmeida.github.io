@@ -70,7 +70,9 @@ func New() http.Handler {
 
 	public := http.FileServer(http.Dir("public"))
 	mux.Handle("GET /assets/", public)
+	mux.Handle("GET /build/", public)
 	mux.Handle("GET /uploads/", public)
+	mux.Handle("GET /lanyard-loader.js", public)
 	mux.Handle("GET /styles.css", public)
 	mux.Handle("GET /site.js", public)
 	mux.Handle("GET /favicon.svg", public)
@@ -673,7 +675,7 @@ func securityHeaders(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", strings.Join([]string{
 			"default-src 'self'",
-			"script-src 'self' https://cdn.jsdelivr.net",
+			"script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
 			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
 			"font-src 'self' https://fonts.gstatic.com",
 			"img-src 'self' data: https:",

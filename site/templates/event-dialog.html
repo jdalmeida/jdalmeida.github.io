@@ -24,6 +24,16 @@
         <div class="lanyard-clip"></div>
         {{ template "badge" .Event }}
       </div>
+      <div class="desktop-lanyard desktop-lanyard-dialog"
+           data-lanyard-dialog
+           data-event-id="{{ .Event.ID }}"
+           data-event-name="{{ .Event.Name }}"
+           data-event-place="{{ .Event.ShortPlace }}"
+           data-event-year="{{ .Event.Year }}"
+           data-event-role="{{ .Event.Role }}"
+           data-event-color="{{ .Event.Color }}"
+           data-event-dark-color="{{ .Event.DarkColor }}"
+           aria-label="Credencial interativa de {{ .Event.Name }}"></div>
       <div class="event-record">
         <p class="eyebrow">{{ .Event.Location }}</p>
         <h2 id="event-dialog-title">{{ .Event.Name }} <em>{{ .Event.Year }}</em></h2>
