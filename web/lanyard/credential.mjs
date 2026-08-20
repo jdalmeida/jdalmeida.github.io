@@ -33,7 +33,7 @@ export const splitTitle = (value, maximum = 22) => {
 
 export const createCredentialTexture = (credential) => {
   const [titleOne, titleTwo = ""] = splitTitle(credential.name);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1450">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1450" viewBox="0 0 1000 1450">
     <rect width="1000" height="1450" rx="46" fill="#f5eedf"/>
     <rect y="370" width="1000" height="850" fill="${credential.color}"/>
     <path d="M0 370h1000v850H0z" fill="url(#shine)"/>
