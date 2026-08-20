@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 
 import {
   DIALOG_FRAME,
-  HOME_FRAME,
   bodyPositions,
   fitDistance,
   homeAnchors,
+  homeFrame,
   isShortClick,
   lerpFactor,
   pointerDelta,
@@ -22,21 +22,29 @@ test("places four anchors around the center of one physics world", () => {
 });
 
 test("keeps every home anchor inside the frame the camera fits", () => {
-  const outer = Math.max(...homeAnchors(4).map(([x]) => Math.abs(x)));
-  assert.ok(outer + 1.62 / 2 < HOME_FRAME.width / 2);
+  for (const count of [1, 4, 5, 8]) {
+    const outer = Math.max(...homeAnchors(count).map(([x]) => Math.abs(x)));
+    assert.ok(outer + 1.62 / 2 < homeFrame(count).width / 2, `${count} anchors`);
+  }
 });
 
 test("backs the camera off for the shorter axis of the canvas", () => {
-  const wide = fitDistance(HOME_FRAME, 20, 16 / 9);
-  const narrow = fitDistance(HOME_FRAME, 20, 1);
+  const wide = fitDistance(homeFrame(4), 20, 16 / 9);
+  const narrow = fitDistance(homeFrame(4), 20, 1);
   assert.equal(Math.round(wide * 100) / 100, 17.86);
   assert.equal(Math.round(narrow * 100) / 100, 26.66);
   assert.ok(narrow > wide);
 });
 
+test("backs the camera off further for a longer row", () => {
+  assert.ok(
+    fitDistance(homeFrame(4), 20, 16 / 9) < fitDistance(homeFrame(5), 20, 16 / 9),
+  );
+});
+
 test("frames one dialog credential closer than the home row", () => {
   assert.ok(
-    fitDistance(DIALOG_FRAME, 20, 0.5) < fitDistance(HOME_FRAME, 20, 0.5),
+    fitDistance(DIALOG_FRAME, 20, 0.5) < fitDistance(homeFrame(4), 20, 0.5),
   );
 });
 

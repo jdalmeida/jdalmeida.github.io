@@ -7,6 +7,7 @@ import {
   createLanyardTexture,
   readCredential,
   splitTitle,
+  titleFontSize,
 } from "./credential.mjs";
 
 test("reads event values from a server-rendered element", () => {
@@ -120,6 +121,57 @@ test("prints the eyelet where the card model has its slot", () => {
   assert.match(front, /x="475" y="98" width="50" height="54"/);
   assert.match(back, /x="476" y="94" width="50" height="55"/);
   // No text may run into the slot. The first line starts below it.
-  assert.match(front, /<text x="500" y="212"/);
+  assert.match(front, /<text x="500" y="230"/);
   assert.match(back, /<text x="500" y="258"/);
+});
+
+test("shrinks a title line that would not fit the card", () => {
+  // Titles split into short lines print at the full size.
+  assert.equal(titleFontSize(["Inovathon Vale", "do Rio Pardo"]), 96);
+
+  // splitTitle drops every remaining word into the second line, so that line
+  // can be long enough to need a smaller size.
+  const line = "Nacional de Ciência e Tecnologia";
+  const size = titleFontSize(["Semana", line]);
+  assert.ok(size < 96);
+  assert.ok(size * line.length * 0.54 <= 900);
+});
+
+test("prints the event above the name it belongs to", () => {
+  const svg = decodeURIComponent(
+    createCredentialTexture({
+      id: "event",
+      name: "Inovathon Vale do Rio Pardo",
+      place: "Santa Cruz do Sul",
+      year: "2026",
+      role: "Developer",
+      color: "#0f7a4a",
+      darkColor: "#0a3a2c",
+    }).split(",", 2)[1],
+  );
+
+  const sizeOf = (pattern) =>
+    Number(svg.match(pattern)[0].match(/font-size="(\d+)"/)[1]);
+  const title = sizeOf(/<text[^>]*>Inovathon Vale<\/text>/);
+  const year = sizeOf(/<text[^>]*>2026<\/text>/);
+  const name = sizeOf(/<text[^>]*>João Gabriel de Almeida<\/text>/);
+
+  assert.ok(title > name * 2);
+  assert.ok(year > name * 2);
+});
+
+test("centers a one-line title where a two-line title starts", () => {
+  const short = decodeURIComponent(
+    createCredentialTexture({
+      id: "event",
+      name: "Amcham SX",
+      place: "Flores da Cunha",
+      year: "2025",
+      role: "Atendee",
+      color: "#1739c9",
+      darkColor: "#091747",
+    }).split(",", 2)[1],
+  );
+
+  assert.match(short, /<text x="500" y="700"[^>]*>Amcham SX<\/text>/);
 });
