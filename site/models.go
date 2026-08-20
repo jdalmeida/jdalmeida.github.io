@@ -95,8 +95,9 @@ var events = []Event{
 		Note:       "Raízes locais, soluções globais. Um fim de semana no Living Vales para tirar do papel uma solução com cara do Vale do Rio Pardo.",
 		Images:     []string{"/uploads/inovathon1.webp", "/uploads/inovathon2.webp"},
 		// A roda de mãos dadas é larga e eu estou na ponta direita dela, de
-		// terno: no recorte alto da galeria, o meio da foto me deixa de fora.
-		Focus: map[string]string{"/uploads/inovathon1.webp": "88% 50%"},
+		// terno: no recorte alto da galeria, o corte encosta na borda direita
+		// para me deixar em foco.
+		Focus: map[string]string{"/uploads/inovathon1.webp": "100% 50%"},
 		Video: "/uploads/inovathon3.webp",
 	},
 	{
