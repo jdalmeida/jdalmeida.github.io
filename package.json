@@ -1,0 +1,21 @@
+{
+  "name": "jdalmeida-portfolio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:lanyard": "esbuild web/lanyard/index.jsx --bundle --format=esm --minify --sourcemap --outfile=public/build/lanyard-desktop.js",
+    "test:lanyard": "node --test web/lanyard/*.test.mjs"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.4",
+    "@react-three/fiber": "^9.3.0",
+    "@react-three/rapier": "^2.1.0",
+    "meshline": "^3.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
