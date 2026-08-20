@@ -98,3 +98,28 @@ test("paints the strap with the event palette and a fitted title", () => {
   assert.match(svg, /textLength="424"/);
   assert.match(svg, /3º Hackathon de Venâncio Aires/);
 });
+
+test("prints the eyelet where the card model has its slot", () => {
+  const credential = {
+    id: "event",
+    name: "Amcham SX",
+    place: "Flores da Cunha",
+    year: "2025",
+    role: "Atendee",
+    color: "#1739c9",
+    darkColor: "#091747",
+  };
+  const front = decodeURIComponent(
+    createCredentialTexture(credential).split(",", 2)[1],
+  );
+  const back = decodeURIComponent(
+    createCredentialBackTexture(credential).split(",", 2)[1],
+  );
+
+  // The slot of card.glb, in the coordinates of each texture.
+  assert.match(front, /x="475" y="98" width="50" height="54"/);
+  assert.match(back, /x="476" y="94" width="50" height="55"/);
+  // No text may run into the slot. The first line starts below it.
+  assert.match(front, /<text x="500" y="212"/);
+  assert.match(back, /<text x="500" y="258"/);
+});

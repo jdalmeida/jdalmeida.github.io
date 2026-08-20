@@ -9,6 +9,23 @@ const escapeXML = (value) =>
 const toDataURI = (svg) =>
   `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
+// The card model has a real slot punched through it. These rectangles are the
+// slot, converted from the card.glb UV bounds into the coordinates of each
+// texture. Keep them aligned with the model, or the printed eyelet drifts away
+// from the metal clasp that hooks through the slot.
+const FRONT_SLOT = { x: 475, y: 98, w: 50, h: 54 };
+const BACK_SLOT = { x: 476, y: 94, w: 50, h: 55 };
+
+// The clasp covers the slot itself, so the printed eyelet only shows as a ring
+// around the clasp. The area inside the slot maps to the wall of the hole, where
+// a dark fill reads as depth.
+const RING_X = 26;
+const RING_Y = 16;
+
+const eyelet = ({ x, y, w, h }, ring, edge, wall) =>
+  `<rect x="${x - RING_X}" y="${y - RING_Y}" width="${w + RING_X * 2}" height="${h + RING_Y * 2}" rx="${(h + RING_Y * 2) / 2}" fill="${ring}" stroke="${edge}" stroke-width="4"/>
+    <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h / 2}" fill="${wall}"/>`;
+
 export const readCredential = (element) => ({
   id: element.dataset.eventId,
   name: element.dataset.eventName,
@@ -41,10 +58,10 @@ export const createCredentialTexture = (credential) => {
     <rect y="370" width="1000" height="850" fill="${credential.color}"/>
     <path d="M0 370h1000v850H0z" fill="url(#shine)"/>
     <rect y="1220" width="1000" height="230" fill="${credential.darkColor}"/>
-    <rect x="405" y="65" width="190" height="48" rx="24" fill="#ded5c3" stroke="#a99f8d" stroke-width="6"/>
-    <text x="500" y="188" text-anchor="middle" font-family="Space Mono,monospace" font-size="54" font-weight="700" fill="#2b231a" style="text-transform:uppercase">${escapeXML(titleOne)}</text>
-    <text x="500" y="252" text-anchor="middle" font-family="Space Mono,monospace" font-size="54" font-weight="700" fill="#2b231a" style="text-transform:uppercase">${escapeXML(titleTwo)}</text>
-    <text x="500" y="325" text-anchor="middle" font-family="Space Mono,monospace" font-size="36" fill="#6f6252">${escapeXML(credential.place)} · ${escapeXML(credential.year)}</text>
+    ${eyelet(FRONT_SLOT, "#ded5c3", "#a99f8d", "#4a4137")}
+    <text x="500" y="212" text-anchor="middle" font-family="Space Mono,monospace" font-size="54" font-weight="700" fill="#2b231a" style="text-transform:uppercase">${escapeXML(titleOne)}</text>
+    <text x="500" y="276" text-anchor="middle" font-family="Space Mono,monospace" font-size="54" font-weight="700" fill="#2b231a" style="text-transform:uppercase">${escapeXML(titleTwo)}</text>
+    <text x="500" y="345" text-anchor="middle" font-family="Space Mono,monospace" font-size="36" fill="#6f6252">${escapeXML(credential.place)} · ${escapeXML(credential.year)}</text>
     <text x="500" y="575" text-anchor="middle" font-family="Space Mono,monospace" font-size="34" letter-spacing="12" fill="#fff" opacity=".75">CREDENCIAL</text>
     <text x="500" y="800" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="128" font-weight="600" fill="#fff">João Gabriel</text>
     <text x="500" y="920" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="76" font-style="italic" fill="#fff">de Almeida</text>
@@ -60,9 +77,10 @@ export const createCredentialBackTexture = (credential) => {
   const [titleOne, titleTwo = ""] = splitTitle(credential.name, 20);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1450" viewBox="0 0 1000 1450">
     <rect width="1000" height="1450" rx="46" fill="${credential.darkColor}"/>
-    <rect width="1000" height="250" fill="${credential.color}"/>
-    <path d="M0 250h1000v1200H0z" fill="url(#backShine)"/>
-    <text x="500" y="172" text-anchor="middle" font-family="Space Mono,monospace" font-size="108" font-weight="700" letter-spacing="18" fill="#fff">${escapeXML(credential.year)}</text>
+    <rect width="1000" height="300" fill="${credential.color}"/>
+    <path d="M0 300h1000v1150H0z" fill="url(#backShine)"/>
+    ${eyelet(BACK_SLOT, "rgba(0,0,0,.22)", "rgba(0,0,0,.35)", "#1b1712")}
+    <text x="500" y="258" text-anchor="middle" font-family="Space Mono,monospace" font-size="98" font-weight="700" letter-spacing="18" fill="#fff">${escapeXML(credential.year)}</text>
     <text x="500" y="560" text-anchor="middle" font-family="Space Mono,monospace" font-size="62" font-weight="700" letter-spacing="4" fill="#fff" style="text-transform:uppercase">${escapeXML(titleOne)}</text>
     <text x="500" y="646" text-anchor="middle" font-family="Space Mono,monospace" font-size="62" font-weight="700" letter-spacing="4" fill="#fff" style="text-transform:uppercase">${escapeXML(titleTwo)}</text>
     <text x="500" y="742" text-anchor="middle" font-family="Space Mono,monospace" font-size="38" letter-spacing="6" fill="#fff" opacity=".68">${escapeXML(credential.place)}</text>
