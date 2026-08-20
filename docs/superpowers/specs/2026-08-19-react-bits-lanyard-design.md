@@ -99,7 +99,7 @@ The desktop dialog will mount one Lanyard with the selected event texture. The c
 
 The previous, next, and close controls will keep their current HTMX behavior. A new HTMX swap will mount the next dialog Lanyard.
 
-The mobile dialog will keep the current CSS cord and HTML credential.
+The mobile dialog will keep its current responsive layout. This layout hides the credential below 821 pixels.
 
 ## Fallback behavior
 
