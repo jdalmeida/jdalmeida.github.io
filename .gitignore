@@ -39,6 +39,7 @@ Thumbs.db
 *.swo
 
 .vercel
+.worktrees/
 *.mp4
 public/assets/*.svg.*.svg
 
