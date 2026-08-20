@@ -9,7 +9,7 @@ import {
   createLanyardTexture,
 } from "./credential.mjs";
 import { Band, LanyardLights } from "./Lanyard.jsx";
-import { DIALOG_FRAME, HOME_FRAME, fitDistance, homeAnchors } from "./scene-config.mjs";
+import { DIALOG_FRAME, fitDistance, homeAnchors, homeFrame } from "./scene-config.mjs";
 
 const FOV = 20;
 
@@ -34,7 +34,7 @@ function FitCamera({ frame }) {
 
 export function LanyardScene({ credentials, mode, onReady, onSelect }) {
   const home = mode === "home";
-  const frame = home ? HOME_FRAME : DIALOG_FRAME;
+  const frame = home ? homeFrame(credentials.length) : DIALOG_FRAME;
   const anchors = home ? homeAnchors(credentials.length) : [[0, 4, 0]];
 
   return (

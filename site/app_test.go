@@ -125,9 +125,15 @@ func TestEventVideoPlaysWithoutPlayerUI(t *testing.T) {
 }
 
 func TestEventVideoShowsThePosterWhileItLoads(t *testing.T) {
-	original := events[0].Poster
-	events[0].Poster = "/uploads/ss_brazil3-poster.webp"
-	t.Cleanup(func() { events[0].Poster = original })
+	index := 0
+	for current := range events {
+		if events[current].ID == "south-summit" {
+			index = current
+		}
+	}
+	original := events[index].Poster
+	events[index].Poster = "/uploads/ss_brazil3-poster.webp"
+	t.Cleanup(func() { events[index].Poster = original })
 
 	t.Setenv("DATABASE_URL", "")
 	handler := New()

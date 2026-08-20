@@ -33,7 +33,11 @@ type Event struct {
 	DarkColor  string
 	Note       string
 	Images     []string
-	Video      string
+	// Focus moves the crop of a gallery photo, by path, when the frame is
+	// tighter than the photo. A photo without an entry is cropped from the
+	// middle, as the browser does by default.
+	Focus map[string]string
+	Video string
 	// Poster is the first frame of Video, served from /uploads. The gallery
 	// draws it while the video downloads. Written by
 	// scripts/optimize-event-videos.py.
@@ -79,13 +83,31 @@ type PostInput struct {
 
 var events = []Event{
 	{
+		ID:         "inovathon-vrp",
+		Name:       "Inovathon Vale do Rio Pardo",
+		Year:       "2026",
+		Location:   "UNISC, Santa Cruz do Sul, RS",
+		ShortPlace: "Santa Cruz do Sul",
+		Role:       "Developer",
+		Number:     "Nº 001",
+		Color:      "#0f7a4a",
+		DarkColor:  "#0a3a2c",
+		Note:       "Raízes locais, soluções globais. Um fim de semana no Living Vales para tirar do papel uma solução com cara do Vale do Rio Pardo.",
+		Images:     []string{"/uploads/inovathon1.webp", "/uploads/inovathon2.webp"},
+		// A roda de mãos dadas é larga e eu estou na ponta direita dela, de
+		// terno: no recorte alto da galeria, o corte encosta na borda direita
+		// para me deixar em foco.
+		Focus: map[string]string{"/uploads/inovathon1.webp": "100% 50%"},
+		Video: "/uploads/inovathon3.webp",
+	},
+	{
 		ID:         "south-summit",
 		Name:       "South Summit Brazil",
 		Year:       "2026",
 		Location:   "Cais Mauá, Porto Alegre, RS",
 		ShortPlace: "Porto Alegre",
 		Role:       "Corps",
-		Number:     "Nº 001",
+		Number:     "Nº 002",
 		Color:      "#fd525b",
 		DarkColor:  "#370c3b",
 		Note:       "Três dias no Cais Mauá entre startups, palcos e café. Uma credencial do lado de quem faz o evento acontecer.",
@@ -100,7 +122,7 @@ var events = []Event{
 		Location:   "Vinícola Luiz Argenta, Flores da Cunha, RS",
 		ShortPlace: "Flores da Cunha",
 		Role:       "Atendee",
-		Number:     "Nº 002",
+		Number:     "Nº 003",
 		Color:      "#1739c9",
 		DarkColor:  "#091747",
 		Note:       "Um encontro anual sobre inovação e negócios, com boas palestras e muitas conexões.",
@@ -115,7 +137,7 @@ var events = []Event{
 		Location:   "Lajeado, RS",
 		ShortPlace: "Lajeado",
 		Role:       "Developer",
-		Number:     "Nº 003",
+		Number:     "Nº 004",
 		Color:      "#2c9f55",
 		DarkColor:  "#1f6f43",
 		Note:       "Foram 54 horas para tirar uma ideia do papel. O time nasceu na sexta e apresentou o produto no domingo.",
@@ -129,7 +151,7 @@ var events = []Event{
 		Location:   "Venâncio Aires, RS",
 		ShortPlace: "Venâncio Aires",
 		Role:       "Dev & Leader",
-		Number:     "Nº 004",
+		Number:     "Nº 005",
 		Color:      "#1f46bf",
 		DarkColor:  "#0e1b62",
 		Note:       "O evento onde as startups viraram parte da minha vida.",

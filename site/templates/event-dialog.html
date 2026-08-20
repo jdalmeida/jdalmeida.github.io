@@ -48,6 +48,7 @@
                  sizes="{{ gallerySizes }}"
                  alt="Registro de {{ $.Event.Name }}"
                  decoding="async"
+                 {{ with index $.Event.Focus $image }}style="object-position: {{ . }}"{{ end }}
                  fetchpriority="{{ if eq $index 0 }}high{{ else }}auto{{ end }}">
           </figure>
           {{ end }}

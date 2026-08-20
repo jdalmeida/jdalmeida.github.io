@@ -51,20 +51,31 @@ export const splitTitle = (value, maximum = 22) => {
   return lines;
 };
 
+// Vollkorn draws a bit over half an em per letter, so this keeps the longest
+// line inside the card instead of letting a long event name run off the edge.
+export const titleFontSize = (lines, maximum = 96) => {
+  const longest = Math.max(...lines.map((line) => line.length), 1);
+  return Math.min(maximum, Math.round(900 / (longest * 0.54)));
+};
+
 export const createCredentialTexture = (credential) => {
-  const [titleOne, titleTwo = ""] = splitTitle(credential.name);
+  const [titleOne, titleTwo = ""] = splitTitle(credential.name, 16);
+  const size = titleFontSize([titleOne, titleTwo]);
+  // A one-line title drops to the middle of the band, where two lines sit.
+  const firstLine = titleTwo ? 640 : 700;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1450" viewBox="0 0 1000 1450">
     <rect width="1000" height="1450" rx="46" fill="#f5eedf"/>
     <rect y="370" width="1000" height="850" fill="${credential.color}"/>
     <path d="M0 370h1000v850H0z" fill="url(#shine)"/>
     <rect y="1220" width="1000" height="230" fill="${credential.darkColor}"/>
     ${eyelet(FRONT_SLOT, "#ded5c3", "#a99f8d", "#4a4137")}
-    <text x="500" y="212" text-anchor="middle" font-family="Space Mono,monospace" font-size="54" font-weight="700" fill="#2b231a" style="text-transform:uppercase">${escapeXML(titleOne)}</text>
-    <text x="500" y="276" text-anchor="middle" font-family="Space Mono,monospace" font-size="54" font-weight="700" fill="#2b231a" style="text-transform:uppercase">${escapeXML(titleTwo)}</text>
-    <text x="500" y="345" text-anchor="middle" font-family="Space Mono,monospace" font-size="36" fill="#6f6252">${escapeXML(credential.place)} · ${escapeXML(credential.year)}</text>
-    <text x="500" y="575" text-anchor="middle" font-family="Space Mono,monospace" font-size="34" letter-spacing="12" fill="#fff" opacity=".75">CREDENCIAL</text>
-    <text x="500" y="800" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="128" font-weight="600" fill="#fff">João Gabriel</text>
-    <text x="500" y="920" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="76" font-style="italic" fill="#fff">de Almeida</text>
+    <text x="500" y="230" text-anchor="middle" font-family="Space Mono,monospace" font-size="30" letter-spacing="12" fill="#6f6252">CREDENCIAL</text>
+    <text x="500" y="300" text-anchor="middle" font-family="Space Mono,monospace" font-size="34" fill="#2b231a">João Gabriel de Almeida</text>
+    <text x="500" y="${firstLine}" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="${size}" font-weight="600" fill="#fff">${escapeXML(titleOne)}</text>
+    <text x="500" y="${firstLine + size + 4}" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="${size}" font-weight="600" fill="#fff">${escapeXML(titleTwo)}</text>
+    <rect x="350" y="838" width="300" height="3" fill="#fff" opacity=".38"/>
+    <text x="500" y="948" text-anchor="middle" font-family="Space Mono,monospace" font-size="86" font-weight="700" letter-spacing="18" dx="9" fill="#fff">${escapeXML(credential.year)}</text>
+    <text x="500" y="1030" text-anchor="middle" font-family="Space Mono,monospace" font-size="32" letter-spacing="10" fill="#fff" opacity=".78" style="text-transform:uppercase">${escapeXML(credential.place)}</text>
     <text x="500" y="1360" text-anchor="middle" font-family="Space Mono,monospace" font-size="64" font-weight="700" letter-spacing="9" fill="#fff" style="text-transform:uppercase">${escapeXML(credential.role)}</text>
     <defs><linearGradient id="shine" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff" stop-opacity=".07"/><stop offset=".48" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
   </svg>`;
@@ -72,7 +83,8 @@ export const createCredentialTexture = (credential) => {
 };
 
 // The card back keeps the event palette so a spinning credential still reads as
-// the same event. It carries the title, the year and the place, never the name.
+// the same event. It leads with the year and the title, like the front, and
+// closes with the name in small type.
 export const createCredentialBackTexture = (credential) => {
   const [titleOne, titleTwo = ""] = splitTitle(credential.name, 20);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1450" viewBox="0 0 1000 1450">
@@ -87,7 +99,8 @@ export const createCredentialBackTexture = (credential) => {
     <rect x="250" y="856" width="500" height="8" fill="${credential.color}"/>
     <rect x="250" y="890" width="500" height="8" fill="${credential.color}" opacity=".6"/>
     <rect x="250" y="924" width="500" height="8" fill="${credential.color}" opacity=".3"/>
-    <text x="500" y="1130" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="72" font-style="italic" fill="#fff" opacity=".9">João Gabriel de Almeida</text>
+    <text x="500" y="1108" text-anchor="middle" font-family="Space Mono,monospace" font-size="28" letter-spacing="11" fill="#fff" opacity=".62">CREDENCIAL DE</text>
+    <text x="500" y="1180" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="52" font-style="italic" fill="#fff" opacity=".9">João Gabriel de Almeida</text>
     <rect y="1290" width="1000" height="160" fill="${credential.color}"/>
     <text x="500" y="1398" text-anchor="middle" font-family="Space Mono,monospace" font-size="58" font-weight="700" letter-spacing="9" fill="#fff" style="text-transform:uppercase">${escapeXML(credential.role)}</text>
     <defs><linearGradient id="backShine" x1="1" x2="0" y1="0" y2="1"><stop stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>

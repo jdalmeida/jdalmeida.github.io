@@ -6,10 +6,22 @@ export const CARD_WIDTH = 1.62;
 
 const HOME_SPACING = 2.4;
 
-// World boxes the camera must keep visible. The home box holds four straps side
-// by side. The dialog box crops the strap so one credential reads much larger.
-export const HOME_FRAME = { width: 9.4, height: 6.3, center: 1.15 };
+// World boxes the camera must keep visible. The dialog box crops the strap so
+// one credential reads much larger.
 export const DIALOG_FRAME = { width: 2.6, height: 4.6, center: 0.35 };
+
+// Breathing room between the outer credential and the edge of the home frame.
+const HOME_MARGIN = 0.29;
+
+// The home box grows with the row, so a credential added to the stack does not
+// push the ones on the ends out of the frame.
+export const homeFrame = (count) => ({
+  width: Number(
+    ((count - 1) * HOME_SPACING + CARD_WIDTH + HOME_MARGIN * 2).toFixed(4),
+  ),
+  height: 6.3,
+  center: 1.15,
+});
 
 export const homeAnchors = (count) => {
   const start = -((count - 1) * HOME_SPACING) / 2;

@@ -798,10 +798,11 @@ video {
     filter 360ms ease;
 }
 
-.badge-0 { transform: rotate(-10deg) translateY(46px); }
-.badge-1 { transform: rotate(-3deg) translateY(7px); }
-.badge-2 { transform: rotate(4deg) translateY(7px); }
-.badge-3 { transform: rotate(11deg) translateY(48px); }
+.badge-0 { transform: rotate(-12deg) translateY(52px); }
+.badge-1 { transform: rotate(-6deg) translateY(14px); }
+.badge-2 { transform: rotate(0deg) translateY(0); }
+.badge-3 { transform: rotate(6deg) translateY(14px); }
+.badge-4 { transform: rotate(12deg) translateY(52px); }
 
 .badge-button:hover,
 .badge-button:focus-visible {
@@ -825,8 +826,8 @@ video {
 }
 
 .badge-top {
-  min-height: 92px;
-  padding: 13px 15px 10px;
+  min-height: 78px;
+  padding: 13px 15px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -842,59 +843,71 @@ video {
   box-shadow: inset 0 2px 2px rgb(43 35 26 / 16%);
 }
 
+/* O crachá é do evento: o nome dele e o ano ocupam a faixa colorida, e quem
+   carrega a credencial fica no rodapé de papel, em letra miúda. */
+.badge-top small {
+  color: var(--ink-500);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
 .badge-top strong {
   max-width: 100%;
   overflow: hidden;
   color: var(--ink-900);
   font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: .05em;
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: .04em;
   line-height: 1.25;
   text-align: center;
   text-overflow: ellipsis;
-  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.badge-top small {
-  color: var(--ink-500);
-  font-family: var(--mono);
-  font-size: 9px;
-}
-
-.badge-name {
+.badge-event {
   flex: 1;
-  padding: 18px;
+  padding: 18px 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 9px;
   color: var(--paper-50);
   background:
     linear-gradient(135deg, rgb(255 255 255 / 7%), transparent 48%),
     var(--badge);
+  text-align: center;
 }
 
-.badge-name span {
-  margin-bottom: 9px;
+.badge-event strong {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 600;
+  line-height: .96;
+  text-wrap: balance;
+}
+
+.badge-event em {
+  padding-top: 8px;
+  border-top: 1px solid rgb(255 255 255 / 35%);
+  font-family: var(--mono);
+  font-size: 19px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: .2em;
+  /* O tracking empurra o último dígito para fora do centro óptico. */
+  text-indent: .2em;
+}
+
+.badge-event small {
   font-family: var(--mono);
   font-size: 8px;
-  letter-spacing: .22em;
-  opacity: .75;
+  letter-spacing: .18em;
+  opacity: .78;
   text-transform: uppercase;
-}
-
-.badge-name strong {
-  font-family: var(--display);
-  font-size: 33px;
-  font-weight: 600;
-  line-height: .9;
-  white-space: nowrap;
-}
-
-.badge-name em {
-  margin-top: 5px;
-  font-family: var(--serif);
-  font-size: 15px;
 }
 
 .badge-role {
@@ -1049,12 +1062,20 @@ video {
 }
 
 .lanyard-wrap .badge-top {
-  min-height: 105px;
+  min-height: 92px;
   padding-top: 24px;
 }
 
-.lanyard-wrap .badge-name strong {
-  font-size: 40px;
+.lanyard-wrap .badge-event strong {
+  font-size: 32px;
+}
+
+.lanyard-wrap .badge-event em {
+  font-size: 23px;
+}
+
+.lanyard-wrap .badge-top strong {
+  font-size: 11px;
 }
 
 .lanyard-wrap .badge-role {
@@ -2449,7 +2470,8 @@ video {
   }
 
   .badge-0,
-  .badge-2 { transform: rotate(-3deg); }
+  .badge-2,
+  .badge-4 { transform: rotate(-3deg); }
   .badge-1,
   .badge-3 { transform: rotate(3deg) translateY(20px); }
 
@@ -2608,19 +2630,21 @@ video {
   }
 
   .badge-top strong {
-    font-size: 9px;
+    font-size: 8px;
   }
 
-  .badge-name {
-    padding: 8px;
+  .badge-event {
+    padding: 10px 8px;
+    gap: 7px;
   }
 
-  .badge-name strong {
-    font-size: 26px;
+  .badge-event strong {
+    font-size: 19px;
   }
 
-  .badge-name em {
-    font-size: 13px;
+  .badge-event em {
+    padding-top: 6px;
+    font-size: 15px;
   }
 
   .badge-role {
@@ -3265,32 +3289,30 @@ body.intro-active {
   height: 12px;
 }
 
-.home-events .badge-top strong {
-  font-size: 12.5px;
-  letter-spacing: .08em;
-}
-
 .home-events .badge-top small {
-  font-size: 13px;
+  font-size: 9px;
 }
 
-.home-events .badge-name {
+.home-events .badge-top strong {
+  font-size: 11px;
+  letter-spacing: .03em;
+}
+
+.home-events .badge-event {
   padding: 16px;
-  gap: 5px;
+  gap: 10px;
 }
 
-.home-events .badge-name span {
-  margin-bottom: 0;
-  font-size: 10px;
+.home-events .badge-event strong {
+  font-size: 27px;
 }
 
-.home-events .badge-name strong {
-  font-size: 34px;
+.home-events .badge-event em {
+  font-size: 20px;
 }
 
-.home-events .badge-name em {
-  margin-top: 0;
-  font-size: 16px;
+.home-events .badge-event small {
+  font-size: 9px;
 }
 
 .home-events .badge-role {
@@ -3301,19 +3323,23 @@ body.intro-active {
 }
 
 .home-events .badge-0 {
-  transform: rotate(-10.5deg) translateY(22.5px);
+  transform: rotate(-11deg) translateY(26px);
 }
 
 .home-events .badge-1 {
-  transform: rotate(-3.5deg) translateY(2.5px);
+  transform: rotate(-5.5deg) translateY(7px);
 }
 
 .home-events .badge-2 {
-  transform: rotate(3.5deg) translateY(2.5px);
+  transform: rotate(0deg) translateY(0);
 }
 
 .home-events .badge-3 {
-  transform: rotate(10.5deg) translateY(22.5px);
+  transform: rotate(5.5deg) translateY(7px);
+}
+
+.home-events .badge-4 {
+  transform: rotate(11deg) translateY(26px);
 }
 
 .home-events .badge-button:hover,
@@ -3631,7 +3657,8 @@ body.intro-active {
   .home-events .badge-0,
   .home-events .badge-1,
   .home-events .badge-2,
-  .home-events .badge-3 {
+  .home-events .badge-3,
+  .home-events .badge-4 {
     transform: none;
   }
 
@@ -3641,11 +3668,15 @@ body.intro-active {
   }
 
   .home-events .badge-top strong {
-    font-size: 10.5px;
+    font-size: 9px;
   }
 
-  .home-events .badge-name strong {
-    font-size: 28px;
+  .home-events .badge-event strong {
+    font-size: 21px;
+  }
+
+  .home-events .badge-event em {
+    font-size: 16px;
   }
 
   .home-contact-links a {
