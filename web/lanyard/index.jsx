@@ -37,7 +37,7 @@ const findHosts = (root, selector) => {
   return hosts;
 };
 
-const renderScene = (host, credentials, mode, onSelect) => {
+const renderScene = (host, credentials, mode, { eventSource, onSelect } = {}) => {
   if (roots.has(host)) return;
   host.classList.add("lanyard-react-root");
   const root = createRoot(host);
@@ -49,6 +49,7 @@ const renderScene = (host, credentials, mode, onSelect) => {
     <LanyardErrorBoundary host={host}>
       <LanyardScene
         credentials={credentials}
+        eventSource={eventSource}
         mode={mode}
         onReady={markReady}
         onSelect={onSelect}
@@ -62,11 +63,17 @@ export function mountLanyards(root = document) {
     const credentials = [...document.querySelectorAll("[data-lanyard-event]")].map(
       readCredential,
     );
-    if (credentials.length) renderScene(host, credentials, "home", selectEvent);
+    if (credentials.length) renderScene(host, credentials, "home", {
+      onSelect: selectEvent,
+    });
   }
 
   for (const host of findHosts(root, "[data-lanyard-dialog]")) {
-    renderScene(host, [readCredential(host)], "dialog");
+    // The dialog canvas covers the body of the modal and stays transparent to
+    // the pointer, so the credential is dragged from the modal itself.
+    renderScene(host, [readCredential(host)], "dialog", {
+      eventSource: host.closest(".dialog-body") || host,
+    });
   }
 }
 

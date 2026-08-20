@@ -2,11 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  ANCHOR_HEIGHT,
   CARD_BOTTOM,
+  CARD_HALF_HEIGHT,
   CARD_WIDTH,
   DIALOG_FRAME,
+  DIALOG_SPAWN_DROP,
   bodyPositions,
   fitDistance,
+  framePosition,
   homeAnchors,
   homeDrop,
   homeFrame,
@@ -14,6 +18,8 @@ import {
   lerpFactor,
   pointerDelta,
 } from "./scene-config.mjs";
+
+const round = (value) => Math.round(value * 1000) / 1000;
 
 test("places four anchors around the center of one physics world", () => {
   assert.deepEqual(homeAnchors(4), [
@@ -79,6 +85,48 @@ test("frames one dialog credential closer than the home row", () => {
   );
 });
 
+// The dialog canvas covers the whole modal, so anything the camera drops out of
+// frame is cropped in plain sight. The credential has to fit from the moment it
+// spawns to the moment it settles.
+test("holds the credential the dialog drops, from spawn to rest", () => {
+  const card = bodyPositions([0, ANCHOR_HEIGHT, 0], DIALOG_SPAWN_DROP).at(-1);
+  const top = DIALOG_FRAME.center + DIALOG_FRAME.height / 2;
+  const bottom = DIALOG_FRAME.center - DIALOG_FRAME.height / 2;
+  const right = DIALOG_FRAME.offset + DIALOG_FRAME.width / 2;
+  const left = DIALOG_FRAME.offset - DIALOG_FRAME.width / 2;
+
+  assert.ok(card[1] + CARD_HALF_HEIGHT < top, "spawn top");
+  assert.ok(card[0] + CARD_WIDTH / 2 < right, "spawn side");
+  assert.ok(CARD_BOTTOM > bottom, "rest bottom");
+  assert.ok(-CARD_WIDTH / 2 > left, "rest side");
+});
+
+test("centers a frame that asks for no edge in particular", () => {
+  const frame = homeFrame(4);
+  const aspect = 16 / 9;
+  const distance = fitDistance(frame, 20, aspect);
+  assert.deepEqual(framePosition(frame, 20, aspect, distance), [0, frame.center]);
+});
+
+// The room a contain fit leaves over falls to the right of the strap and below
+// the card, which is where the swing needs it.
+test("pins the dialog box to the top left of its canvas", () => {
+  const aspect = 1058 / 810;
+  const distance = fitDistance(DIALOG_FRAME, 20, aspect);
+  const [x, y] = framePosition(DIALOG_FRAME, 20, aspect, distance);
+  const halfHeight = distance * Math.tan((20 * Math.PI) / 360);
+
+  assert.equal(
+    round(x - halfHeight * aspect),
+    round(DIALOG_FRAME.offset - DIALOG_FRAME.width / 2),
+  );
+  assert.equal(
+    round(y + halfHeight),
+    round(DIALOG_FRAME.center + DIALOG_FRAME.height / 2),
+  );
+  assert.ok(x + halfHeight * aspect > DIALOG_FRAME.offset + DIALOG_FRAME.width / 2);
+});
+
 test("selects only a pointer release with little movement", () => {
   assert.equal(isShortClick(4), true);
   assert.equal(isShortClick(7), false);
@@ -91,6 +139,16 @@ test("places every rope body in the anchor world space", () => {
     [-4.4, 4, 0.15],
     [-3.9, 4, 0.15],
     [-3.4, 4, 0.15],
+  ]);
+});
+
+test("hangs the rope bodies on the line down to a dropped card", () => {
+  assert.deepEqual(bodyPositions([0, 4, 0], 2), [
+    [0, 4, 0],
+    [0.5, 3.5, 0],
+    [1, 3, 0],
+    [1.5, 2.5, 0],
+    [2, 2, 0],
   ]);
 });
 

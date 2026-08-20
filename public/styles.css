@@ -1022,6 +1022,7 @@ video {
 }
 
 .dialog-body {
+  position: relative;
   padding: 52px 48px 58px;
   display: grid;
   grid-template-columns: 310px 1fr;
@@ -3756,8 +3757,24 @@ body.intro-active {
     grid-template-columns: minmax(285px, 360px) 1fr;
   }
 
+  /* A coluna reserva o espaço onde a credencial descansa, mas a cena cobre o
+     modal inteiro: a queda inicial passa por cima do texto em vez de ser
+     cortada na borda da coluna. */
   .desktop-lanyard-dialog {
     width: 100%;
     height: 700px;
+  }
+
+  /* A cena não recebe ponteiro — quem escuta o arrasto é o corpo do modal —
+     então o texto e a galeria continuam selecionáveis por baixo dela. */
+  .desktop-lanyard-dialog[data-lanyard-mounted="true"] {
+    position: static;
+    pointer-events: none;
+  }
+
+  .desktop-lanyard-dialog .lanyard-wrapper {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
   }
 }
