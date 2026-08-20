@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:lanyard": "esbuild web/lanyard/index.jsx --bundle --format=esm --minify --sourcemap --outfile=public/build/lanyard-desktop.js",
+    "build:lanyard": "esbuild web/lanyard/index.jsx --bundle --format=esm --jsx=automatic --minify --sourcemap --outfile=public/build/lanyard-desktop.js",
     "test:lanyard": "node --test web/lanyard/*.test.mjs"
   },
   "dependencies": {

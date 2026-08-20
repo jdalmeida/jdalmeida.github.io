@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../web/lanyard/lanyard.css"],
-  "sourcesContent": [".lanyard-react-root,\n.lanyard-react-root .lanyard-wrapper,\n.lanyard-react-root canvas {\n  width: 100%;\n  height: 100%;\n}\n\n.lanyard-react-root {\n  position: relative;\n  touch-action: none;\n}\n\n.lanyard-react-root canvas {\n  display: block;\n}\n"],
-  "mappings": "AAAA,CAAC,mBACD,CADC,mBACmB,CAAC,gBACrB,CAFC,mBAEmB,OAClB,MAAO,KACP,OAAQ,IACV,CAEA,CAPC,mBAQC,SAAU,SACV,aAAc,IAChB,CAEA,CAZC,mBAYmB,OAClB,QAAS,KACX",
-  "names": []
-}

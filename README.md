@@ -25,6 +25,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 The app reads Markdown files from `content/posts` when PostgreSQL is not available. The editor needs PostgreSQL.
 
+## Desktop Lanyard
+
+The desktop event section uses the React Bits Lanyard in a React island. Mobile browsers keep the server-rendered credential layout.
+
+Install the frontend dependencies after you clone the repository. Rebuild the committed bundle after you change `web/lanyard`.
+
+```bash
+npm install
+npm run test:lanyard
+npm run build:lanyard
+```
+
 ## Article API
 
 The portfolio exposes an authenticated JSON API for VXP. The API lists and reads all articles, including drafts.

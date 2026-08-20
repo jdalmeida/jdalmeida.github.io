@@ -12,7 +12,12 @@ import {
 import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 import * as THREE from "three";
 
-import { isShortClick } from "./scene-config.mjs";
+import {
+  bodyPositions,
+  isShortClick,
+  lerpFactor,
+  pointerDelta,
+} from "./scene-config.mjs";
 
 const cardGLB = "/assets/lanyard/card.glb";
 const defaultLanyardImage = "/assets/lanyard/lanyard.png";
@@ -78,6 +83,7 @@ export function Band({
   const j2 = useRef();
   const j3 = useRef();
   const card = useRef();
+  const pointerStart = useRef(null);
   const vec = new THREE.Vector3();
   const ang = new THREE.Vector3();
   const rot = new THREE.Vector3();
@@ -93,6 +99,22 @@ export function Band({
   const texture = useTexture(lanyardImage || defaultLanyardImage);
   const frontTex = useTexture(frontImage || BLANK_PIXEL);
   const backTex = useTexture(backImage || BLANK_PIXEL);
+  const initialLine = useMemo(
+    () =>
+      new Float32Array([
+        anchor[0],
+        anchor[1] - 3,
+        anchor[2],
+        anchor[0],
+        anchor[1],
+        anchor[2],
+      ]),
+    [anchor],
+  );
+  const linePoints = useMemo(
+    () => new Float32Array((isMobile ? 17 : 33) * 3),
+    [isMobile],
+  );
 
   const cardMap = useMemo(() => {
     const baseMap = materials.base.map;
@@ -196,16 +218,28 @@ export function Band({
           0.1,
           Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())),
         );
+        const speed = minSpeed + clampedDistance * (maxSpeed - minSpeed);
         ref.current.lerped.lerp(
           ref.current.translation(),
-          delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed)),
+          lerpFactor(delta, speed),
         );
       });
       curve.points[0].copy(j3.current.translation());
       curve.points[1].copy(j2.current.lerped);
       curve.points[2].copy(j1.current.lerped);
       curve.points[3].copy(fixed.current.translation());
-      band.current.geometry.setPoints(curve.getPoints(isMobile ? 16 : 32));
+      const curvePoints = curve.getPoints(isMobile ? 16 : 32);
+      let valid = true;
+      curvePoints.forEach((point, index) => {
+        const offset = index * 3;
+        linePoints[offset] = point.x;
+        linePoints[offset + 1] = point.y;
+        linePoints[offset + 2] = point.z;
+        valid &&= Number.isFinite(point.x + point.y + point.z);
+      });
+      if (valid) {
+        band.current.geometry.setPoints(linePoints);
+      }
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
       card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
@@ -214,22 +248,23 @@ export function Band({
 
   curve.curveType = "chordal";
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+  const [fixedPosition, j1Position, j2Position, j3Position, cardPosition] =
+    bodyPositions(anchor);
 
   return (
     <>
-      <group position={anchor}>
-        <RigidBody ref={fixed} {...segmentProps} type="fixed" />
-        <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps}>
+        <RigidBody position={fixedPosition} ref={fixed} {...segmentProps} type="fixed" />
+        <RigidBody position={j1Position} ref={j1} {...segmentProps}>
           <BallCollider args={[0.1]} />
         </RigidBody>
-        <RigidBody position={[1, 0, 0]} ref={j2} {...segmentProps}>
+        <RigidBody position={j2Position} ref={j2} {...segmentProps}>
           <BallCollider args={[0.1]} />
         </RigidBody>
-        <RigidBody position={[1.5, 0, 0]} ref={j3} {...segmentProps}>
+        <RigidBody position={j3Position} ref={j3} {...segmentProps}>
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[2, 0, 0]}
+          position={cardPosition}
           ref={card}
           {...segmentProps}
           type={dragged ? "kinematicPosition" : "dynamic"}
@@ -238,20 +273,43 @@ export function Band({
           <group
             scale={2.25}
             position={[0, -1.2, -0.05]}
-            onPointerOver={() => hover(true)}
+            onPointerOver={(event) => {
+              event.stopPropagation();
+              hover(true);
+            }}
             onPointerOut={() => hover(false)}
             onPointerUp={(event) => {
+              event.stopPropagation();
               event.target.releasePointerCapture(event.pointerId);
               drag(false);
-              if (isShortClick(event.delta)) onSelect?.();
+              const start = pointerStart.current;
+              pointerStart.current = null;
+              if (
+                start?.id === event.pointerId &&
+                isShortClick(
+                  pointerDelta(start, { x: event.clientX, y: event.clientY }),
+                )
+              ) {
+                onSelect?.();
+              }
             }}
             onPointerDown={(event) => {
+              event.stopPropagation();
               event.target.setPointerCapture(event.pointerId);
+              pointerStart.current = {
+                id: event.pointerId,
+                x: event.clientX,
+                y: event.clientY,
+              };
               drag(
                 new THREE.Vector3()
                   .copy(event.point)
                   .sub(vec.copy(card.current.translation())),
               );
+            }}
+            onPointerCancel={() => {
+              pointerStart.current = null;
+              drag(false);
             }}
           >
             <mesh geometry={nodes.card.geometry}>
@@ -271,10 +329,9 @@ export function Band({
             />
             <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
           </group>
-        </RigidBody>
-      </group>
+      </RigidBody>
       <mesh ref={band}>
-        <meshLineGeometry />
+        <meshLineGeometry points={initialLine} />
         <meshLineMaterial
           color="white"
           depthTest={false}

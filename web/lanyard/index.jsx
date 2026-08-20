@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 
 import { readCredential } from "./credential.mjs";
 import { LanyardScene } from "./Scenes.jsx";
-import "./lanyard.css";
 
 const roots = new Map();
 

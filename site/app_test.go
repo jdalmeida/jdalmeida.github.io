@@ -83,6 +83,12 @@ func TestSecurityHeaders(t *testing.T) {
 	if !strings.Contains(policy, "'wasm-unsafe-eval'") {
 		t.Fatal("Content-Security-Policy does not permit the Rapier WebAssembly module")
 	}
+	if !strings.Contains(policy, "img-src 'self' data: blob: https:") {
+		t.Fatal("Content-Security-Policy does not permit embedded GLB textures")
+	}
+	if !strings.Contains(policy, "connect-src 'self' blob:") {
+		t.Fatal("Content-Security-Policy does not permit GLB texture fetches")
+	}
 	if response.Header().Get("X-Content-Type-Options") != "nosniff" {
 		t.Fatal("X-Content-Type-Options header is incorrect")
 	}
@@ -282,7 +288,6 @@ func TestLanyardStaticFilesAreServed(t *testing.T) {
 	for _, path := range []string{
 		"/lanyard-loader.js",
 		"/build/lanyard-desktop.js",
-		"/build/lanyard-desktop.css",
 	} {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, path, nil))

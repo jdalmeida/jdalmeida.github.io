@@ -6,6 +6,9 @@ const escapeXML = (value) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
 
+const toDataURI = (svg) =>
+  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+
 export const readCredential = (element) => ({
   id: element.dataset.eventId,
   name: element.dataset.eventName,
@@ -48,5 +51,40 @@ export const createCredentialTexture = (credential) => {
     <text x="500" y="1360" text-anchor="middle" font-family="Space Mono,monospace" font-size="64" font-weight="700" letter-spacing="9" fill="#fff" style="text-transform:uppercase">${escapeXML(credential.role)}</text>
     <defs><linearGradient id="shine" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#fff" stop-opacity=".07"/><stop offset=".48" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
   </svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  return toDataURI(svg);
+};
+
+// The card back keeps the event palette so a spinning credential still reads as
+// the same event. It carries the title, the year and the place, never the name.
+export const createCredentialBackTexture = (credential) => {
+  const [titleOne, titleTwo = ""] = splitTitle(credential.name, 20);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1450" viewBox="0 0 1000 1450">
+    <rect width="1000" height="1450" rx="46" fill="${credential.darkColor}"/>
+    <rect width="1000" height="250" fill="${credential.color}"/>
+    <path d="M0 250h1000v1200H0z" fill="url(#backShine)"/>
+    <text x="500" y="172" text-anchor="middle" font-family="Space Mono,monospace" font-size="108" font-weight="700" letter-spacing="18" fill="#fff">${escapeXML(credential.year)}</text>
+    <text x="500" y="560" text-anchor="middle" font-family="Space Mono,monospace" font-size="62" font-weight="700" letter-spacing="4" fill="#fff" style="text-transform:uppercase">${escapeXML(titleOne)}</text>
+    <text x="500" y="646" text-anchor="middle" font-family="Space Mono,monospace" font-size="62" font-weight="700" letter-spacing="4" fill="#fff" style="text-transform:uppercase">${escapeXML(titleTwo)}</text>
+    <text x="500" y="742" text-anchor="middle" font-family="Space Mono,monospace" font-size="38" letter-spacing="6" fill="#fff" opacity=".68">${escapeXML(credential.place)}</text>
+    <rect x="250" y="856" width="500" height="8" fill="${credential.color}"/>
+    <rect x="250" y="890" width="500" height="8" fill="${credential.color}" opacity=".6"/>
+    <rect x="250" y="924" width="500" height="8" fill="${credential.color}" opacity=".3"/>
+    <text x="500" y="1130" text-anchor="middle" font-family="Vollkorn,Georgia,serif" font-size="72" font-style="italic" fill="#fff" opacity=".9">João Gabriel de Almeida</text>
+    <rect y="1290" width="1000" height="160" fill="${credential.color}"/>
+    <text x="500" y="1398" text-anchor="middle" font-family="Space Mono,monospace" font-size="58" font-weight="700" letter-spacing="9" fill="#fff" style="text-transform:uppercase">${escapeXML(credential.role)}</text>
+    <defs><linearGradient id="backShine" x1="1" x2="0" y1="0" y2="1"><stop stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+  </svg>`;
+  return toDataURI(svg);
+};
+
+// One seamless strap tile. textLength forces any event title to fill the same
+// width, so a long name shrinks instead of overflowing the tile.
+export const createLanyardTexture = (credential) => {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="128" viewBox="0 0 512 128">
+    <rect width="512" height="128" fill="${credential.darkColor}"/>
+    <rect y="10" width="512" height="5" fill="${credential.color}"/>
+    <rect y="113" width="512" height="5" fill="${credential.color}"/>
+    <text x="256" y="80" text-anchor="middle" textLength="424" lengthAdjust="spacingAndGlyphs" font-family="Space Mono,monospace" font-size="48" font-weight="700" fill="#fff" opacity=".92" style="text-transform:uppercase">${escapeXML(credential.name)}</text>
+  </svg>`;
+  return toDataURI(svg);
 };
