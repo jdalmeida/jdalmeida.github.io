@@ -75,6 +75,7 @@ export function Band({
   imageFit = "cover",
   lanyardImage = null,
   lanyardWidth = 1,
+  spawnDrop = 0,
   onSelect,
 }) {
   const band = useRef();
@@ -249,7 +250,7 @@ export function Band({
   curve.curveType = "chordal";
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   const [fixedPosition, j1Position, j2Position, j3Position, cardPosition] =
-    bodyPositions(anchor);
+    bodyPositions(anchor, spawnDrop);
 
   return (
     <>
