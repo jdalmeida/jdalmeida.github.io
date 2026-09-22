@@ -28,6 +28,12 @@ import {
 
 const FOV = 20;
 
+// A fita do modal medida contra o crachá: em 2 ela ocupava 31% da largura do
+// cartão, quase o dobro da proporção do molho, e pesava na tela. A câmera do
+// modal está bem mais perto que a do herói, então o mesmo número dá espessuras
+// diferentes nos dois lugares.
+const DIALOG_STRAP_WIDTH = 1.3;
+
 // Os cordões soltos do molho não pertencem a evento nenhum, então a fita vem em
 // preto e branco da marca e sem nome escrito: é fita, não credencial.
 const LOOSE_STRAP_CREDENTIAL = {
@@ -109,7 +115,7 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
                 frontImage={createCredentialTexture(credential)}
                 backImage={createCredentialBackTexture(credential)}
                 lanyardImage={createLanyardTexture(credential)}
-                lanyardWidth={home ? strapWidths[index] : 2}
+                lanyardWidth={home ? strapWidths[index] : DIALOG_STRAP_WIDTH}
                 spawnDrop={home ? 0 : DIALOG_SPAWN_DROP}
                 ropeLength={ropes[index]}
                 hook={hooks[index]}

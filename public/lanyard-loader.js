@@ -8,7 +8,7 @@
   const load = () => {
     if (!desktop.matches || requested) return;
     requested = true;
-    import("/build/lanyard-desktop.js?v=20260922-1").catch((error) => {
+    import("/build/lanyard-desktop.js?v=20260922-2").catch((error) => {
       requested = false;
       console.error("The desktop lanyard could not start.", error);
     });

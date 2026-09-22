@@ -2123,10 +2123,29 @@ body.intro-active {
     pointer-events: none;
   }
 
+  /* A cena cobre o painel inteiro, cabeçalho incluído, e a fita passava por
+     cima do rótulo do registro até ser cortada na borda de cima. O cabeçalho
+     passa a ser a linha onde ela some: a credencial pendura de algo acima do
+     modal. A altura é a mesma conta que o cabeçalho faz — o botão de 44px, o
+     respiro de cima e de baixo e a borda. */
   .desktop-lanyard-dialog .lanyard-wrapper {
+    --dialog-cut: calc(44px + var(--space-3) * 2 + var(--border-solid));
+
     position: absolute;
     inset: 0;
     pointer-events: none;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent var(--dialog-cut),
+      #000 calc(var(--dialog-cut) + 14px)
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent var(--dialog-cut),
+      #000 calc(var(--dialog-cut) + 14px)
+    );
   }
 }
 
