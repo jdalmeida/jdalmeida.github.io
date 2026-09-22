@@ -18,6 +18,7 @@ import {
   LOOSE_STRAP_JOINTS,
   ROPE_TO_CARD,
   bodyPositions,
+  breeze,
   isShortClick,
   lerpFactor,
   looseBodyPositions,
@@ -32,6 +33,13 @@ extend({ MeshLineGeometry, MeshLineMaterial });
 
 // Posiciona o ponto de barriga da fita entre a corda e o gancho. A queda cresce
 // com a distância que a fita tem de vencer, como a de um cabo entre dois postes.
+// Empurra um corpo com a aceleração da brisa. O passo é limitado porque, na
+// volta de uma aba em segundo plano, o `delta` chega enorme e viraria um tranco.
+const pushWithBreeze = (body, wind, delta) => {
+  const impulse = body.mass() * Math.min(delta, 1 / 30);
+  body.applyImpulse({ x: wind.x * impulse, y: 0, z: wind.z * impulse }, true);
+};
+
 const drapeBetween = (target, rope, hook) => {
   target.copy(rope).lerp(hook, DRAPE_AT);
   target.y -= DRAPE_SAG * (0.4 + Math.hypot(hook.x - rope.x, hook.z - rope.z));
@@ -107,6 +115,10 @@ export function Band({
   // então quem segura o ângulo é a mola de rotação lá embaixo, que devolve o
   // crachá ao lugar depois de cada arrasto.
   yaw = 0,
+  // Liga a brisa que balança o crachá parado. `breezePhase` diz quando o vento
+  // chega a este cordão, para o molho não balançar em bloco.
+  withBreeze = false,
+  breezePhase = 0,
   onSelect,
 }) {
   const band = useRef();
@@ -278,11 +290,13 @@ export function Band({
       if (valid) {
         band.current.geometry.setPoints(linePoints);
       }
+      const wind = withBreeze ? breeze(state.clock.elapsedTime, breezePhase) : null;
+      if (wind && !dragged) pushWithBreeze(card.current, wind, delta);
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
       card.current.setAngvel({
         x: ang.x,
-        y: ang.y - (rot.y - yawTarget(yaw)) * 0.25,
+        y: ang.y - (rot.y - yawTarget(yaw + (wind?.yaw ?? 0))) * 0.25,
         z: ang.z,
       });
     }
@@ -408,6 +422,8 @@ export function LooseStrap({
   lanyardWidth = 0.9,
   ropeLength = 1.5,
   hook = null,
+  withBreeze = false,
+  breezePhase = 0,
 }) {
   const band = useRef();
   const bodies = [useRef(), useRef(), useRef(), useRef(), useRef()];
@@ -449,8 +465,16 @@ export function LooseStrap({
   const hookVec = useMemo(() => new THREE.Vector3(), []);
 
   // Desenhada da ponta solta para o gancho, como a da credencial.
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (!bodies[0].current || !band.current) return;
+    // Sem crachá, o vento pega só no peso da ponta — é ele que arrasta a fita.
+    if (withBreeze && bodies.at(-1).current) {
+      pushWithBreeze(
+        bodies.at(-1).current,
+        breeze(state.clock.elapsedTime, breezePhase),
+        delta,
+      );
+    }
     for (const [index, ref] of bodies.slice(1).reverse().entries()) {
       if (!ref.current) return;
       curve.points[index].copy(ref.current.translation());

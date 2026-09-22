@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 
 import {
   ANCHOR_HEIGHT,
+  BREEZE_PHASE_STEP,
+  BREEZE_STRENGTH,
+  BREEZE_YAW,
   CARD_BOTTOM,
   CARD_HALF_HEIGHT,
   CARD_WIDTH,
@@ -11,6 +14,7 @@ import {
   LOOSE_STRAPS,
   LOOSE_STRAP_JOINTS,
   bodyPositions,
+  breeze,
   fitDistance,
   framePosition,
   heroAnchors,
@@ -266,4 +270,23 @@ test("caps rope interpolation after a delayed frame", () => {
 
 test("measures movement for the pointer that started a drag", () => {
   assert.equal(pointerDelta({ x: 10, y: 20 }, { x: 13, y: 24 }), 5);
+});
+
+test("the breeze stays gentle and never stops", () => {
+  let moving = 0;
+  for (let step = 0; step < 2000; step += 1) {
+    const time = step * 0.05;
+    const { x, z, yaw } = breeze(time, 1.1);
+    assert.ok(Math.hypot(x, z) <= BREEZE_STRENGTH * 1.1, "never more than a breeze");
+    assert.ok(Math.abs(yaw) <= BREEZE_YAW, "twists only a few degrees");
+    if (Math.abs(x) > BREEZE_STRENGTH * 0.1) moving += 1;
+  }
+  assert.ok(moving > 1000, "the bunch is swaying most of the time");
+});
+
+test("the breeze reaches each strap a little later", () => {
+  const first = breeze(3, 0);
+  const second = breeze(3, BREEZE_PHASE_STEP);
+  assert.notEqual(first.x, second.x);
+  assert.deepEqual(breeze(3 + BREEZE_PHASE_STEP, 0), second);
 });

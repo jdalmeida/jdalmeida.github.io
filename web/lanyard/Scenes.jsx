@@ -11,6 +11,7 @@ import {
 import { Band, LanyardLights, LooseStrap } from "./Lanyard.jsx";
 import {
   ANCHOR_HEIGHT,
+  BREEZE_PHASE_STEP,
   DIALOG_FRAME,
   DIALOG_SPAWN_DROP,
   LOOSE_STRAPS,
@@ -76,6 +77,12 @@ const computeFromCanvas = (event, state) => {
   state.raycaster.setFromCamera(state.pointer, state.camera);
 };
 
+// Quem pediu menos movimento ao sistema não recebe a brisa: o molho fica parado
+// até alguém arrastar um crachá.
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
 export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect }) {
   const home = mode === "home";
   const frame = home ? heroFrame(credentials.length) : DIALOG_FRAME;
@@ -88,6 +95,8 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
   const hooks = home ? heroHooks(credentials.length) : [];
   const yaws = home ? heroYaws(credentials.length) : [];
   const strapWidths = home ? heroStrapWidths(credentials.length) : [];
+  // A brisa é do molho. No modal a credencial cai e balança sozinha até parar.
+  const withBreeze = home && !prefersReducedMotion();
 
   return (
     <div className="lanyard-wrapper">
@@ -125,6 +134,8 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
                 hook={hooks[index]}
                 yaw={home ? yaws[index] : 0}
                 depthTest={home}
+                withBreeze={withBreeze}
+                breezePhase={index * BREEZE_PHASE_STEP}
                 onSelect={() => onSelect?.(credential.id)}
               />
             ))}
@@ -135,6 +146,8 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
                 lanyardImage={createLanyardTexture(LOOSE_STRAP_CREDENTIAL)}
                 ropeLength={LOOSE_STRAPS[index].rope}
                 hook={hook}
+                withBreeze={withBreeze}
+                breezePhase={(credentials.length + index) * BREEZE_PHASE_STEP}
               />
             ))}
           </Physics>

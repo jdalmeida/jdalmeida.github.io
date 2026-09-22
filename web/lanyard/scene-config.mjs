@@ -255,3 +255,33 @@ export const looseBodyPositions = ([x, y, z], reach = 1) =>
     y,
     z,
   ]);
+
+// A brisa do molho. Parado de todo, o molho lê como render; um crachá de
+// verdade pendurado num gancho nunca para — o ar do ambiente o balança de leve.
+// É uma aceleração lateral, não um impulso fixo: o crachá e o peso do cordão
+// solto têm massas diferentes e devem responder ao mesmo vento. Contra a
+// gravidade da cena (40), 1.4 inclina o cordão pouco menos de 2 graus.
+export const BREEZE_STRENGTH = 1.4;
+
+// Quanto a brisa torce o crachá em torno do eixo vertical, em radianos, somado
+// ao giro de descanso. É o que faz a luz correr pelo cartão.
+export const BREEZE_YAW = 0.07;
+
+// Quanto a fase muda de um cordão para o seguinte. O vento é o mesmo para o
+// molho inteiro, mas chega a cada cordão um pouco depois — sem esse atraso
+// todos balançam em bloco, como se fossem uma peça só.
+export const BREEZE_PHASE_STEP = 0.55;
+
+// A brisa num instante: rajadas lentas que modulam um balanço mais curto. As
+// frequências não são múltiplas umas das outras, então o padrão não se repete
+// a ponto de o olho notar o ciclo.
+export const breeze = (time, phase = 0) => {
+  const t = time + phase;
+  const gust = 0.55 + 0.45 * Math.sin(t * 0.31);
+  const sway = 0.7 * Math.sin(t * 0.83) + 0.3 * Math.sin(t * 2.17 + 1.7);
+  return {
+    x: BREEZE_STRENGTH * gust * sway,
+    z: BREEZE_STRENGTH * 0.35 * gust * Math.sin(t * 0.57 + 0.8),
+    yaw: BREEZE_YAW * gust * Math.sin(t * 0.71 + 0.4),
+  };
+};
