@@ -28,11 +28,15 @@ import {
 
 const FOV = 20;
 
-// A fita do modal medida contra o crachá: em 2 ela ocupava 31% da largura do
-// cartão, quase o dobro da proporção do molho, e pesava na tela. A câmera do
-// modal está bem mais perto que a do herói, então o mesmo número dá espessuras
-// diferentes nos dois lugares.
-const DIALOG_STRAP_WIDTH = 1.3;
+// A fita do modal, medida contra o laço do engate no card.glb — que é por onde
+// uma fita de verdade passa. Com 1.3 ela saía 70% mais larga que o laço, e o
+// engate parecia pendurado nela em vez do contrário. Em 0.85 ela sobra uns 10%,
+// a mesma folga que o molho do herói já tem.
+//
+// A conta não dá para herdar do herói: a largura é medida em unidades de mundo
+// e a câmera do modal está bem mais perto, então o mesmo número rende
+// espessuras diferentes nos dois lugares.
+const DIALOG_STRAP_WIDTH = 0.85;
 
 // Os cordões soltos do molho não pertencem a evento nenhum, então a fita vem em
 // preto e branco da marca e sem nome escrito: é fita, não credencial.
