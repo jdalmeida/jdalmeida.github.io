@@ -453,9 +453,15 @@ body.intro-active {
   max-width: var(--reading-width);
 }
 
+/* A entrelinha do `display-xl` é 60px para uma fonte de 64px — mais apertada
+   que a caixa que o navegador pinta atrás de um trecho destacado, que mede
+   76px com a borda de 2px. Enquanto o amarelo cabe numa linha isso não
+   aparece; assim que ele quebra, as duas caixas se montam uma sobre a outra.
+   Só aqui a entrelinha abre o suficiente para a caixa caber. */
 .home-hero h1 {
   margin: 0 0 var(--space-6);
   font: var(--text-display-xl);
+  line-height: 1.22;
   letter-spacing: -.02em;
 }
 
@@ -2051,9 +2057,28 @@ body.intro-active {
     min-height: 700px;
   }
 
+  /* O alto do molho — o bico onde as fitas convergem no gancho — é cortado:
+     os cordões entram em quadro já separados, como se o gancho estivesse
+     acima da página. A máscara é fração da altura da tela porque a cena é
+     enquadrada por contenção, então a caixa do molho acompanha a altura.
+     O degradê curto só tira o serrilhado do corte; a leitura é de linha. */
   .desktop-lanyard-hero {
+    --lanyard-cut: 25%;
+
     inset: calc(-1 * var(--space-16)) 0 var(--space-12);
     z-index: 1;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent var(--lanyard-cut),
+      #000 calc(var(--lanyard-cut) + 18px)
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent var(--lanyard-cut),
+      #000 calc(var(--lanyard-cut) + 18px)
+    );
   }
 
   .home-hero-art:has(.desktop-lanyard-hero[data-lanyard-mounted="true"]) .home-hero-hint {
@@ -2198,6 +2223,7 @@ body.intro-active {
 
   .home-hero h1 {
     font: var(--text-display-lg);
+    line-height: 1.22;
   }
 
   .archive-header h1 {
