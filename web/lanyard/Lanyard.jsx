@@ -13,18 +13,30 @@ import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 import * as THREE from "three";
 
 import {
+  DRAPE_AT,
+  DRAPE_SAG,
   LOOSE_STRAP_JOINTS,
+  ROPE_TO_CARD,
   bodyPositions,
   isShortClick,
   lerpFactor,
   looseBodyPositions,
   pointerDelta,
+  yawTarget,
 } from "./scene-config.mjs";
 
 const cardGLB = "/assets/lanyard/card.glb";
 const defaultLanyardImage = "/assets/lanyard/lanyard.png";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
+
+// Posiciona o ponto de barriga da fita entre a corda e o gancho. A queda cresce
+// com a distância que a fita tem de vencer, como a de um cabo entre dois postes.
+const drapeBetween = (target, rope, hook) => {
+  target.copy(rope).lerp(hook, DRAPE_AT);
+  target.y -= DRAPE_SAG * (0.4 + Math.hypot(hook.x - rope.x, hook.z - rope.z));
+  return target;
+};
 
 const BLANK_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -56,8 +68,11 @@ export function LanyardLights() {
         rotation={[0, 0, Math.PI / 3]}
         scale={[100, 0.1, 1]}
       />
+      {/* O refletor principal. Em 10 ele estourava qualquer crachá que
+          virasse para este lado — no varal ninguém virava, no molho todos
+          viram. */}
       <Lightformer
-        intensity={10}
+        intensity={4}
         color="white"
         position={[-10, 0, 14]}
         rotation={[0, Math.PI / 2, Math.PI / 3]}
@@ -86,6 +101,12 @@ export function Band({
   // No varal e no modal nada se cruza, e desenhar por cima evita o z-fighting
   // da fita contra o clipe de metal.
   depthTest = false,
+  // O giro de descanso do crachá em torno do próprio eixo vertical, em radianos.
+  // Num molho as credenciais não olham todas para a frente. A gravidade não tem
+  // o que dizer sobre esse giro — ela endireita o que pende, não o que gira —
+  // então quem segura o ângulo é a mola de rotação lá embaixo, que devolve o
+  // crachá ao lugar depois de cada arrasto.
+  yaw = 0,
   onSelect,
 }) {
   const band = useRef();
@@ -185,8 +206,10 @@ export function Band({
         new THREE.Vector3(),
         new THREE.Vector3(),
         new THREE.Vector3(),
+        new THREE.Vector3(),
       ]),
   );
+  const hookVec = useMemo(() => new THREE.Vector3(), []);
   const [dragged, drag] = useState(false);
   const [hovered, hover] = useState(false);
 
@@ -195,7 +218,7 @@ export function Band({
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ropeLength]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.5, 0],
+    [0, ROPE_TO_CARD, 0],
   ]);
 
   useEffect(() => {
@@ -237,10 +260,12 @@ export function Band({
       curve.points[1].copy(j2.current.lerped);
       curve.points[2].copy(j1.current.lerped);
       if (hook) {
-        curve.points[3].set(hook[0], hook[1], hook[2]);
+        hookVec.set(hook[0], hook[1], hook[2]);
       } else {
-        curve.points[3].copy(fixed.current.translation());
+        hookVec.copy(fixed.current.translation());
       }
+      drapeBetween(curve.points[3], j1.current.lerped, hookVec);
+      curve.points[4].copy(hookVec);
       const curvePoints = curve.getPoints(isMobile ? 16 : 32);
       let valid = true;
       curvePoints.forEach((point, index) => {
@@ -255,7 +280,11 @@ export function Band({
       }
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
-      card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
+      card.current.setAngvel({
+        x: ang.x,
+        y: ang.y - (rot.y - yawTarget(yaw)) * 0.25,
+        z: ang.z,
+      });
     }
   });
 
@@ -278,6 +307,7 @@ export function Band({
         </RigidBody>
         <RigidBody
           position={cardPosition}
+          rotation={[0, yaw, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? "kinematicPosition" : "dynamic"}
@@ -326,13 +356,21 @@ export function Band({
             }}
           >
             <mesh geometry={nodes.card.geometry}>
+              {/* Crachá de evento é PVC impresso, não metal. No varal todos
+                  olhavam para a frente e o reflexo era igual em todos; no molho
+                  cada um está virado para um lado, e os que viram para a
+                  esquerda pegavam em cheio o refletor daquele lado — a cor
+                  lavava. `envMapIntensity` segura o quanto do ambiente o cartão
+                  devolve, que é o que produzia o véu. O verniz continua, mais
+                  fraco: é o brilho do plástico, não um espelho. */}
               <meshPhysicalMaterial
                 map={cardMap}
                 map-anisotropy={16}
-                clearcoat={isMobile ? 0 : 1}
-                clearcoatRoughness={0.15}
-                roughness={0.9}
-                metalness={0.8}
+                clearcoat={isMobile ? 0 : 0.15}
+                clearcoatRoughness={0.35}
+                roughness={0.85}
+                metalness={0.05}
+                envMapIntensity={0.08}
               />
             </mesh>
             <mesh
@@ -404,27 +442,28 @@ export function LooseStrap({
   );
   const [curve] = useState(
     () =>
-      new THREE.CatmullRomCurve3([
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-        new THREE.Vector3(),
-      ]),
+      new THREE.CatmullRomCurve3(
+        Array.from(Array(LOOSE_STRAP_JOINTS + 2), () => new THREE.Vector3()),
+      ),
   );
+  const hookVec = useMemo(() => new THREE.Vector3(), []);
 
+  // Desenhada da ponta solta para o gancho, como a da credencial.
   useFrame(() => {
     if (!bodies[0].current || !band.current) return;
-    for (const [index, ref] of bodies.entries()) {
+    for (const [index, ref] of bodies.slice(1).reverse().entries()) {
       if (!ref.current) return;
       curve.points[index].copy(ref.current.translation());
     }
-    if (hook) curve.points[0].set(hook[0], hook[1], hook[2]);
-    // O ponto 0 da curva é a ponta solta: a corda é desenhada de baixo para
-    // cima, como a da credencial.
-    curve.points.reverse();
+    const top = bodies[1].current.translation();
+    if (hook) {
+      hookVec.set(hook[0], hook[1], hook[2]);
+    } else {
+      hookVec.copy(bodies[0].current.translation());
+    }
+    drapeBetween(curve.points[LOOSE_STRAP_JOINTS], top, hookVec);
+    curve.points[LOOSE_STRAP_JOINTS + 1].copy(hookVec);
     const curvePoints = curve.getPoints(isMobile ? 16 : 32);
-    curve.points.reverse();
     let valid = true;
     curvePoints.forEach((point, index) => {
       const offset = index * 3;

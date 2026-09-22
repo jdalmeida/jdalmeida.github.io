@@ -43,6 +43,10 @@ A física prende cada cordão na sua âncora espalhada — é isso que faz o cra
 
 Os crachás não se empurram porque cada um tem a sua camada de `z` e o colisor tem 0,01 de profundidade. Trocar isso faz o molho voltar a ser um varal.
 
+Cada credencial também está girada em torno do próprio eixo, entre 9 e 22 graus para um lado ou para o outro, em `heroYaws`. A gravidade não segura esse giro — ela endireita o que pende, não o que gira —, então quem segura é a mola de `setAngvel` em `Lanyard.jsx`, que até então puxava todo mundo para zero e era o motivo de as credenciais olharem todas para a frente. A mola compara o componente `y` do quaternion, não o ângulo, e é isso que `yawTarget` converte.
+
+O giro mudou a iluminação de graça: no varal todos os crachás olhavam para o mesmo lado e recebiam a mesma luz, e no molho cada um pega o refletor num ângulo. Com a luz ambiente em `PI` e o refletor principal em `10`, os crachás virados para a esquerda estouravam — `#0a7d4f` saía verde-menta. A luz ambiente caiu para `1.1`, o refletor para `4` e o material do cartão deixou de ser quase espelho (`metalness` 0.8) para ser o PVC impresso que ele é. Se mexer nisso, vale medir: a cor da faixa tem de sair perto do token, não mais clara.
+
 A cena vale a partir de 1041px, onde o herói tem duas colunas. Abaixo disso o monograma fica no lugar dela e as credenciais se leem na grade da seção de eventos. A largura está em dois lugares que precisam casar: a media query em `public/styles.css` e o `matchMedia` em `public/lanyard-loader.js`.
 
 Install the frontend dependencies after you clone the repository. Rebuild the committed bundle after you change `web/lanyard`.

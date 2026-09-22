@@ -19,8 +19,10 @@ import {
   heroAnchors,
   heroFrame,
   heroHook,
+  heroHooks,
   heroRopes,
   heroStrapWidths,
+  heroYaws,
   looseStrapAnchors,
 } from "./scene-config.mjs";
 
@@ -73,6 +75,8 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
   const ropes = home ? heroRopes(credentials.length) : credentials.map(() => 1);
   const looseAnchors = home ? looseStrapAnchors(credentials.length) : [];
   const hook = home ? heroHook() : null;
+  const hooks = home ? heroHooks(credentials.length) : [];
+  const yaws = home ? heroYaws(credentials.length) : [];
   const strapWidths = home ? heroStrapWidths(credentials.length) : [];
 
   return (
@@ -89,7 +93,13 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
         }}
       >
         <FitCamera frame={frame} />
-        <ambientLight intensity={Math.PI} />
+        {/* A cena usa tone mapping ACES, que lava o que chega superexposto.
+            Com a luz ambiente em PI as faixas de cor da credencial saíam bem
+            mais claras e dessaturadas que o token da marca — `#0a7d4f` virava
+            um verde-menta. Isso não aparecia no varal, onde todos os crachás
+            olhavam para a frente; no molho cada um pega a luz num ângulo, e os
+            virados para a esquerda lavavam de vez. */}
+        <ambientLight intensity={1.1} />
         <Suspense fallback={null}>
           <Physics gravity={[0, -40, 0]} timeStep={1 / 60}>
             {credentials.map((credential, index) => (
@@ -102,7 +112,8 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
                 lanyardWidth={home ? strapWidths[index] : 2}
                 spawnDrop={home ? 0 : DIALOG_SPAWN_DROP}
                 ropeLength={ropes[index]}
-                hook={hook}
+                hook={hooks[index]}
+                yaw={home ? yaws[index] : 0}
                 depthTest={home}
                 onSelect={() => onSelect?.(credential.id)}
               />

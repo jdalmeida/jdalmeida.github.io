@@ -17,13 +17,16 @@ import {
   heroCardCenter,
   heroFrame,
   heroHook,
+  heroHooks,
   heroRopes,
   heroStrapWidths,
+  heroYaws,
   isShortClick,
   lerpFactor,
   looseBodyPositions,
   looseStrapAnchors,
   pointerDelta,
+  yawTarget,
 } from "./scene-config.mjs";
 
 const round = (value) => Math.round(value * 1000) / 1000;
@@ -68,6 +71,46 @@ test("varies the rope, and with it the height each card rests at", () => {
 
 test("gives the straps different widths", () => {
   assert.ok(new Set(heroStrapWidths(5)).size > 1);
+});
+
+// No credential faces the camera head on: each one is turned a different way,
+// and that is what makes the set read as a bunch instead of parallel cards.
+test("turns every credential a different way", () => {
+  const yaws = heroYaws(5);
+  assert.equal(new Set(yaws).size, 5);
+  assert.ok(
+    yaws.some((yaw) => yaw > 0) && yaws.some((yaw) => yaw < 0),
+    "the bunch opens both ways",
+  );
+  for (const yaw of yaws) {
+    const degrees = Math.abs((yaw * 180) / Math.PI);
+    assert.ok(degrees >= 5 && degrees <= 30, `${degrees} degrees`);
+  }
+});
+
+// The rotation spring compares the quaternion's y component, not the angle.
+test("aims the rotation spring at the quaternion, not the angle", () => {
+  assert.equal(yawTarget(0), 0);
+  assert.equal(yawTarget(Math.PI / 2), Number(Math.SQRT1_2.toFixed(6)));
+  for (const yaw of heroYaws(5)) {
+    assert.equal(Math.sign(yawTarget(yaw)), Math.sign(yaw));
+  }
+});
+
+// No two straps meet the hook at the same spot, or the ends gather into a
+// perfect point; and they converge in depth only part of the way, or every
+// strap would cross in the same plane and the overlap would go.
+test("lands each strap on its own spot of the hook", () => {
+  const hooks = heroHooks(5);
+  assert.equal(new Set(hooks.map(([x]) => x)).size, 5);
+  const [hookX, hookY] = heroHook();
+  for (const [index, [x, y, z]] of hooks.entries()) {
+    assert.ok(Math.abs(x - hookX) < 0.25, "near the hook");
+    assert.ok(y <= hookY && y > hookY - 0.25, "just under the top");
+    const depth = heroAnchors(5)[index][2];
+    assert.ok(Math.abs(z) < Math.abs(depth) || depth === 0, "pulled toward the middle");
+    assert.equal(Math.sign(z), Math.sign(depth));
+  }
 });
 
 test("keeps every card, and the hook, inside the frame the camera fits", () => {

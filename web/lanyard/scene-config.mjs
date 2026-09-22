@@ -46,6 +46,52 @@ const HOOK_LIFT = 0.55;
 const HOOK_X = -0.35;
 export const heroHook = () => [HOOK_X, ANCHOR_HEIGHT + HOOK_LIFT, 0];
 
+// Nenhuma fita encosta no gancho no mesmo lugar: elas se acomodam empilhadas
+// alguns centímetros umas sobre as outras. Sem esse deslocamento as pontas se
+// juntam num bico perfeito, que é o que denuncia o desenho.
+const HOOK_JITTER_X = [0.07, -0.11, 0.14, -0.05, -0.16, 0.1, -0.02];
+const HOOK_JITTER_Y = [0, -0.09, -0.04, -0.14, -0.06, -0.11, -0.02];
+
+// A fita converge em profundidade só em parte: ela sai da camada do crachá em
+// direção ao gancho sem chegar nele, senão os cordões se cruzariam todos no
+// mesmo plano e a sobreposição some.
+const HOOK_DEPTH_PULL = 0.3;
+
+// Onde cada fita encosta no gancho. É ponto de desenho, não de física.
+export const heroHooks = (count) => {
+  const [x, y] = heroHook();
+  return heroAnchors(count).map(([, , z], index) => [
+    Number((x + HOOK_JITTER_X[index % HOOK_JITTER_X.length]).toFixed(4)),
+    Number((y + HOOK_JITTER_Y[index % HOOK_JITTER_Y.length]).toFixed(4)),
+    Number((z * HOOK_DEPTH_PULL).toFixed(4)),
+  ]);
+};
+
+// O quanto a fita barriga entre o gancho e o primeiro corpo da corda. Sem um
+// ponto de controle ali a curva vira uma diagonal seca; com ele a fita cai com
+// o próprio peso, que é o que o olho reconhece como tecido.
+export const DRAPE_AT = 0.55;
+export const DRAPE_SAG = 0.22;
+
+// O quanto cada crachá fica girado em torno do próprio eixo vertical, em graus.
+// Num molho de verdade as credenciais não olham todas para a frente: cada uma
+// se acomodou virada para um lado, e é isso que faz o conjunto ler como molho
+// em vez de uma pilha de cartões paralelos.
+//
+// A gravidade não tem o que dizer sobre esse giro — ela endireita o que pende,
+// não o que gira. Quem segura o ângulo é a mola de `setAngvel` em Lanyard.jsx,
+// que até aqui puxava todo mundo para zero.
+const HERO_YAW = [-15, 10, -22, 17, -9, 13, -18];
+export const heroYaws = (count) =>
+  Array.from(
+    Array(count),
+    (_, index) => (HERO_YAW[index % HERO_YAW.length] * Math.PI) / 180,
+  );
+
+// A mola compara o componente y do quaternion, não o ângulo. Para um giro de
+// `yaw` em torno de Y esse componente vale sen(yaw / 2): é esse o alvo.
+export const yawTarget = (yaw) => Number(Math.sin(yaw / 2).toFixed(6));
+
 // Largura da fita de cada credencial. Cordão de evento não tem medida padrão, e
 // repetir a mesma largura cinco vezes é o que faz o molho parecer desenhado.
 const HERO_STRAP_WIDTH = [0.95, 0.82, 1, 0.88, 0.92, 0.86, 0.98];
