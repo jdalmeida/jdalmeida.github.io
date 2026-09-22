@@ -482,8 +482,20 @@ body.intro-active {
   gap: var(--space-4);
 }
 
+/* O molho pendura de um gancho atrás do cabeçalho e desce até o fim do herói,
+   então a coluna reserva a altura e a cena se sobrepõe a ela, subindo os 64px
+   de respiro do herói para o gancho encostar no cabeçalho. */
 .home-hero-art {
   position: relative;
+}
+
+.home-hero-hint {
+  display: none;
+  margin: var(--space-4) 0 0;
+  color: var(--ink-300);
+  font: var(--text-label);
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
 
 .home-mark-panel {
@@ -1991,7 +2003,8 @@ body.intro-active {
   display: none;
 }
 
-.lanyard-react-root,
+/* O host já é dimensionado por quem o posiciona — `inset` no herói, altura fixa
+   no modal. Quem estica é o que está dentro dele. */
 .lanyard-react-root .lanyard-wrapper,
 .lanyard-react-root canvas {
   width: 100%;
@@ -2007,7 +2020,10 @@ body.intro-active {
   display: block;
 }
 
-@media (min-width: 821px) {
+/* A cena 3D vale onde o herói tem duas colunas. Abaixo disso o molho cairia
+   embaixo do texto, em largura total e cortado, então o monograma fica no
+   lugar dele e as credenciais se leem na grade da seção de eventos. */
+@media (min-width: 1041px) {
   .desktop-lanyard {
     display: block;
     position: absolute;
@@ -2016,29 +2032,47 @@ body.intro-active {
   }
 
   .desktop-lanyard[data-lanyard-mounted="true"] {
-    position: relative;
     visibility: visible;
     pointer-events: auto;
   }
 
-  .home-events:has(.desktop-lanyard-home[data-lanyard-mounted="true"]) .badge-stack {
+  .desktop-lanyard-dialog {
     position: absolute;
-    width: 1px;
-    height: 1px;
-    min-height: 0;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    pointer-events: none;
   }
 
-  /* A cena é enquadrada por contenção: numa janela estreita a caixa alta
-     sobraria por baixo das credenciais, então a altura acompanha a largura. */
-  .desktop-lanyard-home {
-    width: min(1240px, 100%);
-    height: clamp(560px, 62vw, 760px);
-    margin: var(--space-1) auto -40px;
+  .desktop-lanyard-dialog[data-lanyard-mounted="true"] {
+    position: relative;
+  }
+
+  /* A coluna do herói guarda a altura do molho; a cena vai por cima dela e
+     sobe 136px — os 72px do cabeçalho mais os 64px de respiro do herói — para
+     o gancho ficar no topo da página, não no topo da coluna. */
+  .home-hero-art {
+    min-height: 700px;
+  }
+
+  .desktop-lanyard-hero {
+    inset: calc(-1 * var(--space-16)) 0 var(--space-12);
+    z-index: 1;
+  }
+
+  .home-hero-art:has(.desktop-lanyard-hero[data-lanyard-mounted="true"]) .home-hero-hint {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    text-align: center;
+  }
+
+  /* O monograma é o que se vê enquanto a cena não monta, e cede o lugar a ela
+     quando monta. */
+  .home-hero-art:has(.desktop-lanyard-hero[data-lanyard-mounted="true"]) .home-mark-panel {
+    display: none;
+  }
+
+  .home-hero-art:not(:has(.desktop-lanyard-hero[data-lanyard-mounted="true"])) .home-hero-hint {
+    display: none;
   }
 
   .dialog-body:has(.desktop-lanyard-dialog[data-lanyard-mounted="true"]) .lanyard-wrap {

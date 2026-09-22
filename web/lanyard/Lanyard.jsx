@@ -13,9 +13,11 @@ import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 import * as THREE from "three";
 
 import {
+  LOOSE_STRAP_JOINTS,
   bodyPositions,
   isShortClick,
   lerpFactor,
+  looseBodyPositions,
   pointerDelta,
 } from "./scene-config.mjs";
 
@@ -76,6 +78,14 @@ export function Band({
   lanyardImage = null,
   lanyardWidth = 1,
   spawnDrop = 0,
+  ropeLength = 1,
+  // Onde a fita é desenhada no alto. Sem isso ela nasce na âncora da física,
+  // e um molho de âncoras espalhadas vira um varal de cordões paralelos.
+  hook = null,
+  // O molho sobrepõe cordão e crachá, então lá a fita respeita a profundidade.
+  // No varal e no modal nada se cruza, e desenhar por cima evita o z-fighting
+  // da fita contra o clipe de metal.
+  depthTest = false,
   onSelect,
 }) {
   const band = useRef();
@@ -106,11 +116,9 @@ export function Band({
         anchor[0],
         anchor[1] - 3,
         anchor[2],
-        anchor[0],
-        anchor[1],
-        anchor[2],
+        ...(hook || anchor),
       ]),
-    [anchor],
+    [anchor, hook],
   );
   const linePoints = useMemo(
     () => new Float32Array((isMobile ? 17 : 33) * 3),
@@ -182,9 +190,9 @@ export function Band({
   const [dragged, drag] = useState(false);
   const [hovered, hover] = useState(false);
 
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ropeLength]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
     [0, 1.5, 0],
@@ -228,7 +236,11 @@ export function Band({
       curve.points[0].copy(j3.current.translation());
       curve.points[1].copy(j2.current.lerped);
       curve.points[2].copy(j1.current.lerped);
-      curve.points[3].copy(fixed.current.translation());
+      if (hook) {
+        curve.points[3].set(hook[0], hook[1], hook[2]);
+      } else {
+        curve.points[3].copy(fixed.current.translation());
+      }
       const curvePoints = curve.getPoints(isMobile ? 16 : 32);
       let valid = true;
       curvePoints.forEach((point, index) => {
@@ -250,7 +262,7 @@ export function Band({
   curve.curveType = "chordal";
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   const [fixedPosition, j1Position, j2Position, j3Position, cardPosition] =
-    bodyPositions(anchor, spawnDrop);
+    bodyPositions(anchor, spawnDrop, ropeLength);
 
   return (
     <>
@@ -335,7 +347,113 @@ export function Band({
         <meshLineGeometry points={initialLine} />
         <meshLineMaterial
           color="white"
-          depthTest={false}
+          depthTest={depthTest}
+          resolution={isMobile ? [1000, 2000] : [1000, 1000]}
+          useMap
+          map={texture}
+          repeat={[-4, 1]}
+          lineWidth={lanyardWidth}
+        />
+      </mesh>
+    </>
+  );
+}
+
+// Um cordão sem credencial: os que sobram no molho de quem guarda crachá de
+// evento. É volume visual, não conteúdo — não recebe ponteiro, não abre nada e
+// não representa evento nenhum. A corda é mais longa que a de uma credencial e
+// termina num peso pequeno, que é o que a faz cair em vez de flutuar.
+export function LooseStrap({
+  anchor = [0, 4, 0],
+  isMobile = false,
+  lanyardImage = null,
+  lanyardWidth = 0.9,
+  ropeLength = 1.5,
+  hook = null,
+}) {
+  const band = useRef();
+  const bodies = [useRef(), useRef(), useRef(), useRef(), useRef()];
+  const texture = useTexture(lanyardImage || defaultLanyardImage);
+  const segmentProps = {
+    type: "dynamic",
+    canSleep: true,
+    colliders: false,
+    angularDamping: 4,
+    linearDamping: 4,
+  };
+
+  useRopeJoint(bodies[0], bodies[1], [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(bodies[1], bodies[2], [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(bodies[2], bodies[3], [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(bodies[3], bodies[4], [[0, 0, 0], [0, 0, 0], ropeLength]);
+
+  const positions = looseBodyPositions(anchor, ropeLength);
+  const initialLine = useMemo(
+    () =>
+      new Float32Array([
+        anchor[0],
+        anchor[1] - ropeLength * LOOSE_STRAP_JOINTS,
+        anchor[2],
+        ...(hook || anchor),
+      ]),
+    [anchor, hook, ropeLength],
+  );
+  const linePoints = useMemo(
+    () => new Float32Array((isMobile ? 17 : 33) * 3),
+    [isMobile],
+  );
+  const [curve] = useState(
+    () =>
+      new THREE.CatmullRomCurve3([
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+        new THREE.Vector3(),
+      ]),
+  );
+
+  useFrame(() => {
+    if (!bodies[0].current || !band.current) return;
+    for (const [index, ref] of bodies.entries()) {
+      if (!ref.current) return;
+      curve.points[index].copy(ref.current.translation());
+    }
+    if (hook) curve.points[0].set(hook[0], hook[1], hook[2]);
+    // O ponto 0 da curva é a ponta solta: a corda é desenhada de baixo para
+    // cima, como a da credencial.
+    curve.points.reverse();
+    const curvePoints = curve.getPoints(isMobile ? 16 : 32);
+    curve.points.reverse();
+    let valid = true;
+    curvePoints.forEach((point, index) => {
+      const offset = index * 3;
+      linePoints[offset] = point.x;
+      linePoints[offset + 1] = point.y;
+      linePoints[offset + 2] = point.z;
+      valid &&= Number.isFinite(point.x + point.y + point.z);
+    });
+    if (valid) band.current.geometry.setPoints(linePoints);
+  });
+
+  curve.curveType = "chordal";
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+  return (
+    <>
+      <RigidBody position={positions[0]} ref={bodies[0]} {...segmentProps} type="fixed" />
+      {positions.slice(1, -1).map((position, index) => (
+        <RigidBody key={index} position={position} ref={bodies[index + 1]} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+      ))}
+      <RigidBody position={positions.at(-1)} ref={bodies.at(-1)} {...segmentProps}>
+        <BallCollider args={[0.12]} />
+      </RigidBody>
+      <mesh ref={band}>
+        <meshLineGeometry points={initialLine} />
+        <meshLineMaterial
+          color="white"
           resolution={isMobile ? [1000, 2000] : [1000, 1000]}
           useMap
           map={texture}

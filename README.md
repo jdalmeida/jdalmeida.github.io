@@ -37,7 +37,13 @@ As cores das credenciais de evento ficam em `site/models.go` e as texturas da cr
 
 ## Desktop Lanyard
 
-The desktop event section uses the React Bits Lanyard in a React island. Mobile browsers keep the server-rendered credential layout.
+O herói pendura as credenciais num molho, como o de crachás de evento numa parede: todas as fitas convergem num gancho só e os crachás caem em leque, sobrepostos. A cena é uma ilha React com a Lanyard do React Bits.
+
+A física prende cada cordão na sua âncora espalhada — é isso que faz o crachá descansar aberto e parar quieto. O que converge no gancho é a fita desenhada, que sai dele na diagonal até o primeiro corpo da corda. As duas coisas vivem em `web/lanyard/scene-config.mjs`, com o gancho em `heroHook` e as âncoras em `heroAnchors`.
+
+Os crachás não se empurram porque cada um tem a sua camada de `z` e o colisor tem 0,01 de profundidade. Trocar isso faz o molho voltar a ser um varal.
+
+A cena vale a partir de 1041px, onde o herói tem duas colunas. Abaixo disso o monograma fica no lugar dela e as credenciais se leem na grade da seção de eventos. A largura está em dois lugares que precisam casar: a media query em `public/styles.css` e o `matchMedia` em `public/lanyard-loader.js`.
 
 Install the frontend dependencies after you clone the repository. Rebuild the committed bundle after you change `web/lanyard`.
 

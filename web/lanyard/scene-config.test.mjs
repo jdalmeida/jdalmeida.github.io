@@ -8,80 +8,123 @@ import {
   CARD_WIDTH,
   DIALOG_FRAME,
   DIALOG_SPAWN_DROP,
+  LOOSE_STRAPS,
+  LOOSE_STRAP_JOINTS,
   bodyPositions,
   fitDistance,
   framePosition,
-  homeAnchors,
-  homeDrop,
-  homeFrame,
+  heroAnchors,
+  heroCardCenter,
+  heroFrame,
+  heroHook,
+  heroRopes,
+  heroStrapWidths,
   isShortClick,
   lerpFactor,
+  looseBodyPositions,
+  looseStrapAnchors,
   pointerDelta,
 } from "./scene-config.mjs";
 
 const round = (value) => Math.round(value * 1000) / 1000;
 
-test("places four anchors around the center of one physics world", () => {
-  assert.deepEqual(homeAnchors(4), [
-    [-3.3, 4, -0.15],
-    [-1.1, 3.4, 0.15],
-    [1.1, 4, -0.15],
-    [3.3, 3.4, 0.15],
-  ]);
+test("hangs the whole bunch from one hook", () => {
+  for (const [, y] of heroAnchors(5)) {
+    assert.equal(y, ANCHOR_HEIGHT);
+  }
+  const [, hookY] = heroHook();
+  assert.ok(hookY > ANCHOR_HEIGHT, "the hook sits above every anchor");
 });
 
-test("hangs every other credential lower than its neighbours", () => {
-  const heights = homeAnchors(5).map(([, y]) => y);
-  for (const [index, height] of heights.entries()) {
-    assert.notEqual(height, heights[index + 1]);
-    assert.equal(height, 4 - homeDrop(index));
+// The card collider is 0.01 deep, so two credentials on different layers never
+// touch. That is what lets them overlap on screen instead of shoving each other
+// sideways — without it the bunch would push itself back into a row.
+test("gives every credential its own depth layer", () => {
+  for (const count of [1, 4, 5, 8]) {
+    const depths = heroAnchors(count).map(([, , z]) => z);
+    assert.equal(new Set(depths).size, count, `${count} layers`);
   }
 });
 
-test("keeps every home anchor inside the frame the camera fits", () => {
-  for (const count of [1, 4, 5, 8]) {
-    const frame = homeFrame(count);
-    const outer = Math.max(...homeAnchors(count).map(([x]) => Math.abs(x)));
-    assert.ok(outer + CARD_WIDTH / 2 < frame.width / 2, `${count} wide`);
+test("puts the most recent event at the front of the bunch", () => {
+  const depths = heroAnchors(5).map(([, , z]) => z);
+  assert.equal(Math.max(...depths), depths[0]);
+  assert.equal(Math.min(...depths), depths.at(-1));
+});
 
-    // The frame runs from above the anchors to below the lowest card.
+// A credential straight behind another is a credential nobody can see.
+test("never hangs two credentials from the same spot", () => {
+  const columns = heroAnchors(5).map(([x]) => x);
+  assert.equal(new Set(columns).size, 5);
+});
+
+test("varies the rope, and with it the height each card rests at", () => {
+  const heights = heroRopes(5).map(heroCardCenter);
+  assert.equal(new Set(heights).size, 5);
+  for (const height of heights) {
+    assert.ok(height < ANCHOR_HEIGHT, "every card hangs below the hook");
+  }
+});
+
+test("gives the straps different widths", () => {
+  assert.ok(new Set(heroStrapWidths(5)).size > 1);
+});
+
+test("keeps every card, and the hook, inside the frame the camera fits", () => {
+  for (const count of [1, 4, 5, 8]) {
+    const frame = heroFrame(count);
     const top = frame.center + frame.height / 2;
     const bottom = frame.center - frame.height / 2;
-    const lowest = Math.min(...homeAnchors(count).map(([, y]) => y));
-    assert.ok(top > 4, `${count} top`);
-    assert.ok(bottom < CARD_BOTTOM - (4 - lowest), `${count} bottom`);
+    const right = frame.offset + frame.width / 2;
+    const left = frame.offset - frame.width / 2;
+
+    assert.ok(top > heroHook()[1], `${count} hook`);
+    for (const [index, [x]] of heroAnchors(count).entries()) {
+      assert.ok(x + CARD_WIDTH / 2 < right, `${count} right`);
+      assert.ok(x - CARD_WIDTH / 2 > left, `${count} left`);
+      const card = heroCardCenter(heroRopes(count)[index]);
+      assert.ok(card - CARD_HALF_HEIGHT > bottom, `${count} bottom`);
+    }
   }
 });
 
-// The stagger only uses the room the width of the row already leaves, so the
-// credentials keep their size on the canvas the home page gives the scene.
-test("fits the staggered row without backing the camera off further", () => {
-  const aspect = 1240 / 760;
-  const frame = homeFrame(5);
-  const flat = { ...frame, height: frame.height - 0.6 };
-  assert.equal(
-    Math.round(fitDistance(frame, 20, aspect) * 100),
-    Math.round(fitDistance(flat, 20, aspect) * 100),
-  );
+// The floor follows the longest rope in play, so a credential that hangs lower
+// than the ones before it is not cropped.
+test("drops the floor when a longer rope joins the bunch", () => {
+  const floor = (count) => heroFrame(count).center - heroFrame(count).height / 2;
+  assert.ok(Math.max(...heroRopes(5)) > Math.max(...heroRopes(2)));
+  assert.ok(floor(5) < floor(2));
+});
+
+test("hangs the loose straps behind the deepest credential", () => {
+  const deepest = Math.min(...heroAnchors(5).map(([, , z]) => z));
+  const loose = looseStrapAnchors(5);
+  assert.equal(loose.length, LOOSE_STRAPS.length);
+  for (const [, y, z] of loose) {
+    assert.equal(y, ANCHOR_HEIGHT);
+    assert.ok(z < deepest, "a loose strap never crosses in front of a card");
+  }
 });
 
 test("backs the camera off for the shorter axis of the canvas", () => {
-  const wide = fitDistance(homeFrame(4), 20, 16 / 9);
-  const narrow = fitDistance(homeFrame(4), 20, 1);
-  assert.equal(Math.round(wide * 100) / 100, 19.99);
-  assert.equal(Math.round(narrow * 100) / 100, 27.28);
-  assert.ok(narrow > wide);
+  // The bunch is a tall box, so a portrait canvas is fitted on its height and
+  // only a canvas wider than the box itself is fitted on its width.
+  const frame = heroFrame(5);
+  const tall = fitDistance(frame, 20, 0.5);
+  const square = fitDistance(frame, 20, 1);
+  assert.ok(tall > square);
+  assert.equal(round(square), round(frame.height / (2 * Math.tan(Math.PI / 18))));
 });
 
-test("never brings the camera closer as the row grows", () => {
-  const distance = (count) => fitDistance(homeFrame(count), 20, 1240 / 760);
+test("never brings the camera closer as the bunch grows", () => {
+  const distance = (count) => fitDistance(heroFrame(count), 20, 547 / 716);
   assert.ok(distance(5) >= distance(4));
-  assert.ok(distance(8) > distance(5));
+  assert.ok(distance(8) >= distance(5));
 });
 
-test("frames one dialog credential closer than the home row", () => {
+test("frames one dialog credential closer than the whole bunch", () => {
   assert.ok(
-    fitDistance(DIALOG_FRAME, 20, 0.5) < fitDistance(homeFrame(4), 20, 0.5),
+    fitDistance(DIALOG_FRAME, 20, 0.5) < fitDistance(heroFrame(4), 20, 0.5),
   );
 });
 
@@ -102,10 +145,13 @@ test("holds the credential the dialog drops, from spawn to rest", () => {
 });
 
 test("centers a frame that asks for no edge in particular", () => {
-  const frame = homeFrame(4);
+  const frame = heroFrame(5);
   const aspect = 16 / 9;
   const distance = fitDistance(frame, 20, aspect);
-  assert.deepEqual(framePosition(frame, 20, aspect, distance), [0, frame.center]);
+  assert.deepEqual(framePosition(frame, 20, aspect, distance), [
+    frame.offset,
+    frame.center,
+  ]);
 });
 
 // The room a contain fit leaves over falls to the right of the strap and below
@@ -142,6 +188,18 @@ test("places every rope body in the anchor world space", () => {
   ]);
 });
 
+// A longer rope spawns its bodies further apart, so the strap starts slack
+// instead of taut and the scene opens without a jerk.
+test("spreads the rope bodies by the length of the rope", () => {
+  assert.deepEqual(bodyPositions([0, 4, 0], 0, 1.5), [
+    [0, 4, 0],
+    [0.75, 4, 0],
+    [1.5, 4, 0],
+    [2.25, 4, 0],
+    [3, 4, 0],
+  ]);
+});
+
 test("hangs the rope bodies on the line down to a dropped card", () => {
   assert.deepEqual(bodyPositions([0, 4, 0], 2), [
     [0, 4, 0],
@@ -150,6 +208,12 @@ test("hangs the rope bodies on the line down to a dropped card", () => {
     [1.5, 2.5, 0],
     [2, 2, 0],
   ]);
+});
+
+test("gives a loose strap one body per joint, plus the weight on the end", () => {
+  const bodies = looseBodyPositions([0, 4, 0], 1.5);
+  assert.equal(bodies.length, LOOSE_STRAP_JOINTS + 1);
+  assert.deepEqual(bodies.at(-1), [3, 4, 0]);
 });
 
 test("caps rope interpolation after a delayed frame", () => {

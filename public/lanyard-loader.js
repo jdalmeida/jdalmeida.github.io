@@ -1,13 +1,14 @@
 (() => {
   "use strict";
 
-  const desktop = window.matchMedia("(min-width: 821px)");
+  // Precisa casar com a media query da cena em styles.css.
+  const desktop = window.matchMedia("(min-width: 1041px)");
   let requested = false;
 
   const load = () => {
     if (!desktop.matches || requested) return;
     requested = true;
-    import("/build/lanyard-desktop.js?v=20260820-10").catch((error) => {
+    import("/build/lanyard-desktop.js?v=20260922-1").catch((error) => {
       requested = false;
       console.error("The desktop lanyard could not start.", error);
     });

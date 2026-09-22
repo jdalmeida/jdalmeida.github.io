@@ -4,19 +4,66 @@ export const ANCHOR_HEIGHT = 4;
 export const CARD_BOTTOM = -1.75;
 export const CARD_WIDTH = 1.62;
 
-const HOME_SPACING = 2.2;
+// O molho pendura tudo de um gancho só, como o rack de crachás numa parede: as
+// âncoras ficam agrupadas em torno de x = 0 e o leque nasce do comprimento de
+// cordão de cada credencial, não de um espaçamento entre elas.
+//
+// O crachá tem meia-espessura de 0.01 no colisor, então duas credenciais em
+// camadas de z diferentes nunca se tocam: elas se sobrepõem na tela em vez de
+// se empurrarem para os lados. É o que dá o empilhamento da foto.
+const HERO_DEPTH_STEP = 0.32;
 
-// Breathing room between the outer credential and the edge of the home frame.
-const HOME_MARGIN = 0.7;
+// Quanto cada cordão desloca a âncora no gancho. Um molho real não sai de um
+// ponto matemático: as fitas se acomodam alguns centímetros uma ao lado da
+// outra. A lista se repete, então um evento novo entra sem tabela nova.
+const HERO_HANGER_X = [-0.7, 0.85, -1.25, 0.3, 1.3, 0.05, -0.45];
 
-// Every other credential hangs a little lower, so the row reads as a rack of
-// badges instead of a fence and neighbours never line up corner to corner.
-const HOME_DROP = 0.6;
+// Comprimento de cada uma das três juntas de corda, por credencial. A junta
+// esférica ainda acrescenta ROPE_TO_CARD até o centro do crachá, então o
+// crachá descansa em ANCHOR_HEIGHT - 3 * cordão - ROPE_TO_CARD.
+const HERO_HANGER_ROPE = [1.12, 1, 1.34, 1.18, 1.46, 1.06, 1.28];
 
-// Slack above the anchor and below the lowest card, so nothing touches the
-// edge of the frame the camera fits. It stays inside the room the width of the
-// row already leaves, so the stagger costs no size.
-const HOME_PADDING = 0.35;
+// Quantas juntas de corda o cordão tem, e o quanto a junta esférica desce do
+// último corpo até o centro do crachá. Ambos vêm dos joints em Lanyard.jsx.
+export const ROPE_JOINTS = 3;
+export const ROPE_TO_CARD = 1.5;
+
+// Folga lateral para o balanço: arrastada, a credencial sai bem além de onde
+// descansa, e o enquadramento não pode cortar esse movimento.
+const HERO_SWING = 0.7;
+
+// Folga acima do gancho e abaixo do crachá mais baixo.
+const HERO_PADDING = 0.35;
+
+// O gancho: o ponto único de onde o molho inteiro pendura. A física continua
+// prendendo cada cordão na sua âncora espalhada — é isso que faz o crachá
+// descansar aberto em leque e parar quieto lá. O que converge no gancho é a
+// fita desenhada, que sai dele na diagonal até o primeiro corpo da corda, do
+// jeito que uma fita de verdade cai quando está dobrada sobre um prego.
+// O gancho fica fora do centro, como o da parede: um molho pendurado não abre
+// um leque simétrico, ele cai para o lado em que tem mais peso.
+const HOOK_LIFT = 0.55;
+const HOOK_X = -0.35;
+export const heroHook = () => [HOOK_X, ANCHOR_HEIGHT + HOOK_LIFT, 0];
+
+// Largura da fita de cada credencial. Cordão de evento não tem medida padrão, e
+// repetir a mesma largura cinco vezes é o que faz o molho parecer desenhado.
+const HERO_STRAP_WIDTH = [0.95, 0.82, 1, 0.88, 0.92, 0.86, 0.98];
+export const heroStrapWidths = (count) =>
+  Array.from(
+    Array(count),
+    (_, index) => HERO_STRAP_WIDTH[index % HERO_STRAP_WIDTH.length],
+  );
+
+// Os cordões sem credencial. São volume visual ao fundo do molho — não clicam e
+// não representam evento nenhum. Ficam atrás da camada de z mais funda que as
+// credenciais alcançam, com quatro juntas em vez de três para cair mais solto.
+export const LOOSE_STRAP_JOINTS = 4;
+export const LOOSE_STRAPS = [
+  { x: -0.62, rope: 1.52, depth: 1 },
+  { x: 0.55, rope: 1.74, depth: 2 },
+  { x: -0.08, rope: 1.36, depth: 3 },
+];
 
 // Half the height of the card, measured on its collider.
 export const CARD_HALF_HEIGHT = 1.125;
@@ -60,29 +107,61 @@ export const DIALOG_FRAME = {
   align: { x: -1, y: 1 },
 };
 
-export const homeDrop = (index) => (index % 2 ? HOME_DROP : 0);
+const heroHanger = (index) => ({
+  x: HERO_HANGER_X[index % HERO_HANGER_X.length],
+  rope: HERO_HANGER_ROPE[index % HERO_HANGER_ROPE.length],
+});
 
-// The home box grows with the row, so a credential added to the stack does not
-// push the ones on the ends out of the frame.
-export const homeFrame = (count) => {
-  const floor = CARD_BOTTOM - HOME_DROP - HOME_PADDING;
-  const ceiling = ANCHOR_HEIGHT + HOME_PADDING;
-  return {
-    width: Number(
-      ((count - 1) * HOME_SPACING + CARD_WIDTH + HOME_MARGIN * 2).toFixed(4),
-    ),
-    height: Number((ceiling - floor).toFixed(4)),
-    center: Number(((ceiling + floor) / 2).toFixed(4)),
-  };
+// O comprimento de cordão de cada credencial, na ordem em que ela aparece.
+export const heroRopes = (count) =>
+  Array.from(Array(count), (_, index) => heroHanger(index).rope);
+
+// Onde o crachá descansa, medido do centro. Serve tanto para enquadrar quanto
+// para saber qual credencial fica mais baixa no molho.
+export const heroCardCenter = (rope) =>
+  Number((ANCHOR_HEIGHT - ROPE_JOINTS * rope - ROPE_TO_CARD).toFixed(4));
+
+// Todas as âncoras na mesma altura: é um gancho só. O que varia é o cordão.
+// A profundidade segue a ordem dos eventos, do mais recente para o mais antigo:
+// o primeiro da lista fica na frente do molho, que é onde se lê inteiro.
+export const heroAnchors = (count) => {
+  const middle = (count - 1) / 2;
+  return Array.from(Array(count), (_, index) => [
+    heroHanger(index).x,
+    ANCHOR_HEIGHT,
+    Number(((middle - index) * HERO_DEPTH_STEP).toFixed(4)),
+  ]);
 };
 
-export const homeAnchors = (count) => {
-  const start = -((count - 1) * HOME_SPACING) / 2;
-  return Array.from(Array(count), (_, index) => [
-    Number((start + index * HOME_SPACING).toFixed(4)),
-    ANCHOR_HEIGHT - homeDrop(index),
-    index % 2 ? 0.15 : -0.15,
+// Os cordões soltos ficam atrás da credencial mais funda, em camadas próprias.
+export const looseStrapAnchors = (count) => {
+  const back = -((count - 1) / 2) * HERO_DEPTH_STEP;
+  return LOOSE_STRAPS.map(({ x, depth }) => [
+    x,
+    ANCHOR_HEIGHT,
+    Number((back - depth * HERO_DEPTH_STEP).toFixed(4)),
   ]);
+};
+
+// A caixa do molho é estreita e alta, e cresce para baixo com o cordão mais
+// comprido em uso — uma credencial a mais não corta as que já estão lá.
+export const heroFrame = (count) => {
+  const ropes = heroRopes(count);
+  const lowest = Math.min(...ropes.map(heroCardCenter)) - CARD_HALF_HEIGHT;
+  const edges = heroAnchors(count).flatMap(([x]) => [
+    x - CARD_WIDTH / 2,
+    x + CARD_WIDTH / 2,
+  ]);
+  const left = Math.min(HOOK_X, ...edges) - HERO_SWING;
+  const right = Math.max(HOOK_X, ...edges) + HERO_SWING;
+  const floor = lowest - HERO_PADDING;
+  const ceiling = ANCHOR_HEIGHT + HOOK_LIFT + HERO_PADDING;
+  return {
+    width: Number((right - left).toFixed(4)),
+    height: Number((ceiling - floor).toFixed(4)),
+    center: Number(((ceiling + floor) / 2).toFixed(4)),
+    offset: Number(((right + left) / 2).toFixed(4)),
+  };
 };
 
 // Contain fit: the camera backs off far enough for the shorter axis of the
@@ -110,12 +189,23 @@ export const lerpFactor = (delta, speed) => Math.min(1, delta * speed);
 export const pointerDelta = (start, end) =>
   Math.hypot(end.x - start.x, end.y - start.y);
 
-// The rope bodies start on the line between the anchor and the card. `drop`
-// hangs that line, and with it the card the scene swings into place, below the
-// anchor instead of beside it.
-export const bodyPositions = ([x, y, z], drop = 0) =>
+// Os corpos da corda nascem na linha entre a âncora e o crachá. `drop` pendura
+// essa linha — e com ela o crachá que a cena balança até o lugar — abaixo da
+// âncora em vez de ao lado. `reach` é o comprimento de cada junta: um cordão
+// mais comprido espalha os corpos na mesma medida, senão ele nasce esticado e
+// a cena abre com um tranco.
+export const bodyPositions = ([x, y, z], drop = 0, reach = 1) =>
   [0, 0.5, 1, 1.5, 2].map((offset) => [
-    Number((x + offset).toFixed(4)),
+    Number((x + offset * reach).toFixed(4)),
     Number((y - (drop * offset) / 2).toFixed(4)),
+    z,
+  ]);
+
+// Um cordão solto não tem crachá: a corda é mais longa e termina num peso
+// pequeno. Os corpos nascem na mesma linha lateral que os da credencial.
+export const looseBodyPositions = ([x, y, z], reach = 1) =>
+  Array.from(Array(LOOSE_STRAP_JOINTS + 1), (_, index) => [
+    Number((x + index * 0.5 * reach).toFixed(4)),
+    y,
     z,
   ]);

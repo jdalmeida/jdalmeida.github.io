@@ -8,18 +8,31 @@ import {
   createCredentialTexture,
   createLanyardTexture,
 } from "./credential.mjs";
-import { Band, LanyardLights } from "./Lanyard.jsx";
+import { Band, LanyardLights, LooseStrap } from "./Lanyard.jsx";
 import {
   ANCHOR_HEIGHT,
   DIALOG_FRAME,
   DIALOG_SPAWN_DROP,
+  LOOSE_STRAPS,
   fitDistance,
   framePosition,
-  homeAnchors,
-  homeFrame,
+  heroAnchors,
+  heroFrame,
+  heroHook,
+  heroRopes,
+  heroStrapWidths,
+  looseStrapAnchors,
 } from "./scene-config.mjs";
 
 const FOV = 20;
+
+// Os cordões soltos do molho não pertencem a evento nenhum, então a fita vem em
+// preto e branco da marca e sem nome escrito: é fita, não credencial.
+const LOOSE_STRAP_CREDENTIAL = {
+  name: "",
+  color: "#2b2f36",
+  darkColor: "#0a0a0b",
+};
 
 // Keeps the whole world box in frame at any canvas size, aligned the way the
 // frame asks for. The camera never rotates, so aiming it is a plain translation.
@@ -53,10 +66,14 @@ const computeFromCanvas = (event, state) => {
 
 export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect }) {
   const home = mode === "home";
-  const frame = home ? homeFrame(credentials.length) : DIALOG_FRAME;
+  const frame = home ? heroFrame(credentials.length) : DIALOG_FRAME;
   const anchors = home
-    ? homeAnchors(credentials.length)
+    ? heroAnchors(credentials.length)
     : [[0, ANCHOR_HEIGHT, 0]];
+  const ropes = home ? heroRopes(credentials.length) : credentials.map(() => 1);
+  const looseAnchors = home ? looseStrapAnchors(credentials.length) : [];
+  const hook = home ? heroHook() : null;
+  const strapWidths = home ? heroStrapWidths(credentials.length) : [];
 
   return (
     <div className="lanyard-wrapper">
@@ -82,9 +99,21 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
                 frontImage={createCredentialTexture(credential)}
                 backImage={createCredentialBackTexture(credential)}
                 lanyardImage={createLanyardTexture(credential)}
-                lanyardWidth={home ? 0.9 : 2}
+                lanyardWidth={home ? strapWidths[index] : 2}
                 spawnDrop={home ? 0 : DIALOG_SPAWN_DROP}
+                ropeLength={ropes[index]}
+                hook={hook}
+                depthTest={home}
                 onSelect={() => onSelect?.(credential.id)}
+              />
+            ))}
+            {looseAnchors.map((anchor, index) => (
+              <LooseStrap
+                key={`loose-${index}`}
+                anchor={anchor}
+                lanyardImage={createLanyardTexture(LOOSE_STRAP_CREDENTIAL)}
+                ropeLength={LOOSE_STRAPS[index].rope}
+                hook={hook}
               />
             ))}
           </Physics>
