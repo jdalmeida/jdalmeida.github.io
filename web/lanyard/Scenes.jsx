@@ -8,18 +8,43 @@ import {
   createCredentialTexture,
   createLanyardTexture,
 } from "./credential.mjs";
-import { Band, LanyardLights } from "./Lanyard.jsx";
+import { Band, LanyardLights, LooseStrap } from "./Lanyard.jsx";
 import {
   ANCHOR_HEIGHT,
   DIALOG_FRAME,
   DIALOG_SPAWN_DROP,
+  LOOSE_STRAPS,
   fitDistance,
   framePosition,
-  homeAnchors,
-  homeFrame,
+  heroAnchors,
+  heroFrame,
+  heroHook,
+  heroHooks,
+  heroRopes,
+  heroStrapWidths,
+  heroYaws,
+  looseStrapAnchors,
 } from "./scene-config.mjs";
 
 const FOV = 20;
+
+// A fita do modal, medida contra o laço do engate no card.glb — que é por onde
+// uma fita de verdade passa. Com 1.3 ela saía 70% mais larga que o laço, e o
+// engate parecia pendurado nela em vez do contrário. Em 0.85 ela sobra uns 10%,
+// a mesma folga que o molho do herói já tem.
+//
+// A conta não dá para herdar do herói: a largura é medida em unidades de mundo
+// e a câmera do modal está bem mais perto, então o mesmo número rende
+// espessuras diferentes nos dois lugares.
+const DIALOG_STRAP_WIDTH = 0.85;
+
+// Os cordões soltos do molho não pertencem a evento nenhum, então a fita vem em
+// preto e branco da marca e sem nome escrito: é fita, não credencial.
+const LOOSE_STRAP_CREDENTIAL = {
+  name: "",
+  color: "#2b2f36",
+  darkColor: "#0a0a0b",
+};
 
 // Keeps the whole world box in frame at any canvas size, aligned the way the
 // frame asks for. The camera never rotates, so aiming it is a plain translation.
@@ -53,10 +78,16 @@ const computeFromCanvas = (event, state) => {
 
 export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect }) {
   const home = mode === "home";
-  const frame = home ? homeFrame(credentials.length) : DIALOG_FRAME;
+  const frame = home ? heroFrame(credentials.length) : DIALOG_FRAME;
   const anchors = home
-    ? homeAnchors(credentials.length)
+    ? heroAnchors(credentials.length)
     : [[0, ANCHOR_HEIGHT, 0]];
+  const ropes = home ? heroRopes(credentials.length) : credentials.map(() => 1);
+  const looseAnchors = home ? looseStrapAnchors(credentials.length) : [];
+  const hook = home ? heroHook() : null;
+  const hooks = home ? heroHooks(credentials.length) : [];
+  const yaws = home ? heroYaws(credentials.length) : [];
+  const strapWidths = home ? heroStrapWidths(credentials.length) : [];
 
   return (
     <div className="lanyard-wrapper">
@@ -72,7 +103,13 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
         }}
       >
         <FitCamera frame={frame} />
-        <ambientLight intensity={Math.PI} />
+        {/* A cena usa tone mapping ACES, que lava o que chega superexposto.
+            Com a luz ambiente em PI as faixas de cor da credencial saíam bem
+            mais claras e dessaturadas que o token da marca — `#0a7d4f` virava
+            um verde-menta. Isso não aparecia no varal, onde todos os crachás
+            olhavam para a frente; no molho cada um pega a luz num ângulo, e os
+            virados para a esquerda lavavam de vez. */}
+        <ambientLight intensity={1.1} />
         <Suspense fallback={null}>
           <Physics gravity={[0, -40, 0]} timeStep={1 / 60}>
             {credentials.map((credential, index) => (
@@ -82,9 +119,22 @@ export function LanyardScene({ credentials, eventSource, mode, onReady, onSelect
                 frontImage={createCredentialTexture(credential)}
                 backImage={createCredentialBackTexture(credential)}
                 lanyardImage={createLanyardTexture(credential)}
-                lanyardWidth={home ? 0.9 : 2}
+                lanyardWidth={home ? strapWidths[index] : DIALOG_STRAP_WIDTH}
                 spawnDrop={home ? 0 : DIALOG_SPAWN_DROP}
+                ropeLength={ropes[index]}
+                hook={hooks[index]}
+                yaw={home ? yaws[index] : 0}
+                depthTest={home}
                 onSelect={() => onSelect?.(credential.id)}
+              />
+            ))}
+            {looseAnchors.map((anchor, index) => (
+              <LooseStrap
+                key={`loose-${index}`}
+                anchor={anchor}
+                lanyardImage={createLanyardTexture(LOOSE_STRAP_CREDENTIAL)}
+                ropeLength={LOOSE_STRAPS[index].rope}
+                hook={hook}
               />
             ))}
           </Physics>

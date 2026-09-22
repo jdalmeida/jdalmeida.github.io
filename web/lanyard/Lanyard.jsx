@@ -13,16 +13,30 @@ import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 import * as THREE from "three";
 
 import {
+  DRAPE_AT,
+  DRAPE_SAG,
+  LOOSE_STRAP_JOINTS,
+  ROPE_TO_CARD,
   bodyPositions,
   isShortClick,
   lerpFactor,
+  looseBodyPositions,
   pointerDelta,
+  yawTarget,
 } from "./scene-config.mjs";
 
 const cardGLB = "/assets/lanyard/card.glb";
 const defaultLanyardImage = "/assets/lanyard/lanyard.png";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
+
+// Posiciona o ponto de barriga da fita entre a corda e o gancho. A queda cresce
+// com a distância que a fita tem de vencer, como a de um cabo entre dois postes.
+const drapeBetween = (target, rope, hook) => {
+  target.copy(rope).lerp(hook, DRAPE_AT);
+  target.y -= DRAPE_SAG * (0.4 + Math.hypot(hook.x - rope.x, hook.z - rope.z));
+  return target;
+};
 
 const BLANK_PIXEL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
@@ -54,8 +68,11 @@ export function LanyardLights() {
         rotation={[0, 0, Math.PI / 3]}
         scale={[100, 0.1, 1]}
       />
+      {/* O refletor principal. Em 10 ele estourava qualquer crachá que
+          virasse para este lado — no varal ninguém virava, no molho todos
+          viram. */}
       <Lightformer
-        intensity={10}
+        intensity={4}
         color="white"
         position={[-10, 0, 14]}
         rotation={[0, Math.PI / 2, Math.PI / 3]}
@@ -76,6 +93,20 @@ export function Band({
   lanyardImage = null,
   lanyardWidth = 1,
   spawnDrop = 0,
+  ropeLength = 1,
+  // Onde a fita é desenhada no alto. Sem isso ela nasce na âncora da física,
+  // e um molho de âncoras espalhadas vira um varal de cordões paralelos.
+  hook = null,
+  // O molho sobrepõe cordão e crachá, então lá a fita respeita a profundidade.
+  // No varal e no modal nada se cruza, e desenhar por cima evita o z-fighting
+  // da fita contra o clipe de metal.
+  depthTest = false,
+  // O giro de descanso do crachá em torno do próprio eixo vertical, em radianos.
+  // Num molho as credenciais não olham todas para a frente. A gravidade não tem
+  // o que dizer sobre esse giro — ela endireita o que pende, não o que gira —
+  // então quem segura o ângulo é a mola de rotação lá embaixo, que devolve o
+  // crachá ao lugar depois de cada arrasto.
+  yaw = 0,
   onSelect,
 }) {
   const band = useRef();
@@ -106,11 +137,9 @@ export function Band({
         anchor[0],
         anchor[1] - 3,
         anchor[2],
-        anchor[0],
-        anchor[1],
-        anchor[2],
+        ...(hook || anchor),
       ]),
-    [anchor],
+    [anchor, hook],
   );
   const linePoints = useMemo(
     () => new Float32Array((isMobile ? 17 : 33) * 3),
@@ -177,17 +206,19 @@ export function Band({
         new THREE.Vector3(),
         new THREE.Vector3(),
         new THREE.Vector3(),
+        new THREE.Vector3(),
       ]),
   );
+  const hookVec = useMemo(() => new THREE.Vector3(), []);
   const [dragged, drag] = useState(false);
   const [hovered, hover] = useState(false);
 
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ropeLength]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.5, 0],
+    [0, ROPE_TO_CARD, 0],
   ]);
 
   useEffect(() => {
@@ -228,7 +259,13 @@ export function Band({
       curve.points[0].copy(j3.current.translation());
       curve.points[1].copy(j2.current.lerped);
       curve.points[2].copy(j1.current.lerped);
-      curve.points[3].copy(fixed.current.translation());
+      if (hook) {
+        hookVec.set(hook[0], hook[1], hook[2]);
+      } else {
+        hookVec.copy(fixed.current.translation());
+      }
+      drapeBetween(curve.points[3], j1.current.lerped, hookVec);
+      curve.points[4].copy(hookVec);
       const curvePoints = curve.getPoints(isMobile ? 16 : 32);
       let valid = true;
       curvePoints.forEach((point, index) => {
@@ -243,14 +280,18 @@ export function Band({
       }
       ang.copy(card.current.angvel());
       rot.copy(card.current.rotation());
-      card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
+      card.current.setAngvel({
+        x: ang.x,
+        y: ang.y - (rot.y - yawTarget(yaw)) * 0.25,
+        z: ang.z,
+      });
     }
   });
 
   curve.curveType = "chordal";
   texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
   const [fixedPosition, j1Position, j2Position, j3Position, cardPosition] =
-    bodyPositions(anchor, spawnDrop);
+    bodyPositions(anchor, spawnDrop, ropeLength);
 
   return (
     <>
@@ -266,6 +307,7 @@ export function Band({
         </RigidBody>
         <RigidBody
           position={cardPosition}
+          rotation={[0, yaw, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? "kinematicPosition" : "dynamic"}
@@ -314,13 +356,21 @@ export function Band({
             }}
           >
             <mesh geometry={nodes.card.geometry}>
+              {/* Crachá de evento é PVC impresso, não metal. No varal todos
+                  olhavam para a frente e o reflexo era igual em todos; no molho
+                  cada um está virado para um lado, e os que viram para a
+                  esquerda pegavam em cheio o refletor daquele lado — a cor
+                  lavava. `envMapIntensity` segura o quanto do ambiente o cartão
+                  devolve, que é o que produzia o véu. O verniz continua, mais
+                  fraco: é o brilho do plástico, não um espelho. */}
               <meshPhysicalMaterial
                 map={cardMap}
                 map-anisotropy={16}
-                clearcoat={isMobile ? 0 : 1}
-                clearcoatRoughness={0.15}
-                roughness={0.9}
-                metalness={0.8}
+                clearcoat={isMobile ? 0 : 0.15}
+                clearcoatRoughness={0.35}
+                roughness={0.85}
+                metalness={0.05}
+                envMapIntensity={0.08}
               />
             </mesh>
             <mesh
@@ -335,7 +385,114 @@ export function Band({
         <meshLineGeometry points={initialLine} />
         <meshLineMaterial
           color="white"
-          depthTest={false}
+          depthTest={depthTest}
+          resolution={isMobile ? [1000, 2000] : [1000, 1000]}
+          useMap
+          map={texture}
+          repeat={[-4, 1]}
+          lineWidth={lanyardWidth}
+        />
+      </mesh>
+    </>
+  );
+}
+
+// Um cordão sem credencial: os que sobram no molho de quem guarda crachá de
+// evento. É volume visual, não conteúdo — não recebe ponteiro, não abre nada e
+// não representa evento nenhum. A corda é mais longa que a de uma credencial e
+// termina num peso pequeno, que é o que a faz cair em vez de flutuar.
+export function LooseStrap({
+  anchor = [0, 4, 0],
+  isMobile = false,
+  lanyardImage = null,
+  lanyardWidth = 0.9,
+  ropeLength = 1.5,
+  hook = null,
+}) {
+  const band = useRef();
+  const bodies = [useRef(), useRef(), useRef(), useRef(), useRef()];
+  const texture = useTexture(lanyardImage || defaultLanyardImage);
+  const segmentProps = {
+    type: "dynamic",
+    canSleep: true,
+    colliders: false,
+    angularDamping: 4,
+    linearDamping: 4,
+  };
+
+  useRopeJoint(bodies[0], bodies[1], [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(bodies[1], bodies[2], [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(bodies[2], bodies[3], [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(bodies[3], bodies[4], [[0, 0, 0], [0, 0, 0], ropeLength]);
+
+  const positions = looseBodyPositions(anchor, ropeLength);
+  const initialLine = useMemo(
+    () =>
+      new Float32Array([
+        anchor[0],
+        anchor[1] - ropeLength * LOOSE_STRAP_JOINTS,
+        anchor[2],
+        ...(hook || anchor),
+      ]),
+    [anchor, hook, ropeLength],
+  );
+  const linePoints = useMemo(
+    () => new Float32Array((isMobile ? 17 : 33) * 3),
+    [isMobile],
+  );
+  const [curve] = useState(
+    () =>
+      new THREE.CatmullRomCurve3(
+        Array.from(Array(LOOSE_STRAP_JOINTS + 2), () => new THREE.Vector3()),
+      ),
+  );
+  const hookVec = useMemo(() => new THREE.Vector3(), []);
+
+  // Desenhada da ponta solta para o gancho, como a da credencial.
+  useFrame(() => {
+    if (!bodies[0].current || !band.current) return;
+    for (const [index, ref] of bodies.slice(1).reverse().entries()) {
+      if (!ref.current) return;
+      curve.points[index].copy(ref.current.translation());
+    }
+    const top = bodies[1].current.translation();
+    if (hook) {
+      hookVec.set(hook[0], hook[1], hook[2]);
+    } else {
+      hookVec.copy(bodies[0].current.translation());
+    }
+    drapeBetween(curve.points[LOOSE_STRAP_JOINTS], top, hookVec);
+    curve.points[LOOSE_STRAP_JOINTS + 1].copy(hookVec);
+    const curvePoints = curve.getPoints(isMobile ? 16 : 32);
+    let valid = true;
+    curvePoints.forEach((point, index) => {
+      const offset = index * 3;
+      linePoints[offset] = point.x;
+      linePoints[offset + 1] = point.y;
+      linePoints[offset + 2] = point.z;
+      valid &&= Number.isFinite(point.x + point.y + point.z);
+    });
+    if (valid) band.current.geometry.setPoints(linePoints);
+  });
+
+  curve.curveType = "chordal";
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+  return (
+    <>
+      <RigidBody position={positions[0]} ref={bodies[0]} {...segmentProps} type="fixed" />
+      {positions.slice(1, -1).map((position, index) => (
+        <RigidBody key={index} position={position} ref={bodies[index + 1]} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+      ))}
+      <RigidBody position={positions.at(-1)} ref={bodies.at(-1)} {...segmentProps}>
+        <BallCollider args={[0.12]} />
+      </RigidBody>
+      <mesh ref={band}>
+        <meshLineGeometry points={initialLine} />
+        <meshLineMaterial
+          color="white"
           resolution={isMobile ? [1000, 2000] : [1000, 1000]}
           useMap
           map={texture}

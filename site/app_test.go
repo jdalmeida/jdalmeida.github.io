@@ -256,7 +256,7 @@ func TestHomeProvidesDesktopLanyardDataAndMobileFallback(t *testing.T) {
 	for _, value := range []string{
 		`data-lanyard-home`,
 		`data-event-name="South Summit Brazil"`,
-		`data-event-color="#fd525b"`,
+		`data-event-color="#c8102e"`,
 		`hx-get="/partials/events/south-summit"`,
 		`class="event-badge"`,
 	} {
@@ -304,7 +304,7 @@ func TestLanyardStaticFilesAreServed(t *testing.T) {
 }
 
 func TestAnimatedSignatureSVG(t *testing.T) {
-	source, err := os.ReadFile("../public/assets/logo-signature-animated.svg")
+	source, err := os.ReadFile("../public/assets/jalmeida-signature-animated.svg")
 	if err != nil {
 		t.Fatalf("read signature SVG: %v", err)
 	}
@@ -339,7 +339,7 @@ func TestAnimatedSignatureSVG(t *testing.T) {
 		`id="intro-sigg1" class="intro-sig-guide" pathLength="1" stroke-width="34.4"`,
 		`id="intro-sigg6a" class="intro-sig-guide" pathLength="1" stroke-width="33.8"`,
 		`transform="translate(0.33039927,1.3924874)"`,
-		`logo-signature-animated.svg?v=5#p1`,
+		`jalmeida-signature-animated.svg?v=5#p1`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("signature intro does not contain %q", want)

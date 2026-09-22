@@ -7,8 +7,8 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Space+Mono:wght@400;700&family=Vollkorn:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20260727">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Instrument+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=20260922-3">
   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous" defer></script>
   <script src="/site.js?v=20260727" defer></script>
 </head>
@@ -19,15 +19,15 @@
       hx-post="/admin/login"
       hx-target="#login-form"
       hx-swap="outerHTML">
-  <img src="/assets/logo-signature.png" alt="João Almeida" width="132" height="76">
-  <p class="eyebrow">( acesso reservado )</p>
+  <img src="/assets/jalmeida-signature.png" alt="João Almeida" width="132" height="91">
+  <p class="eyebrow">acesso reservado</p>
   <h1>Editor de artigos</h1>
   <p>Use a senha definida no ambiente do aplicativo.</p>
   {{ if .Error }}<div class="form-error" role="alert">{{ .Error }}</div>{{ end }}
   <label for="password">Senha</label>
   <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
   <button class="button button-primary" type="submit">
-    <span class="button-label">Entrar</span>
+    <span class="button-label">Entrar no editor</span>
     <span class="htmx-indicator">Aguarde...</span>
   </button>
   <a href="/">← voltar ao site</a>
@@ -41,7 +41,7 @@
 <body class="admin-body">
   <main class="login-page">
     <div class="login-art" aria-hidden="true">
-      <img src="/logo_collage.webp" alt="">
+      <img src="/assets/jalmeida-mark.png" alt="">
     </div>
     <div id="login-form">{{ template "admin-login-form" . }}</div>
   </main>
@@ -55,7 +55,7 @@
 {{ template "admin-shell-head" . }}
 <body class="admin-body">
   <main class="error-page">
-    <p class="eyebrow">( editor indisponível )</p>
+    <p class="eyebrow">editor indisponível</p>
     <h1>O banco de dados não está conectado.</h1>
     <p>{{ .Error }}</p>
     <a class="button button-primary" href="/">Voltar ao site</a>
@@ -101,14 +101,14 @@
 <section class="editor-panel" id="editor-panel">
   <header class="editor-header">
     <div>
-      <p class="eyebrow">{{ if .EditPost.ID }}( editar artigo ){{ else }}( novo artigo ){{ end }}</p>
+      <p class="eyebrow">{{ if .EditPost.ID }}editar artigo{{ else }}novo artigo{{ end }}</p>
       <h2>{{ if .EditPost.ID }}{{ .EditPost.Title }}{{ else }}Nova página{{ end }}</h2>
     </div>
     <button class="button button-quiet"
             type="button"
             hx-get="/admin/posts/new"
             hx-target="#editor-panel"
-            hx-swap="innerHTML">Limpar</button>
+            hx-swap="innerHTML">Limpar campos</button>
   </header>
   {{ if .Error }}<div class="form-error" role="alert">{{ .Error }}</div>{{ end }}
   <form class="editor-form"
@@ -182,7 +182,7 @@
 <body class="admin-body">
   <header class="admin-header">
     <a href="/" class="brand" aria-label="Abrir o site">
-      <img src="/assets/logo-signature.png" alt="" width="104" height="59">
+      <img src="/assets/jalmeida-mark.png" alt="" width="104" height="32">
     </a>
     <div>
       <span>Editor</span>
@@ -197,7 +197,7 @@
     <aside class="admin-sidebar">
       <div class="sidebar-heading">
         <div>
-          <p class="eyebrow">( arquivo )</p>
+          <p class="eyebrow">arquivo</p>
           <h1>Artigos</h1>
         </div>
         <button class="new-post-button"

@@ -4,7 +4,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ .Title }}</title>
   <meta name="description" content="{{ .Description }}">
-  <meta name="theme-color" content="#f3ecda">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b0c0e" media="(prefers-color-scheme: dark)">
   <meta name="author" content="João de Almeida">
   <meta property="og:type" content="{{ if .Post }}article{{ else }}website{{ end }}">
   <meta property="og:title" content="{{ .Title }}">
@@ -12,9 +13,9 @@
   <meta property="og:locale" content="pt_BR">
   <meta property="og:url" content="{{ .Canonical }}">
   <meta property="og:site_name" content="João de Almeida">
-  <meta property="og:image" content="{{ .Origin }}/assets/logo-mark.png">
+  <meta property="og:image" content="{{ .Origin }}/assets/jalmeida-mark.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:image" content="{{ .Origin }}/assets/logo-mark.png">
+  <meta name="twitter:image" content="{{ .Origin }}/assets/jalmeida-mark.png">
   {{ if .Post }}
   {{ if not .Post.PublishedAt.IsZero }}<meta property="article:published_time" content="{{ .Post.PublishedAt.Format "2006-01-02" }}">{{ end }}
   <meta property="article:author" content="{{ .Post.Author }}">
@@ -49,10 +50,10 @@
   {{ range videoOrigins .Events }}
   <link rel="preconnect" href="{{ . }}">
   {{ end }}
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Space+Mono:wght@400;700&family=Vollkorn:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20260820-3">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Instrument+Sans:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css?v=20260922-3">
   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.10/dist/htmx.min.js" integrity="sha384-H5SrcfygHmAuTDZphMHqBJLc3FhssKjG7w/CeCpFReSfwBWDTKpkzPP8c+cLsK+V" crossorigin="anonymous" defer></script>
-  <script src="/lanyard-loader.js?v=20260820-9" defer></script>
+  <script src="/lanyard-loader.js?v=20260922-3" defer></script>
   <script src="/site.js?v=20260728-1" defer></script>
 </head>
 {{ end }}
@@ -61,7 +62,7 @@
 <header class="site-header" data-site-header>
   <div class="nav-shell">
     <a class="brand" href="/" aria-label="João de Almeida, página inicial">
-      <img src="/assets/logo-signature.png" alt="" width="80" height="54">
+      <img src="/assets/jalmeida-mark.png" alt="" width="84" height="36">
     </a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-toggle>
       <span></span><span></span>
@@ -80,8 +81,8 @@
 {{ define "site-footer" }}
 <footer class="site-footer">
   <div class="footer-shell">
-    <img class="footer-mark" src="/assets/logo-signature.png" alt="Almeida" width="47" height="32">
-    <p>© {{ .Year }} joão de almeida — feito à mão</p>
+    <img class="footer-mark" src="/assets/jalmeida-mark.png" alt="J de Almeida" width="47" height="24">
+    <p>© {{ .Year }} João Gabriel de Almeida</p>
   </div>
 </footer>
 <div class="reading-progress" aria-hidden="true" data-reading-progress></div>
@@ -121,7 +122,7 @@
     {{ end }}
   {{ else }}
     <div class="empty-state">
-      <span>( arquivo vazio )</span>
+      <span>arquivo vazio</span>
       <h2>Nenhum artigo nesta categoria.</h2>
       <p>Escolha outra categoria para continuar.</p>
     </div>

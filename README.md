@@ -25,9 +25,29 @@ Open [http://localhost:3000](http://localhost:3000).
 
 The app reads Markdown files from `content/posts` when PostgreSQL is not available. The editor needs PostgreSQL.
 
+## Identidade
+
+O site segue a identidade JAlmeida: preto e branco para a estrutura, azul para a ação e amarelo para o realce. As três famílias vêm do Google Fonts — Space Grotesk para título, Instrument Sans para corpo e JetBrains Mono para rótulo e código.
+
+Todos os tokens vivem no bloco `:root` de `public/styles.css`, com o tema Terminal (escuro) logo abaixo em `prefers-color-scheme`. Nenhum componente escreve hexadecimal: se faltar um degrau, acrescente o token primeiro.
+
+As marcas são arquivos, não desenhos. O monograma está em `public/assets/jalmeida-mark.png`, a assinatura em `public/assets/jalmeida-signature.png` e a versão animada da abertura em `public/assets/jalmeida-signature-animated.svg`. A tinta está assada em cada arquivo, então o tema escuro inverte a imagem em vez de pedir um segundo arquivo. Não redesenhe nem recomponha o `< J >` com caractere de teclado.
+
+As cores das credenciais de evento ficam em `site/models.go` e as texturas da credencial 3D em `web/lanyard/credential.mjs`, que repete os tokens porque um SVG dentro do canvas WebGL não lê a folha de estilo.
+
 ## Desktop Lanyard
 
-The desktop event section uses the React Bits Lanyard in a React island. Mobile browsers keep the server-rendered credential layout.
+O herói pendura as credenciais num molho, como o de crachás de evento numa parede: todas as fitas convergem num gancho só e os crachás caem em leque, sobrepostos. A cena é uma ilha React com a Lanyard do React Bits.
+
+A física prende cada cordão na sua âncora espalhada — é isso que faz o crachá descansar aberto e parar quieto. O que converge no gancho é a fita desenhada, que sai dele na diagonal até o primeiro corpo da corda. As duas coisas vivem em `web/lanyard/scene-config.mjs`, com o gancho em `heroHook` e as âncoras em `heroAnchors`.
+
+Os crachás não se empurram porque cada um tem a sua camada de `z` e o colisor tem 0,01 de profundidade. Trocar isso faz o molho voltar a ser um varal.
+
+Cada credencial também está girada em torno do próprio eixo, entre 9 e 22 graus para um lado ou para o outro, em `heroYaws`. A gravidade não segura esse giro — ela endireita o que pende, não o que gira —, então quem segura é a mola de `setAngvel` em `Lanyard.jsx`, que até então puxava todo mundo para zero e era o motivo de as credenciais olharem todas para a frente. A mola compara o componente `y` do quaternion, não o ângulo, e é isso que `yawTarget` converte.
+
+O giro mudou a iluminação de graça: no varal todos os crachás olhavam para o mesmo lado e recebiam a mesma luz, e no molho cada um pega o refletor num ângulo. Com a luz ambiente em `PI` e o refletor principal em `10`, os crachás virados para a esquerda estouravam — `#0a7d4f` saía verde-menta. A luz ambiente caiu para `1.1`, o refletor para `4` e o material do cartão deixou de ser quase espelho (`metalness` 0.8) para ser o PVC impresso que ele é. Se mexer nisso, vale medir: a cor da faixa tem de sair perto do token, não mais clara.
+
+A cena vale a partir de 1041px, onde o herói tem duas colunas. Abaixo disso o monograma fica no lugar dela e as credenciais se leem na grade da seção de eventos. A largura está em dois lugares que precisam casar: a media query em `public/styles.css` e o `matchMedia` em `public/lanyard-loader.js`.
 
 Install the frontend dependencies after you clone the repository. Rebuild the committed bundle after you change `web/lanyard`.
 
