@@ -80,7 +80,7 @@ func TestHeadCarriesStructuredData(t *testing.T) {
 	handler.ServeHTTP(home, httptest.NewRequest(http.MethodGet, "/", nil))
 	for _, want := range []string{
 		`"@type": "Person"`,
-		`<meta property="og:image" content="https://example.com/assets/logo-mark.png">`,
+		`<meta property="og:image" content="https://example.com/assets/jalmeida-mark.png">`,
 	} {
 		if !strings.Contains(home.Body.String(), want) {
 			t.Fatalf("home head does not contain %q", want)

@@ -79,6 +79,7 @@ test("paints the card back with the event palette and event text", () => {
   assert.match(svg, /Porto Alegre/);
   assert.match(svg, /2026/);
   assert.doesNotMatch(svg, /#f5eedf/);
+  assert.doesNotMatch(svg, /Vollkorn|Space Mono/);
 });
 
 test("paints the strap with the event palette and a fitted title", () => {
@@ -134,7 +135,7 @@ test("shrinks a title line that would not fit the card", () => {
   const line = "Nacional de Ciência e Tecnologia";
   const size = titleFontSize(["Semana", line]);
   assert.ok(size < 96);
-  assert.ok(size * line.length * 0.54 <= 900);
+  assert.ok(size * line.length * 0.58 <= 900);
 });
 
 test("prints the event above the name it belongs to", () => {

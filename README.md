@@ -25,6 +25,16 @@ Open [http://localhost:3000](http://localhost:3000).
 
 The app reads Markdown files from `content/posts` when PostgreSQL is not available. The editor needs PostgreSQL.
 
+## Identidade
+
+O site segue a identidade JAlmeida: preto e branco para a estrutura, azul para a ação e amarelo para o realce. As três famílias vêm do Google Fonts — Space Grotesk para título, Instrument Sans para corpo e JetBrains Mono para rótulo e código.
+
+Todos os tokens vivem no bloco `:root` de `public/styles.css`, com o tema Terminal (escuro) logo abaixo em `prefers-color-scheme`. Nenhum componente escreve hexadecimal: se faltar um degrau, acrescente o token primeiro.
+
+As marcas são arquivos, não desenhos. O monograma está em `public/assets/jalmeida-mark.png`, a assinatura em `public/assets/jalmeida-signature.png` e a versão animada da abertura em `public/assets/jalmeida-signature-animated.svg`. A tinta está assada em cada arquivo, então o tema escuro inverte a imagem em vez de pedir um segundo arquivo. Não redesenhe nem recomponha o `< J >` com caractere de teclado.
+
+As cores das credenciais de evento ficam em `site/models.go` e as texturas da credencial 3D em `web/lanyard/credential.mjs`, que repete os tokens porque um SVG dentro do canvas WebGL não lê a folha de estilo.
+
 ## Desktop Lanyard
 
 The desktop event section uses the React Bits Lanyard in a React island. Mobile browsers keep the server-rendered credential layout.

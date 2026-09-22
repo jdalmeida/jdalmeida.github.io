@@ -76,8 +76,6 @@ func New() http.Handler {
 	mux.Handle("GET /styles.css", public)
 	mux.Handle("GET /site.js", public)
 	mux.Handle("GET /favicon.svg", public)
-	mux.Handle("GET /logo_collage.webp", public)
-	mux.Handle("GET /signature_collage.webp", public)
 
 	return securityHeaders(mux)
 }
