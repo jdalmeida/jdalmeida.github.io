@@ -56,7 +56,10 @@
 }
 .leaf[data-turned="true"] { transform: translateZ(var(--z)) rotateY(-180deg); }
 .face {
-  position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; container-type: inline-size; backface-visibility: hidden;
+  position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; container-type: inline-size; backface-visibility: visible;
+  /* Gecko can paint the mirrored front of a turned leaf despite backface-visibility.
+     Swap the visible side halfway through the leaf's delayed turn. */
+  transition: visibility 0s calc(var(--delay) + .5s);
   padding: 7cqi 5cqi 10cqi 13cqi; border-radius: 0 6px 6px 0;
   font: clamp(16px, 4cqi, 22px)/1.6 var(--font-hand), cursive;
   background:
@@ -66,6 +69,8 @@
     #f6f1e3;
   box-shadow: inset 0 0 0 1px #0000000d, 2px 3px 6px #0005;
 }
+.leaf .face[data-side="back"], .leaf[data-turned="true"] .face[data-side="front"] { visibility: hidden; }
+.leaf[data-turned="true"] .face[data-side="back"] { visibility: visible; }
 .face[data-side="back"] {
   transform: rotateY(180deg); border-radius: 6px 0 0 6px;
   background:
@@ -158,5 +163,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .cover, .book, .leaf { transition: none; }
+  .face { transition: none; }
   .room, .book { animation: none !important; }
 }

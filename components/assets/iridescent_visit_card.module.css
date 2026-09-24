@@ -23,16 +23,25 @@
 .face {
   position: absolute; inset: 0; overflow: hidden;
   border-radius: inherit; corner-shape: inherit;
-  backface-visibility: hidden;
+  /* Explicitly swap sides at the midpoint: Gecko may paint the mirrored backface. */
+  backface-visibility: visible;
+  transition: visibility 0s .2s;
 }
 .front { background: linear-gradient(115deg, #8d93a1, #c9cdd6 45%, #858b99); }
 .front > :not(.flipButton) { pointer-events: none; }
 .back {
+  visibility: hidden;
   display: flex; flex-direction: column;
   padding: 5% 7%;
   transform: rotateY(180deg);
   background: radial-gradient(circle at 92% 12%, #43535a, transparent 38%), linear-gradient(135deg, #212b30, #10191e 75%);
   box-shadow: inset 0 0 0 1px #ffffff4d;
+}
+.scene[data-flipped="true"] .front { visibility: hidden; }
+.scene[data-flipped="true"] .back { visibility: visible; }
+.scene:not([data-flipped="true"]):hover .face { transition-delay: .04s; }
+@supports (-moz-appearance: none) {
+  .back > * { transform: scaleX(-1); }
 }
 .back::before {
   content: ""; position: absolute; inset: 0 0 auto; height: 2px;
@@ -116,4 +125,4 @@
   text-shadow: 0 1px 2px #000a;
 }
 
-@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .card, .face { transition: none; } }
