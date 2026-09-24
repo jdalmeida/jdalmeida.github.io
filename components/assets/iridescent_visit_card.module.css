@@ -1,5 +1,5 @@
 /* ---------- 3D business card ---------- */
-.scene { perspective: 1200px; width: min(92vw, 640px); }
+.scene { perspective: 1200px; width: min(92vw, 640px, 125svh); }
 
 .card {
   --rx: 6deg; --ry: -10deg; --mx: 35%; --my: 30%;
@@ -8,10 +8,10 @@
   border-radius: 4.5% / 7%;
   corner-shape: superellipse(1.5);
   overflow: hidden;
-  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1)));
   transform-style: preserve-3d;
   transition: transform .4s cubic-bezier(.2,.8,.2,1);
-  box-shadow: 0 30px 60px -20px #000c, inset 0 0 0 1px #fff6;
+  box-shadow: 0 var(--card-shadow-y, 30px) var(--card-shadow-blur, 60px) var(--card-shadow-spread, -20px) #000a, inset 0 0 0 1px #fff6;
   background: linear-gradient(115deg, #8d93a1, #c9cdd6 45%, #858b99);
   font-family: var(--font-geist-mono), monospace;
   color: #f4f4f6;
@@ -65,9 +65,9 @@
 }
 
 .cardText {
-  position: absolute; right: 7%; bottom: 9%;
+  position: absolute; right: 7%; bottom: var(--card-text-bottom, 9%);
   text-transform: uppercase; letter-spacing: .12em;
-  font-size: clamp(9px, 2.4vw, 16px); line-height: 1.5; text-align: right;
+  font-size: calc(clamp(9px, 2.4vw, 16px) * var(--card-type-scale, 1)); line-height: 1.5; text-align: right;
   text-shadow: 0 1px 2px #000a;
 }
 
@@ -75,9 +75,9 @@
 .cardStickers img { width: 3em; height: 3em; }
 
 .cardName {
-  position: absolute; left: 7%; bottom: 9%;
+  position: absolute; left: 7%; bottom: var(--card-name-bottom, 9%);
   text-transform: uppercase; letter-spacing: .12em;
-  font-size: clamp(9px, 2.4vw, 16px); line-height: 1.5; text-align: left;
+  font-size: calc(clamp(9px, 2.4vw, 16px) * var(--card-type-scale, 1)); line-height: 1.5; text-align: left;
   text-shadow: 0 1px 2px #000a;
 }
 

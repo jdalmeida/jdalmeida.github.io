@@ -31,8 +31,10 @@ const shape = (src: string) => `url('${src}') center / 100% 100% no-repeat`;
 // Peel = cut the sticker along a fold line, then draw the cut-off part mirrored over the line as the backing paper.
 function sticker(src: string, size: number, r: () => number) {
   const s = Math.floor(r() * 1e5), amount = 0.6 + r() * 0.8;
+  // Colour variant so repeats don't read as copies: random hue/saturation, and some inverted so black stickers vary too.
+  const tint = `${r() < 0.25 ? "invert(1) " : ""}hue-rotate(${Math.round(r() * 360)}deg) saturate(${(0.7 + r() * 0.9).toFixed(2)})`;
   const wrap = document.createElement("div");
-  wrap.innerHTML = `<div style="${abs}"><img src="${src}" alt="" draggable="false" style="${abs}width:100%;height:100%"></div>`;
+  wrap.innerHTML = `<div style="${abs}"><img src="${src}" alt="" draggable="false" style="${abs}width:100%;height:100%;filter:${tint}"></div>`;
   const body = wrap.firstElementChild as HTMLElement;
 
   [...LAYERS, RUB].forEach((l, i) => {
@@ -68,7 +70,7 @@ function sticker(src: string, size: number, r: () => number) {
 // Procedurally scatters stickers over its parent. Drop inside any `position: relative` box.
 // Jittered grid: one slot per cell, nudged randomly, so stickers spread evenly without piling up.
 // Built after mount (like Grime) so SSR and client markup match and the grid fits the element's px size.
-export default function Stickers({ srcs, seed, spacing = 220, className }: Props) {
+export default function Stickers({ srcs, seed, spacing = 130, className }: Props) {
   const paint = (el: HTMLDivElement | null) => {
     if (!el || !srcs.length) return;
     const r = rng(seed ?? Math.floor(Math.random() * 1e5));
@@ -84,14 +86,14 @@ export default function Stickers({ srcs, seed, spacing = 220, className }: Props
     el.replaceChildren();
     for (let y = 0; y < rows; y++)
       for (let x = 0; x < cols; x++) {
-        if (r() < 0.25) continue; // empty cells keep it organic
-        const size = Math.round(56 + r() * 64);
+        if (r() < 0.1) continue; // empty cells keep it organic
+        const size = Math.round(100 + r() * 110); // bigger than a cell, so neighbours overlap
         const s = sticker(pick(), size, r);
         // ponytail: positions in %, so a resize stretches the layout instead of re-rolling it.
         Object.assign(s.style, {
           position: "absolute",
-          left: `${((x + 0.15 + r() * 0.7) / cols) * 100}%`,
-          top: `${((y + 0.15 + r() * 0.7) / rows) * 100}%`,
+          left: `${((x + r()) / cols) * 100}%`,
+          top: `${((y + r()) / rows) * 100}%`,
           width: `${size}px`,
           height: `${size}px`,
           translate: "-50% -50%",
