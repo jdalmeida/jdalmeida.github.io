@@ -1,0 +1,81 @@
+/* ---------- 3D business card ---------- */
+.scene { perspective: 1200px; width: min(92vw, 640px); }
+
+.card {
+  --rx: 6deg; --ry: -10deg; --mx: 35%; --my: 30%;
+  position: relative;
+  aspect-ratio: 85.6 / 54;
+  border-radius: 4.5% / 7%;
+  corner-shape: superellipse(1.5);
+  overflow: hidden;
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform .4s cubic-bezier(.2,.8,.2,1);
+  box-shadow: 0 30px 60px -20px #000c, inset 0 0 0 1px #fff6;
+  background: linear-gradient(115deg, #8d93a1, #c9cdd6 45%, #858b99);
+  font-family: var(--font-geist-mono), monospace;
+  color: #f4f4f6;
+}
+.scene:hover .card { transition-duration: .08s; }
+
+/* holographic foil: noise texture (public/textures/holo-foil.svg) sliding with the pointer */
+.cardHolo, .cardGlare { position: absolute; inset: 0; pointer-events: none; }
+.cardHolo {
+  background: url(/textures/holo-foil.svg) var(--mx) var(--my) / 103% 103%;
+  filter: saturate(3) contrast(1.15) brightness(.9);
+}
+/* grey veil over the foil */
+.cardHolo::after { content: ""; position: absolute; inset: 0; background: #8c8c8c; opacity: .69; }
+/* extra saturation pass + specular streak */
+.cardGlare {
+  background:
+    linear-gradient(115deg, #0000 calc(var(--mx) - 12%), #ffffff20 var(--mx), #0000 calc(var(--mx) + 12%)),
+    radial-gradient(45% 60% at var(--mx) var(--my), #ffffff10, transparent 70%);
+  mix-blend-mode: overlay;
+}
+
+.cardChip {
+  position: absolute; left: 6%; top: 18%; width: 13%; aspect-ratio: 1.15;
+  border-radius: 16%;
+  /* EMV contacts: center pad, 4 diagonals to top/bottom, 2 horizontals per side (viewBox matches aspect-ratio) */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 115 100' fill='none' stroke='%235a4424' stroke-width='2.2' stroke-linejoin='round' stroke-opacity='.85'%3E%3Crect x='40' y='26' width='35' height='48' rx='12'/%3E%3Cpath d='M46 27L37 0M69 27L78 0M46 73L37 100M69 73L78 100M0 37H29L40 42M0 63H29L40 58M115 37H86L75 42M115 63H86L75 58'/%3E%3C/svg%3E") center / 100% 100%,
+    radial-gradient(80% 60% at 30% 20%, #fff3, #0000 70%),
+    linear-gradient(135deg, #d9c592, #a88f5e 55%, #c9b27f);
+  box-shadow: 0 0 0 1.5px #fff9, 0 1px 3px #0005, inset 0 0 0 1px #5a442499, inset 0 -2px 4px #0003;
+}
+
+.cardQr {
+  position: absolute; right: 5%; top: 6%; width: 20%; aspect-ratio: 1;
+  border-radius: 6%;
+  background: #fff;
+  box-shadow: 0 2px 6px #0003;
+  /* placeholder pattern */
+  background-image:
+    repeating-conic-gradient(#111 0 25%, #fff 0 50%);
+  background-size: 18% 18%;
+  background-position: center;
+  border: 6px solid #fff;
+}
+
+.cardSignature {
+  position: absolute; left: 10%; top: 12%; width: 54%;
+  filter: drop-shadow(0 1px 1px #0004);
+  transform: translateZ(30px);
+}
+
+.cardText {
+  position: absolute; right: 7%; bottom: 9%;
+  text-transform: uppercase; letter-spacing: .12em;
+  font-size: clamp(9px, 2.4vw, 16px); line-height: 1.5; text-align: right;
+  text-shadow: 0 1px 2px #000a;
+}
+
+.cardName {
+  position: absolute; left: 7%; bottom: 9%;
+  text-transform: uppercase; letter-spacing: .12em;
+  font-size: clamp(9px, 2.4vw, 16px); line-height: 1.5; text-align: left;
+  text-shadow: 0 1px 2px #000a;
+}
+
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }
