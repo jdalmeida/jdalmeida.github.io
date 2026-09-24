@@ -68,13 +68,15 @@ function scratches(w: number, h: number, r: () => number) {
   return `<g fill="none" stroke="#ffffff40" stroke-linecap="round" filter="url(#f)">${paths}</g>`;
 }
 
-// One layer rendered to a CSS `url(...)` SVG image of w×h px.
-export function layerImage(l: Layer, w: number, h: number, seed: number) {
+// One layer as an SVG data URL of w×h px (drawn into canvas textures by the desk's WebGL scene).
+export function layerUrl(l: Layer, w: number, h: number, seed: number) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
     <filter id="f" x="0" y="0" width="100%" height="100%">${l.filter.replaceAll(`seed="S"`, `seed="${seed}"`)}</filter>
     ${l.body?.(w, h, rng(seed)) ?? `<rect width="100%" height="100%" filter="url(#f)"/>`}</svg>`;
-  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
+
+export const layerImage = (l: Layer, w: number, h: number, seed: number) => `url("${layerUrl(l, w, h, seed)}")`;
 
 // Procedural dirt + grease + wear overlay. Drop inside any `position: relative; overflow: hidden` box.
 // Rendered once to an SVG image (not live DOM filters): live filters inside a 3D-transformed parent freeze the page.
