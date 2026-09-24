@@ -15,7 +15,7 @@ const layer: CSSProperties = { position: "absolute", inset: 0, pointerEvents: "n
 // Noise filters per layer. `seed="S"` is replaced by the real seed. Noise is in px, so it doesn't stretch with element size.
 const LAYERS: { blend: CSSProperties["mixBlendMode"]; opacity: number; filter: string; body?: (w: number, h: number, rand: () => number) => string }[] = [
   { // dirt: brown blotches + dark specks
-    blend: "multiply", opacity: 0.55,
+    blend: "multiply", opacity: 0.30,
     filter: `<feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="5" seed="S"/>
       <feColorMatrix values="0 0 0 0 .42 0 0 0 0 .33 0 0 0 0 .22 4 0 0 0 -2.3" result="b"/>
       <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="1" seed="S"/>
@@ -23,7 +23,7 @@ const LAYERS: { blend: CSSProperties["mixBlendMode"]; opacity: number; filter: s
       <feMerge><feMergeNode in="b"/><feMergeNode/></feMerge>`,
   },
   { // grease: soft oily smears that catch light
-    blend: "soft-light", opacity: 0.6,
+    blend: "soft-light", opacity: 0.9,
     filter: `<feTurbulence type="fractalNoise" baseFrequency=".005 .008" numOctaves="3" seed="S"/>
       <feColorMatrix values="0 0 0 0 1 0 0 0 0 .96 0 0 0 0 .82 3.2 0 0 0 -1.5"/>
       <feGaussianBlur stdDeviation="3"/>`,
@@ -62,7 +62,7 @@ function scratches(w: number, h: number, r: () => number) {
       add(cx + (r() - 0.5) * spread * 2, cy + (r() - 0.5) * spread, ang + (r() - 0.5) * 0.3, len * (0.2 + r()));
   }
   for (let n = 8 + Math.floor(r() * 20); n--; ) add(r() * w, r() * h, r() * Math.PI, 4 + r() * 60 * r());
-  return `<g fill="none" stroke="#fff" stroke-linecap="round" filter="url(#f)">${paths}</g>`;
+  return `<g fill="none" stroke="#ffffff40" stroke-linecap="round" filter="url(#f)">${paths}</g>`;
 }
 
 // Procedural dirt + grease + wear overlay. Drop inside any `position: relative; overflow: hidden` box.

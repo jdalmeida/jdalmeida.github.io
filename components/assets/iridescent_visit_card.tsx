@@ -39,6 +39,10 @@ export default function VisitCard() {
           <p>João de Almeida</p>
         </div>
         <div className={styles.cardText}>
+          <div className={styles.cardStickers} aria-hidden>
+            <img src="/stickers/globe_black.svg" alt="" />
+            <img src="/stickers/star_scribble_black.svg" alt="" />
+          </div>
           <p>Creative Developer</p>
           <p>Design • Code • Build</p>
         </div>
