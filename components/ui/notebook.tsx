@@ -28,8 +28,11 @@ function Doodles({ seed, back }: { seed: number; back: boolean }) {
 
 // What the client adds to the device seed (the server adds IP and browser headers).
 const device = () => [screen.width, screen.height, devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.hardwareConcurrency, navigator.language].join("|");
+// Stamps stuck at the bottom edge of the first screen are nudged up so they don't make the page scroll
+// (12.8cqi: half the box of a 20cqi sticker rotated up to 20deg).
+// ponytail: stamps further down a long page aren't clamped; the content height isn't known in CSS.
 const onFace = (stamps: Stamp[], f: number) =>
-  stamps.filter((s) => s.face === f).map((s) => <StampSticker key={s.id} s={s} style={{ left: `${s.x}%`, top: `${s.y}%` }} />);
+  stamps.filter((s) => s.face === f).map((s) => <StampSticker key={s.id} s={s} style={{ left: `${s.x}%`, top: s.y! > 100 ? `${s.y}%` : `min(${s.y}%, 100% - 12.8cqi)` }} />);
 
 // Is `el` (the sticker being placed) over any text or image of the page? Both rects are in screen space,
 // so the book's 3D tilt distorts them alike. The sticker's transparent corners don't count.
@@ -108,9 +111,11 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
 
   // While placing, the sticker follows the pointer; it goes grey over text.
   const aim = (e: MouseEvent<HTMLDivElement>) => {
-    const ghost = e.currentTarget.firstElementChild as HTMLElement;
-    Object.assign(ghost.style, { left: `${e.nativeEvent.offsetX}px`, top: `${e.nativeEvent.offsetY}px` });
-    ghost.dataset.ok = String(!overText(e.currentTarget.parentElement!, ghost));
+    const layer = e.currentTarget, ghost = layer.firstElementChild as HTMLElement;
+    const { offsetX: x, offsetY: y } = e.nativeEvent, r = ghost.offsetWidth * 0.64; // half the box of a sticker rotated up to 20deg
+    Object.assign(ghost.style, { left: `${x}px`, top: `${y}px` });
+    // Keep the whole sticker on the page: past the edges it's cut off or makes the page scroll.
+    ghost.dataset.ok = String(x > r && y > r && x < layer.offsetWidth - r && y < layer.offsetHeight - r && !overText(layer.parentElement!, ghost));
   };
   const drop = async (e: MouseEvent<HTMLDivElement>, f: number) => {
     aim(e);

@@ -56,7 +56,7 @@
 }
 .leaf[data-turned="true"] { transform: translateZ(var(--z)) rotateY(-180deg); }
 .face {
-  position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; container-type: inline-size; backface-visibility: visible;
+  position: absolute; inset: 0; overflow: hidden auto; overscroll-behavior: contain; pointer-events: auto; container-type: inline-size; backface-visibility: visible;
   /* Gecko can paint the mirrored front of a turned leaf despite backface-visibility.
      Swap the visible side halfway through the leaf's delayed turn. */
   transition: visibility 0s calc(var(--delay) + .5s);
