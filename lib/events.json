@@ -1,0 +1,82 @@
+[
+  {
+    "id": "inovathon-vrp",
+    "name": "Inovathon Vale do Rio Pardo",
+    "year": "2026",
+    "location": "UNISC, Santa Cruz do Sul, RS",
+    "place": "Santa Cruz do Sul",
+    "role": "Developer",
+    "number": "Nº 001",
+    "color": "#0a7d4f",
+    "darkColor": "#063c26",
+    "note": "Raízes locais, soluções globais. Um fim de semana no Living Vales para tirar do papel uma solução com cara do Vale do Rio Pardo.",
+    "images": [
+      "/credentials/inovathon1-960.webp",
+      "/credentials/inovathon2-960.webp"
+    ]
+  },
+  {
+    "id": "south-summit",
+    "name": "South Summit Brazil",
+    "year": "2026",
+    "location": "Cais Mauá, Porto Alegre, RS",
+    "place": "Porto Alegre",
+    "role": "Corps",
+    "number": "Nº 002",
+    "color": "#c8102e",
+    "darkColor": "#6d0a1a",
+    "note": "Três dias no Cais Mauá entre startups, palcos e café. Uma credencial do lado de quem faz o evento acontecer.",
+    "images": [
+      "/credentials/ss_brazil1-960.webp",
+      "/credentials/ss_brazil2-960.webp"
+    ]
+  },
+  {
+    "id": "amcham-sx",
+    "name": "Amcham SX",
+    "year": "2025",
+    "location": "Vinícola Luiz Argenta, Flores da Cunha, RS",
+    "place": "Flores da Cunha",
+    "role": "Atendee",
+    "number": "Nº 003",
+    "color": "#153df5",
+    "darkColor": "#0a1f8a",
+    "note": "Um encontro anual sobre inovação e negócios, com boas palestras e muitas conexões.",
+    "images": [
+      "/credentials/sx1-960.webp",
+      "/credentials/sx2-960.webp"
+    ]
+  },
+  {
+    "id": "techstars-sw",
+    "name": "Techstars Startup Weekend",
+    "year": "2025",
+    "location": "Lajeado, RS",
+    "place": "Lajeado",
+    "role": "Developer",
+    "number": "Nº 004",
+    "color": "#2b2f36",
+    "darkColor": "#0a0a0b",
+    "note": "Foram 54 horas para tirar uma ideia do papel. O time nasceu na sexta e apresentou o produto no domingo.",
+    "images": [
+      "/credentials/sw_lajeado1-960.webp",
+      "/credentials/sw_lajeado2-960.webp"
+    ]
+  },
+  {
+    "id": "hackathon-va",
+    "name": "3º Hackathon de Venâncio Aires",
+    "year": "2024",
+    "location": "Venâncio Aires, RS",
+    "place": "Venâncio Aires",
+    "role": "Dev & Leader",
+    "number": "Nº 005",
+    "color": "#0f31cc",
+    "darkColor": "#091747",
+    "note": "O evento onde as startups viraram parte da minha vida.",
+    "images": [
+      "/credentials/hackathon1-960.webp",
+      "/credentials/hackathon2-960.webp"
+    ]
+  }
+]

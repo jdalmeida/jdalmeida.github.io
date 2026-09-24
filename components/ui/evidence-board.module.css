@@ -1,0 +1,95 @@
+/* Room: an open box around the viewport, back wall pushed --depth away. */
+.room {
+  --depth: 700px;
+  position: fixed; inset: 0; width: 100vw; max-width: none; height: 100svh; max-height: none;
+  margin: 0; padding: 0; border: 0; overflow: hidden; color: #111;
+  background: #050505; perspective: 1000px;
+  /* Procedural textures: stained plaster (one stretched blotch layer so it never visibly repeats + tiled fine grain) and streaky wood grain. */
+  --plaster: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7 -.22'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23b)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none' width='1000' height='1000'%3E%3Cfilter id='a' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004' numOctaves='5' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .16 0 0 0 0 .14 0 0 0 0 .08 0 0 0 2.2 -.75'/%3E%3C/filter%3E%3Crect width='1000' height='1000' filter='url(%23a)'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+  --wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='800'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.12 .004' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='.6 0 0 0 .17 .34 0 0 0 .07 .16 0 0 0 .02 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='240' height='800' filter='url(%23w)'/%3E%3C/svg%3E");
+  animation: fade 1.4s ease both;
+}
+.room::backdrop { background: transparent; }
+.room[data-closing="true"] { animation: fade-out .9s ease both; }
+.room[data-closing="true"] .camera { animation: dolly-out .9s cubic-bezier(.5, 0, .8, .3) both; }
+.camera {
+  position: absolute; inset: 0; transform-style: preserve-3d;
+  animation: dolly 1.4s cubic-bezier(.15, .7, .2, 1) both;
+}
+@keyframes fade { from { opacity: 0; } 25% { opacity: 1; } }
+/* Same keyframes can't replay reversed on close (unchanged name = no restart), hence the -out copies. */
+@keyframes fade-out { 75% { opacity: 1; } to { opacity: 0; } }
+@keyframes dolly { from { transform: translateZ(-1600px) translateX(-20vw) rotateY(-28deg); } }
+@keyframes dolly-out { to { transform: translateZ(-1600px) translateX(-20vw) rotateY(-28deg); } }
+
+.wall, .floor, .ceiling, .side { position: absolute; left: -25vw; width: 150vw; }
+.wall {
+  top: -25svh; height: 150svh; transform: translateZ(calc(-1 * var(--depth)));
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 42%, #fff1 0 15%, #0000 30%, #0006 58%, #000d 85%), var(--plaster), #767461;
+}
+.floor {
+  top: 125svh; height: var(--depth); transform-origin: top; transform: translateZ(calc(-1 * var(--depth))) rotateX(90deg);
+  background: linear-gradient(#0008, #000d), repeating-linear-gradient(90deg, #0000 0 11vw, #0c0603 11vw calc(11vw + 3px)),
+    repeating-linear-gradient(90deg, #0000 0 calc(11vw + 3px), #0003 0 calc(22vw + 6px)), var(--wood) 0 0 / 11vw auto;
+}
+.ceiling {
+  top: calc(-25svh - var(--depth)); height: var(--depth); transform-origin: bottom;
+  transform: translateZ(calc(-1 * var(--depth))) rotateX(-90deg);
+  background: radial-gradient(circle at 50% 70%, #fff6d8 0 3%, #fff6d833 5%, #0000 9%), radial-gradient(circle at 50% 70%, #0000, #000c 60%), var(--plaster), #2a2a25;
+}
+.side {
+  top: -25svh; width: var(--depth); height: 150svh;
+  background: linear-gradient(90deg, #000e, #0007), var(--plaster), #3a3a33;
+}
+.side[data-side="left"] { left: calc(-25vw - var(--depth)); transform-origin: right; transform: translateZ(calc(-1 * var(--depth))) rotateY(90deg); }
+.side[data-side="right"] { left: 125vw; transform-origin: left; transform: translateZ(calc(-1 * var(--depth))) rotateY(-90deg) scaleX(-1); }
+
+/* ponytail: landscape board; on portrait phones it just shrinks, give it a stacked layout if that's too small. */
+.board {
+  position: relative; width: min(82%, 190svh); aspect-ratio: 16 / 10; container-type: inline-size;
+  border: 1.6cqi solid #5b3a20; border-radius: .6cqi;
+  background: radial-gradient(#0000 60%, #0006), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect width='300' height='300' fill='%23c09062'/%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='3' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.28 0 0 0 0 0.13 0 0 0 2.6 -1.1'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23p)'/%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.22' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.32 0 0 0 0 0.15 0 0 0 4 -1.8'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)'/%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.3' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.78 0 0 0 0 0.55 0 0 0 6 -3.6'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23l)'/%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.11 0 0 0 0 0.05 0 0 0 10 -6.2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23s)'/%3E%3C/svg%3E") 0 0 / 22cqi;
+  box-shadow: 0 3cqi 6cqi #000b, inset 0 0 2cqi #0008;
+}
+
+.title {
+  position: absolute; left: 50%; top: 4%; width: 84%; transform: translateX(-50%);
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .4em 1em;
+  margin: 0; font-size: 3.4cqi; line-height: 1; font-weight: 800; text-transform: uppercase;
+}
+.word { display: flex; gap: .08em; }
+.letter { display: inline-block; padding: .08em .14em; box-shadow: .08em .1em .12em #0007; }
+
+.note {
+  position: absolute; left: 8%; top: 40%; width: 26%; aspect-ratio: 1; padding: 2.4% 2%;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: linear-gradient(#0000 85%, #0001), #f7e66b; transform: rotate(-4deg);
+  font: 1.45cqi/1.35 "Comic Sans MS", "Bradley Hand", cursive; box-shadow: .3cqi .6cqi 1cqi #0007;
+}
+.note p { margin: 0; }
+.note small { font-size: 1.1cqi; opacity: .7; }
+
+.polaroid {
+  position: absolute; width: 22%; margin: 0; padding: 1.1% 1.1% 0; background: #f5f3ec;
+  box-shadow: .3cqi .6cqi 1cqi #0008; transform: rotate(5deg);
+}
+.polaroid[data-photo="0"] { left: 45%; top: 29%; }
+.polaroid[data-photo="1"] { left: 71%; top: 45%; transform: rotate(-6deg); }
+.polaroid img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; filter: sepia(.25) contrast(1.05); }
+.polaroid figcaption { padding: .6cqi 0 1.2cqi; text-align: center; font: 1.3cqi "Courier New", monospace; }
+
+.threads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.threads path { fill: none; stroke: #c01a1a; stroke-width: 2.5; vector-effect: non-scaling-stroke; filter: drop-shadow(1px 2px 1px #0008); }
+.pin {
+  position: absolute; width: 1.4cqi; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 35% 35%, #ff8a8a, #b30f0f 60%, #5a0505); box-shadow: .2cqi .4cqi .4cqi #0009;
+}
+
+.back {
+  position: absolute; left: 1.5rem; top: 1.5rem; padding: .6rem 1rem; border: 1px solid #fff4; border-radius: 999px;
+  background: #0008; color: #eee; font: 500 .9rem var(--font-geist-sans), sans-serif; cursor: pointer;
+}
+.back:hover, .back:focus-visible { background: #000c; border-color: #fff9; }
+
+@media (prefers-reduced-motion: reduce) { .room, .camera { animation: none !important; } }

@@ -1,0 +1,162 @@
+/* Closed notebook on the desk: back cover, 1px page slices (like the desk edge) and a cover that peeks open on hover. */
+.notebook {
+  position: absolute; left: 43%; top: 31%; width: 13%; aspect-ratio: .72; padding: 0; border: 0; background: none; cursor: pointer;
+  transform: translate(-50%, -50%) translateZ(2px) rotate(-9deg); transform-style: preserve-3d;
+}
+.notebook:focus-visible { outline: 3px solid #fff; outline-offset: 6px; border-radius: 4px; }
+/* Back cover doubles as the page block: an extra plane between it and the cover z-fought on the rotated (mobile) desk. */
+.backCover {
+  position: absolute; inset: 0; border-radius: 3px 6px 6px 3px; background: #f1ead8;
+  box-shadow: inset 0 0 0 1px #cfc5ad, 0 0 0 2px #14263d, 3px 5px 2px #15100ac0, 8px 14px 16px #130b0880;
+}
+.cover {
+  position: absolute; inset: 0; display: grid; place-items: center; container-type: inline-size;
+  border-radius: 3px 6px 6px 3px; transform-origin: left; transform: translateZ(8px);
+  background: linear-gradient(90deg, #0000 0 5%, #0005 5% 7%, #0000 9%), radial-gradient(ellipse at 30% 20%, #3c5f8c, #1c3452 70%);
+  box-shadow: inset 0 0 0 1px #ffffff1a;
+  transition: transform .5s cubic-bezier(.2, .8, .3, 1.1);
+}
+.notebook:hover .cover, .notebook:focus-visible .cover { transform: translateZ(8px) rotateY(-32deg); }
+.cover::after { content: ""; position: absolute; top: 0; bottom: 0; right: 12%; width: 4%; background: #151515; box-shadow: 1px 0 1px #0008; }
+.label {
+  padding: .3em .8em; background: #f4efe2; color: #1c3452; border: 1px solid #1c345255; border-radius: 2px;
+  font: 700 18cqi/1 var(--font-hand-title), cursive; box-shadow: 1px 1px 2px #0006;
+}
+
+/* Open book: fixed room, leaves hinge on the spine and turn with rotateY. */
+.room {
+  position: fixed; inset: 0; width: 100vw; max-width: none; height: 100svh; max-height: none;
+  margin: 0; padding: 0; border: 0; overflow: hidden; color: #1d1a16;
+  background: radial-gradient(ellipse at 50% 45%, #5d4230, #2b1d13 60%, #0c0806); perspective: 2000px;
+  animation: fade .9s ease both;
+}
+.room::backdrop { background: transparent; }
+.room[data-closing="true"] { animation: fade-out .8s .7s ease both; }
+.room[data-closing="true"] .book { animation: depart .8s .7s cubic-bezier(.5, 0, .8, .3) both; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes arrive { from { translate: 0 70svh; scale: .4; } }
+@keyframes depart { to { translate: 0 70svh; scale: .4; } }
+
+.book {
+  --shift: 0%;
+  position: absolute; left: 50%; top: 50%; width: min(90vw, 118svh, 1300px); aspect-ratio: 1.42;
+  transform: translate(-50%, -48%) rotateX(14deg) translateX(var(--shift)); transform-style: preserve-3d;
+  pointer-events: none; /* its plane (z 0) sits in front of the unturned leaves (negative z) and would swallow clicks and wheel */
+  transition: transform 1s cubic-bezier(.45, .05, .25, 1);
+  animation: arrive 1s cubic-bezier(.15, .7, .2, 1) both;
+}
+.book[data-state="closed"] { --shift: -25%; }
+.book[data-state="end"] { --shift: 25%; }
+.leaf {
+  position: absolute; left: 50%; top: 0; width: 50%; height: 100%;
+  transform-origin: left; transform-style: preserve-3d; transform: translateZ(var(--z));
+  container-type: inline-size; /* the face's own padding/font cqi resolve against this, not the face */
+  transition: transform 1s cubic-bezier(.45, .05, .25, 1) var(--delay);
+}
+.leaf[data-turned="true"] { transform: translateZ(var(--z)) rotateY(-180deg); }
+.face {
+  position: absolute; inset: 0; overflow: auto; overscroll-behavior: contain; pointer-events: auto; container-type: inline-size; backface-visibility: hidden;
+  padding: 7cqi 5cqi 10cqi 13cqi; border-radius: 0 6px 6px 0;
+  font: clamp(16px, 4cqi, 22px)/1.6 var(--font-hand), cursive;
+  background:
+    linear-gradient(90deg, #0003, #0000 7%),
+    linear-gradient(90deg, #0000 11cqi, #d9534f66 11cqi calc(11cqi + 1px), #0000 0),
+    repeating-linear-gradient(#0000 0 calc(1.6em - 1px), #6a8fc633 calc(1.6em - 1px) 1.6em) 0 7cqi / 100% 100% local,
+    #f6f1e3;
+  box-shadow: inset 0 0 0 1px #0000000d, 2px 3px 6px #0005;
+}
+.face[data-side="back"] {
+  transform: rotateY(180deg); border-radius: 6px 0 0 6px;
+  background:
+    linear-gradient(270deg, #0003, #0000 7%),
+    repeating-linear-gradient(#0000 0 calc(1.6em - 1px), #6a8fc633 calc(1.6em - 1px) 1.6em) 0 7cqi / 100% 100% local,
+    #f6f1e3;
+  padding: 7cqi 9cqi 10cqi 6cqi;
+}
+.doodle {
+  position: absolute; overflow: visible; pointer-events: none; mix-blend-mode: multiply;
+  fill: none; stroke: #2a45a0; stroke-opacity: .75; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.folio { position: absolute; bottom: 4cqi; right: 6cqi; font: 3cqi var(--font-hand), cursive; opacity: .5; }
+.face[data-side="back"] .doodle {
+  position: absolute; overflow: visible; pointer-events: none; mix-blend-mode: multiply;
+  fill: none; stroke: #2a45a0; stroke-opacity: .75; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
+}
+.folio { right: auto; left: 6cqi; }
+
+.coverFace {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4cqi;
+  background: linear-gradient(90deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 30% 20%, #3c5f8c, #1c3452 70%);
+  color: #f4efe2;
+}
+.coverFace .label { font-size: 12cqi; }
+.coverFace small { font: 3cqi var(--font-geist-mono), monospace; letter-spacing: .2em; text-transform: uppercase; opacity: .8; }
+.coverFace::after { content: ""; position: absolute; top: 0; bottom: 0; right: 12%; width: 3.5%; background: #151515; }
+.face[data-side="back"] .coverFace { background: linear-gradient(270deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 70% 20%, #3c5f8c, #1c3452 70%); }
+.face[data-side="back"] .coverFace::after { right: auto; left: 12%; }
+
+.owner { display: flex; flex-direction: column; justify-content: center; height: 100%; text-align: center; }
+.owner img { width: 70%; margin: 4cqi auto; }
+
+.toc h2, .titlePage h2, .guestbook h2 { margin: 0 0 .6em; font: 700 9cqi/1.1 var(--font-hand-title), cursive; color: #1c3452; }
+.toc ol { margin: 0; padding: 0; list-style: none; }
+.toc button {
+  display: flex; align-items: baseline; gap: .5em; width: 100%; padding: .2em 0; border: 0; background: none;
+  font: inherit; line-height: 1.6; text-align: left; color: inherit; cursor: pointer;
+}
+.toc button::after { content: ""; order: 1; flex: 1; border-bottom: 2px dotted #1d1a1655; }
+.toc button i { order: 2; font-style: normal; }
+.toc button:hover span, .toc button:focus-visible span { color: #b3261e; text-decoration: underline; }
+
+.titlePage { display: flex; flex-direction: column; justify-content: center; min-height: 100%; }
+.titlePage time { font: 3cqi var(--font-geist-mono), monospace; text-transform: uppercase; letter-spacing: .12em; opacity: .6; }
+.titlePage h2 { font-size: 11cqi; margin-top: .3em; }
+.titlePage p { margin: 0 0 1em; }
+.titlePage ul { display: flex; flex-wrap: wrap; gap: .5em; margin: 0 0 1.5em; padding: 0; list-style: none; }
+.titlePage li { padding: .1em .6em; border: 1.5px solid #b3261e; border-radius: 3px; color: #b3261e; font: 2.6cqi var(--font-geist-mono), monospace; text-transform: uppercase; transform: rotate(-2deg); }
+
+.prose h2, .prose h3 { margin: 1em 0 .2em; font: 700 1.7em/1.1 var(--font-hand-title), cursive; color: #1c3452; }
+.prose h3 { font-size: 1.4em; }
+.prose p, .prose ul, .prose ol { margin: 0 0 .8em; }
+.prose code { padding: 0 .25em; border-radius: 3px; background: #0000000f; font: .85em var(--font-geist-mono), monospace; }
+.prose pre { overflow: auto; padding: .8em; background: #0000000d; }
+.prose pre code { padding: 0; background: none; }
+.prose blockquote { margin: 0 0 .8em; padding-left: 1em; border-left: 3px solid #b3261e88; color: #4a4238; }
+.prose table { display: block; overflow: auto; margin: 0 0 1em; border-collapse: collapse; font-size: .8em; line-height: 1.35; }
+.prose th, .prose td { padding: .3em .5em; border: 1px solid #1d1a1633; vertical-align: top; }
+.prose img { max-width: 100%; }
+.prose a { color: #1c3452; }
+.mobileTitle { display: none; }
+
+.guestbook p button, .visitors button {
+  padding: 0; border: 0; background: none; font: inherit; color: #b3261e; text-decoration: underline; cursor: pointer;
+}
+.visitors { margin: 1em 0 0; padding: 0; list-style: none; font: 2.8cqi/1.9 var(--font-geist-mono), monospace; }
+.visitors button { color: inherit; text-decoration: none; text-align: left; }
+.visitors button:hover, .visitors button:focus-visible { color: #b3261e; }
+/* Sticker placement: covers the whole page while a visitor picks a spot. */
+.placeLayer { position: absolute; top: 0; left: 0; width: 100%; min-height: 100%; z-index: 5; cursor: copy; }
+.placeLayer:not(:hover) [data-stamp] { display: none; }
+
+.back, .nav button {
+  padding: .6rem 1rem; border: 1px solid #fff4; border-radius: 999px;
+  background: #0008; color: #eee; font: 500 .9rem var(--font-geist-sans), sans-serif; cursor: pointer;
+}
+.back { position: absolute; left: 1.5rem; top: 1.5rem; }
+.nav { position: absolute; left: 50%; bottom: max(1.2rem, env(safe-area-inset-bottom)); translate: -50% 0; display: flex; gap: .5rem; }
+.back:hover, .back:focus-visible, .nav button:hover:not(:disabled), .nav button:focus-visible { background: #000c; border-color: #fff9; }
+.nav button:disabled { opacity: .35; cursor: default; }
+
+/* ponytail: phones show one page at a time (the right one), so right faces repeat the title; swipe-to-flip if taps feel clunky. */
+@media (max-width: 640px) and (orientation: portrait) {
+  .notebook { left: 54%; top: 30%; }
+  .book { width: 184vw; height: 76svh; aspect-ratio: auto; }
+  .book[data-state="open"] { --shift: -25%; }
+  .mobileTitle { display: block; }
+  .face { padding: 6cqi 5cqi 10cqi 13cqi; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cover, .book, .leaf { transition: none; }
+  .room, .book { animation: none !important; }
+}

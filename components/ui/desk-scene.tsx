@@ -3,6 +3,7 @@
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
 import Grime, { LAYERS, layerImage, rng, type Layer } from "@/components/ui/grime";
 import styles from "./desk-scene.module.css";
+import DeskCredentials from "./desk-credentials";
 
 // One-pixel slices extrude the same rounded outline as the tabletop.
 const deskLayers = Array.from({ length: 24 }, (_, index) => index + 1);
@@ -23,7 +24,7 @@ const handleSides = [0, .075].flatMap((inset) => Array.from({ length: 48 }, (_, 
     "--handle-light": `${76 + 12 * Math.cos(a - Math.PI / 4)}%`,
   } as CSSProperties;
 }));
-const coffeeSpot = (r: () => number) => ({ radius: 0.038 + r() * 0.008, x: 0.6 + r() * 0.28, y: 0.25 + r() * 0.5 });
+const coffeeSpot = (r: () => number) => ({ radius: 0.038 + r() * 0.008, x: 0.8 + r() * 0.08, y: 0.25 + r() * 0.08 });
 
 // Coffee-cup rings: one spot where the mug always goes, 1–4 overlapping rings, mostly broken arcs like dried stains.
 // ponytail: spot kept on the right half, since the card lands on the left.
@@ -99,7 +100,7 @@ const ease = (value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export default function DeskScene({ card, stickers }: { card: ReactNode; stickers: ReactNode }) {
+export default function DeskScene({ card, stickers, notebook }: { card: ReactNode; stickers: ReactNode; notebook: ReactNode }) {
   const scene = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const desk = useRef<HTMLDivElement>(null);
@@ -186,6 +187,8 @@ export default function DeskScene({ card, stickers }: { card: ReactNode; sticker
               <div className={styles.top}><Grime layers={DESK_LAYERS} /></div>
             </div>
             <CoffeeCup />
+            {notebook}
+            <DeskCredentials />
           </div>
           <div className={styles.cardAnchor}>
             <div className={styles.card} data-desk-card>{card}</div>
