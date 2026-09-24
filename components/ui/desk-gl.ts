@@ -1,5 +1,6 @@
 import { Camera, Geometry, Mesh, Program, Renderer, Texture, Transform, Vec3 } from "ogl";
-import { cupAt, paintDesk } from "./desk-textures";
+import { coffeeSpot, cupAt, paintDesk } from "./desk-textures";
+import { rng } from "./grime";
 
 // The desk's furniture, cup, bin and floor in one WebGL canvas, placed exactly under the CSS-transformed `.desk`
 // (which keeps only the interactive notebook and credentials). Units are CSS px; the camera mirrors `.space`'s
@@ -229,8 +230,11 @@ export function createDeskGL(parent: HTMLElement, className: string) {
     render();
   }
 
+  // Where the mug stands, as desk fractions (diameter is of the width), so the flat layer can put a button on it.
+  const spot = coffeeSpot(rng(seed)), [x, y] = cupAt(spot);
   return {
     draw,
+    cup: { x, y, d: spot.radius * 2 },
     dispose() {
       clearTimeout(timer);
       built?.();

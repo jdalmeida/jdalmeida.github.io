@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import styles from "./desk-scene.module.css";
 import DeskCredentials from "./desk-credentials";
 import PaperToss from "./paper-toss";
+import CoffeeRun from "./coffee-run";
 import { createDeskGL } from "./desk-gl";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
@@ -25,6 +26,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
     const stickers = viewport.firstElementChild as HTMLElement;
     const gl = createDeskGL(surface.parentElement!, styles.gl);
     if (!gl) surface.dataset.flat = "";
+    else for (const [key, value] of [["--cup-x", gl.cup.x], ["--cup-y", gl.cup.y], ["--cup-d", gl.cup.d]] as const) surface.style.setProperty(key, `${value * 100}%`);
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const mobile = matchMedia("(max-width: 640px) and (orientation: portrait)");
     let frame = 0, drawn = "";
@@ -49,7 +51,8 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
       const set = (el: HTMLElement, values: Record<string, string | number>) => {
         for (const [key, value] of Object.entries(values)) el.style.setProperty(key, String(value));
       };
-      set(surface, { "--entry": `${entry}px`, "--pitch": `${pitch}deg`, "--turn": `${turn}deg` });
+      // The mug is 0.85 of its diameter tall (desk-gl.ts `cup`); its button floats at rim height.
+      set(surface, { "--entry": `${entry}px`, "--pitch": `${pitch}deg`, "--turn": `${turn}deg`, "--cup-z": `${width * (gl?.cup.d ?? 0) * 0.85}px` });
       set(card, {
         "--card-y": `${(mobile.matches ? -width * 0.23 : width * 0.085) * travel}px`,
         "--card-x": `${mobile.matches ? 0 : -width * 0.23 * travel}px`,
@@ -106,6 +109,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
             {notebook}
             <DeskCredentials />
             <PaperToss />
+            <CoffeeRun />
           </div>
           <div className={styles.cardAnchor}>
             <div className={styles.card} data-desk-card>{card}</div>

@@ -17,3 +17,11 @@ create table if not exists scores (
   name text,                       -- set by the player; only named rows show on the leaderboard
   updated_at timestamptz not null default now() -- when `best` was reached; ties go to whoever got there first
 );
+
+-- Café castle platformer progress, keyed by a random id the browser keeps in localStorage.
+create table if not exists castle (
+  key uuid primary key,
+  cleared smallint not null default 0, -- stages cleared, in order
+  best smallint[] not null default '{}', -- most beans per stage
+  updated_at timestamptz not null default now()
+);

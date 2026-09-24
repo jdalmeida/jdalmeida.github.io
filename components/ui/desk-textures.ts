@@ -2,7 +2,7 @@ import { LAYERS, rng, type Layer } from "@/components/ui/grime";
 
 // Flat desk surfaces painted once into 2D canvases, then uploaded as WebGL textures. Sizes are CSS px of the desk.
 export type Spot = { radius: number; x: number; y: number };
-const coffeeSpot = (r: () => number): Spot => ({ radius: 0.038 + r() * 0.008, x: 0.87 + r() * 0.05, y: 0.12 + r() * 0.08 });
+export const coffeeSpot = (r: () => number): Spot => ({ radius: 0.038 + r() * 0.008, x: 0.87 + r() * 0.05, y: 0.12 + r() * 0.08 });
 // Cup centre, as a fraction of desk width / height; its diameter is 2 * radius of the desk width.
 export const cupAt = (s: Spot) => [s.x - s.radius * 1.8, s.y + 0.035];
 

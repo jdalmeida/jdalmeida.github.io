@@ -1,0 +1,51 @@
+/* Sits over the WebGL mug (desk-gl.ts): desk-scene.tsx sets --cup-x/y/d from the desk seed and --cup-z to its rim height. */
+.mug {
+  position: absolute; left: var(--cup-x); top: var(--cup-y); width: calc(var(--cup-d) * 1.15); aspect-ratio: 1; padding: 0; border: 0;
+  border-radius: 50%; background: none; cursor: pointer;
+  transform: translate(-50%, -50%) translateZ(var(--cup-z));
+}
+.mug:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+[data-landed="false"] .mug, [data-flat] .mug { visibility: hidden; }
+
+.hud { flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem 1.5rem; min-height: 1.6rem; }
+.lost { opacity: .25; }
+.menu { padding: .2rem .7rem; border: 1px solid #e3ddcf55; border-radius: 999px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.frame { position: relative; }
+canvas.level { cursor: default; width: min(94vw, calc((100svh - 9rem) * 1.71)); }
+canvas.level:active { cursor: default; }
+.stages {
+  position: absolute; inset: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem;
+  background: #0b0b0acc; text-align: center;
+}
+.stages p { margin: 0; color: #ffcc55; }
+.stages ol { display: flex; flex-direction: column; gap: .6rem; margin: 0; padding: 0; list-style: none; }
+.stages button {
+  display: flex; flex-direction: column; gap: .2rem; min-width: min(16rem, 70vw); padding: .6rem 1rem; border: 2px solid #e3ddcf55;
+  background: #1e1d1a; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer;
+}
+.stages button:hover:not(:disabled), .stages button:focus-visible { border-color: #e3ddcf; outline: none; }
+.stages button:disabled { opacity: .4; cursor: not-allowed; }
+.stages small { font-size: 10px; opacity: .7; }
+
+/* Touch: pad pinned to the bottom corners, big enough for thumbs. */
+.pad, .rotate { display: none; }
+.pad { position: fixed; left: 1rem; right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); justify-content: space-between; pointer-events: none; }
+.pad span { display: flex; gap: .8rem; pointer-events: auto; }
+.pad button {
+  width: 4.2rem; aspect-ratio: 1; border: 2px solid #e3ddcf55; border-radius: 50%; background: #1e1d1acc; color: inherit;
+  font: 700 1.2rem var(--font-geist-mono), monospace; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.pad button:active { background: #3a3833; }
+@media (pointer: coarse) {
+  .pad { display: flex; }
+  .hint { display: none; }
+}
+@media (pointer: coarse) and (orientation: portrait) {
+  .rotate { display: block; margin: 0; font-size: 10px; opacity: .5; }
+}
+/* Phone on its side: the canvas takes the middle, thumbs get the sides. */
+@media (pointer: coarse) and (orientation: landscape) {
+  canvas.level { width: min(calc(100vw - 20rem), calc((100svh - 4.5rem) * 1.71)); }
+  .pad { top: 50%; bottom: auto; translate: 0 -50%; }
+  .pad span { flex-direction: column; }
+}
