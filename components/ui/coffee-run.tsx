@@ -88,14 +88,25 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
     }
   }
 
+  // Bones burst out of a hit skeleton, away from the whip, and tumble under gravity; a dead one scatters with its skull.
+  const bones = (f: Game["foes"][number], t: number, n: number) => {
+    for (let i = 0; i < n; i++) {
+      const vx = f.kick * (25 + (i % 3) * 18) + Math.cos(i * 2.4) * 20, vy = -80 - (i % 4) * 22;
+      const x = f.x + 3 + vx * t, y = f.y + 5 + vy * t + 200 * t * t;
+      if (i === 0 && f.dead) { rect(x - 1, y - 1, 3, 3, "#e6e2d3"); rect(x, y, 1, 1, "#1a1a1a"); }
+      else if (Math.floor(t * 14 + i) % 2) rect(x - 1, y, 3, 1, "#e6e2d3"); else rect(x, y - 1, 1, 3, "#e6e2d3");
+    }
+  };
   for (const f of g.foes) {
+    if (f.dead && f.kind === "skel") { if (f.t < 0.9) bones(f, f.t, 8); continue; }
     if (f.dead) { if (f.t < 0.3) for (let i = 0; i < 4; i++) rect(f.x + 3 + Math.cos(i * 1.6) * f.t * 30, f.y + 5 + Math.sin(i * 1.6) * f.t * 30, 2, 2, "#ff9a3c"); continue; }
     if (f.kind === "bat") {
       const up = Math.floor(f.t * 8) % 2;
       rect(f.x + 2, f.y + 2, 3, 3, "#6b3f8f"); rect(f.x + 2, f.y + 3, 1, 1, "#ff4b4b"); rect(f.x + 4, f.y + 3, 1, 1, "#ff4b4b");
       rect(f.x, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8"); rect(f.x + 5, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8");
     } else {
-      const bone = "#e6e2d3", left = f.vx < 0, step = Math.floor(f.x / 3) % 2;
+      if (f.ouch < 0.6) bones(f, f.ouch, 3);
+      const bone = f.ouch < 0.15 ? "#ff8a7a" : "#e6e2d3", left = f.vx < 0, step = Math.floor(f.x / 3) % 2;
       rect(f.x + 1, f.y, 4, 4, bone); rect(f.x + (left ? 1 : 3), f.y + 1, 1, 2, "#1a1a1a");
       rect(f.x + 2, f.y + 4, 2, 5, bone); for (let r = 5; r < 9; r += 2) rect(f.x, f.y + r, 6, 1, bone);
       rect(f.x + 1 + step, f.y + 9, 1, 4, bone); rect(f.x + 4 - step, f.y + 9, 1, 4, bone);

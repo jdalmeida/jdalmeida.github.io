@@ -44,6 +44,17 @@ test("whipping a skeleton twice kills it", () => {
   assert.ok(skel.dead);
 });
 
+test("a whipped skeleton slides back away from the hero and does no contact damage meanwhile", () => {
+  const g = run(fresh(0), {}, 0.5);
+  const skel = g.foes.find((f) => f.kind === "skel");
+  Object.assign(skel, { x: g.x + 12, vx: 0 });
+  const before = skel.x;
+  run(g, { whip: true }, 0.35);
+  assert.equal(skel.hp, 1);
+  assert.ok(skel.x > before + 5, `moved ${skel.x - before}`);
+  assert.equal(g.hp, 4);
+});
+
 test("touching a foe costs one heart", () => {
   const g = run(fresh(0), {}, 0.5);
   Object.assign(g.foes.find((f) => f.kind === "skel"), { x: g.x, y: g.y, vx: 0 });

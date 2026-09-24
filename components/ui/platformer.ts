@@ -62,9 +62,11 @@ export const STAGES = [
   },
 ];
 const SPEED = 55, G = 480, JUMP = 190, FALL = 280, WHIP = 0.32, REACH = 18, HURT = 1, BUFFER = 0.1, COYOTE = 0.08;
+export const STUN = 0.3;
 const SIZE = { bat: [7, 6], skel: [6, 13] } as const;
 
-export type Foe = { kind: "bat" | "skel"; x: number; y: number; vx: number; home: number; hp: number; hit: number; t: number; dead: boolean };
+// `ouch` is seconds since the last whip hit; `kick` the direction it came from.
+export type Foe = { kind: "bat" | "skel"; x: number; y: number; vx: number; home: number; hp: number; hit: number; t: number; dead: boolean; ouch: number; kick: 1 | -1 };
 export type Game = {
   stage: number; x: number; y: number; vx: number; vy: number; face: 1 | -1; ground: boolean; air: number; buffer: number;
   hp: number; hurt: number; kick: number; whip: number; swing: number; prev: { jump: boolean; whip: boolean };
@@ -88,8 +90,8 @@ export function fresh(stage: number): Game {
   let x = 0, y = 0;
   STAGES[stage].map.forEach((row, cy) => [...row].forEach((c, cx) => {
     if (c === "P") { x = cx * T + 1; y = (cy + 1) * T - PH; }
-    if (c === "b") foes.push({ kind: "bat", x: cx * T, y: cy * T + 1, vx: 0, home: cy * T + 1, hp: 1, hit: 0, t: 0, dead: false });
-    if (c === "s") foes.push({ kind: "skel", x: cx * T + 1, y: (cy + 1) * T - SIZE.skel[1], vx: -15, home: 0, hp: 2, hit: 0, t: 0, dead: false });
+    if (c === "b") foes.push({ kind: "bat", x: cx * T, y: cy * T + 1, vx: 0, home: cy * T + 1, hp: 1, hit: 0, t: 0, dead: false, ouch: 99, kick: 1 });
+    if (c === "s") foes.push({ kind: "skel", x: cx * T + 1, y: (cy + 1) * T - SIZE.skel[1], vx: -15, home: 0, hp: 2, hit: 0, t: 0, dead: false, ouch: 99, kick: 1 });
   }));
   return {
     stage, x, y, vx: 0, vy: 0, face: 1, ground: false, air: 0, buffer: 0, hp: HP, hurt: 0, kick: 0, whip: 0, swing: 0,
@@ -151,24 +153,28 @@ function sub(g: Game, input: Input, dt: number) {
   });
 
   for (const f of g.foes) {
-    f.t += dt;
+    f.t += dt; f.ouch += dt;
     if (f.dead) continue;
     if (f.kind === "bat") {
       // Bats sleep until the hero comes near, then swoop along in a wave.
       if (!f.vx && Math.abs(g.x - f.x) < 90) { f.vx = g.x < f.x ? -45 : 45; f.t = 0; }
       if (f.vx) { f.x += f.vx * dt; f.y = f.home + Math.sin(f.t * 5) * 10; }
     } else {
-      // Skeletons pace and turn at walls and ledge ends.
-      f.x += f.vx * dt;
-      const ahead = Math.floor((f.vx > 0 ? f.x + SIZE.skel[0] : f.x) / T), floor = Math.round((f.y + SIZE.skel[1]) / T);
-      if (wall(ahead, floor - 1) || !(wall(ahead, floor) || tile(ahead, floor) === "=")) { f.vx *= -1; f.x += f.vx * dt; }
+      // Skeletons pace and turn at walls and ledge ends; a hit slides them back (never off a ledge) and stops them briefly.
+      const floor = Math.round((f.y + SIZE.skel[1]) / T);
+      const edge = (x: number, dir: number) => {
+        const ahead = Math.floor((dir > 0 ? x + SIZE.skel[0] : x) / T);
+        return wall(ahead, floor - 1) || !(wall(ahead, floor) || tile(ahead, floor) === "=");
+      };
+      if (f.ouch < STUN) { const x = f.x + f.kick * 90 * (1 - f.ouch / STUN) * dt; if (!edge(x, f.kick)) f.x = x; }
+      else { f.x += f.vx * dt; if (edge(f.x, f.vx)) { f.vx *= -1; f.x += f.vx * dt; } }
     }
     if (whip && f.hit !== g.swing && overlap(whip, foeBox(f))) {
-      f.hit = g.swing;
+      f.hit = g.swing; f.ouch = 0; f.kick = g.face;
       if (--f.hp <= 0) { f.dead = true; f.t = 0; }
       continue;
     }
-    if (g.hurt <= 0 && overlap(hero(g), foeBox(f))) {
+    if (g.hurt <= 0 && f.ouch >= STUN && overlap(hero(g), foeBox(f))) {
       g.hp--; g.hurt = HURT; g.kick = g.x + PW / 2 < f.x + SIZE[f.kind][0] / 2 ? -1 : 1; g.vy = -120;
     }
   }
