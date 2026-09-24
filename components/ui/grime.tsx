@@ -7,6 +7,8 @@ type Props = {
   seed?: number;
   /** Overall strength, 0–1. */
   amount?: number;
+  /** Layers to paint; defaults to dirt + grease + wear. */
+  layers?: Layer[];
   className?: string;
 };
 
@@ -76,7 +78,7 @@ export function layerImage(l: Layer, w: number, h: number, seed: number) {
 
 // Procedural dirt + grease + wear overlay. Drop inside any `position: relative; overflow: hidden` box.
 // Rendered once to an SVG image (not live DOM filters): live filters inside a 3D-transformed parent freeze the page.
-export default function Grime({ seed, amount = 1, className }: Props) {
+export default function Grime({ seed, amount = 1, layers = LAYERS, className }: Props) {
   const opacity = (o: number) => Math.min(1, o * amount);
 
   // Built after mount so SSR and client markup match, and so the image matches the element's px size.
@@ -84,13 +86,13 @@ export default function Grime({ seed, amount = 1, className }: Props) {
     if (!el) return;
     const s = seed ?? Math.floor(Math.random() * 1e5);
     const w = el.offsetWidth, h = el.offsetHeight;
-    LAYERS.forEach((l, i) => ((el.children[i] as HTMLElement).style.backgroundImage = layerImage(l, w, h, s + i * 101)));
+    layers.forEach((l, i) => ((el.children[i] as HTMLElement).style.backgroundImage = layerImage(l, w, h, s + i * 101)));
   };
 
   return (
     <div ref={paint} className={className} aria-hidden
       style={{ ...layer, boxShadow: `inset 0 0 18px rgb(58 42 26 / ${opacity(0.35)})` }}>
-      {LAYERS.map((l, i) => <div key={i} style={{ ...layer, mixBlendMode: l.blend, opacity: opacity(l.opacity ?? 1) }} />)}
+      {layers.map((l, i) => <div key={i} style={{ ...layer, mixBlendMode: l.blend, opacity: opacity(l.opacity ?? 1) }} />)}
     </div>
   );
 }

@@ -1,10 +1,97 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type ReactNode } from "react";
+import Grime, { LAYERS, layerImage, rng, type Layer } from "@/components/ui/grime";
 import styles from "./desk-scene.module.css";
 
 // One-pixel slices extrude the same rounded outline as the tabletop.
 const deskLayers = Array.from({ length: 24 }, (_, index) => index + 1);
+const cupSides = Array.from({ length: 48 }, (_, index) => ({
+  "--angle": `${index * 7.5}deg`,
+  "--shade": `${78 + 16 * Math.cos((index * 7.5 - 35) * Math.PI / 180)}%`,
+} as CSSProperties));
+// Close both contours of the handle instead of stacking edge-on rings.
+const handleSides = [0, .075].flatMap((inset) => Array.from({ length: 48 }, (_, index) => {
+  const a = index * Math.PI / 24, b = (index + 1) * Math.PI / 24;
+  const rx = .24 - inset, ry = .33 - inset;
+  const dx = rx * (Math.cos(b) - Math.cos(a)), dy = ry * (Math.sin(b) - Math.sin(a));
+  return {
+    "--handle-x": .24 + rx * (Math.cos(a) + Math.cos(b)) / 2,
+    "--handle-y": .33 + ry * (Math.sin(a) + Math.sin(b)) / 2,
+    "--handle-length": Math.hypot(dx, dy),
+    "--handle-angle": `${Math.atan2(dy, dx)}rad`,
+    "--handle-light": `${76 + 12 * Math.cos(a - Math.PI / 4)}%`,
+  } as CSSProperties;
+}));
+const coffeeSpot = (r: () => number) => ({ radius: 0.038 + r() * 0.008, x: 0.6 + r() * 0.28, y: 0.25 + r() * 0.5 });
+
+// Coffee-cup rings: one spot where the mug always goes, 1–4 overlapping rings, mostly broken arcs like dried stains.
+// ponytail: spot kept on the right half, since the card lands on the left.
+const COFFEE: Layer = {
+  blend: "multiply", opacity: 0.8,
+  filter: `<feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="3" seed="S"/>
+    <feDisplacementMap in="SourceGraphic" scale="5"/>
+    <feGaussianBlur stdDeviation=".7"/>`,
+  body: (w, h, r) => {
+    const spot = coffeeSpot(r);
+    const R = w * spot.radius, cx = w * spot.x, cy = h * spot.y;
+    let rings = "";
+    for (let n = 1 + Math.floor(r() * 4); n--; ) {
+      const rad = R * (0.95 + r() * 0.1), c = 2 * Math.PI * rad, arc = c * (0.55 + r() * 0.45);
+      rings += `<circle cx="${(cx + (r() - 0.5) * R * 0.7).toFixed(1)}" cy="${(cy + (r() - 0.5) * R * 0.7).toFixed(1)}" r="${rad.toFixed(1)}"
+        fill-opacity="${(0.05 + r() * 0.12).toFixed(2)}" stroke-width="${(1.2 + r() * 2.3).toFixed(1)}" stroke-opacity="${(0.45 + r() * 0.45).toFixed(2)}"
+        stroke-dasharray="${arc.toFixed(1)} ${c.toFixed(1)}" stroke-dashoffset="${(r() * c).toFixed(1)}"/>`;
+    }
+    // The empty rect makes the filter box span the whole image, so the wobble isn't clipped at the rings' bounds.
+    return `<g fill="#6b3f1d" stroke="#3a1d0b" filter="url(#f)"><rect width="100%" height="100%" fill="none" stroke="none"/>${rings}</g>`;
+  },
+};
+
+// Card grime minus grease: its light smears read as bleached patches on the dark wood.
+const [dirt, , wear] = LAYERS;
+const DESK_LAYERS = [dirt, wear];
+
+function CoffeeCup() {
+  const paint = (el: HTMLDivElement | null) => {
+    if (!el) return;
+    const seed = Math.floor(Math.random() * 1e5);
+    const spot = coffeeSpot(rng(seed));
+    el.style.setProperty("--cup-x", `${(spot.x - spot.radius * 1.8) * 100}%`);
+    el.style.setProperty("--cup-y", `${(spot.y + 0.035) * 100}%`);
+    el.style.setProperty("--cup-size", `${spot.radius * 200}%`);
+    (el.firstElementChild as HTMLElement).style.backgroundImage = layerImage(COFFEE, el.offsetWidth, el.offsetHeight, seed);
+    const resize = () => el.style.setProperty("--cup-diameter", `${el.offsetWidth * spot.radius * 2}px`);
+    const observer = new ResizeObserver(resize);
+    observer.observe(el);
+    resize();
+    return () => observer.disconnect();
+  };
+
+  return (
+    <div ref={paint} className={styles.coffee} aria-hidden="true">
+      <div className={styles.coffeeStains} />
+      <div className={styles.cup}>
+        <div className={styles.cupShadow} />
+        <div className={styles.cupBase} />
+        <div className={styles.cupHandle}>
+          <div className={styles.handleFace} />
+          <div className={styles.handleFace} />
+          {handleSides.map((style, index) => (
+            <div key={index} className={styles.handleSide} style={style} />
+          ))}
+        </div>
+        {cupSides.map((style, index) => (
+          <div key={index} className={styles.cupWall} style={style} />
+        ))}
+        {cupSides.map((style, index) => (
+          <div key={index} className={styles.cupInnerWall} style={style} />
+        ))}
+        <div className={styles.cupCoffee} />
+        <div className={styles.cupRim} />
+      </div>
+    </div>
+  );
+}
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const ease = (value: number) => {
@@ -41,7 +128,7 @@ export default function DeskScene({ card, stickers }: { card: ReactNode; sticker
         "--entry": `${entry}px`,
         "--pitch": `${pitch}deg`,
         "--turn": `${turn}deg`,
-        "--card-y": `${(mobile.matches ? width * 0.23 : width * 0.085) * travel}px`,
+        "--card-y": `${(mobile.matches ? -width * 0.23 : width * 0.085) * travel}px`,
         "--card-x": `${mobile.matches ? 0 : -width * 0.23 * travel}px`,
         "--card-pitch": `${pitch * landing}deg`,
         "--card-turn": `${-8 * travel}deg`,
@@ -96,9 +183,9 @@ export default function DeskScene({ card, stickers }: { card: ReactNode; sticker
               {deskLayers.map((depth) => (
                 <div key={depth} className={styles.edge} style={{ "--depth": depth } as CSSProperties} />
               ))}
-              <div className={styles.top} />
+              <div className={styles.top}><Grime layers={DESK_LAYERS} /></div>
             </div>
-            {/* Future objects placed here share the desk's perspective. */}
+            <CoffeeCup />
           </div>
           <div className={styles.cardAnchor}>
             <div className={styles.card} data-desk-card>{card}</div>

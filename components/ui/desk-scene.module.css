@@ -36,8 +36,56 @@
   will-change: transform;
 }
 .furniture { position: absolute; inset: 0; transform-style: preserve-3d; }
+.coffee { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+/* Blending here flattens the sibling cup in Chromium's 3D compositor. */
+.coffeeStains { position: absolute; inset: 0; background-size: 100% 100%; opacity: .8; transform: translateZ(.1px); }
+.cup {
+  --cup-height: calc(var(--cup-diameter) * .85);
+  position: absolute; left: var(--cup-x); top: var(--cup-y); width: var(--cup-size); aspect-ratio: 1;
+  transform: translate(-50%, -50%); transform-style: preserve-3d;
+}
+.cupShadow { position: absolute; inset: 3%; border-radius: 50%; background: #160c0880; box-shadow: 9px 12px 12px 4px #160c0870; transform: translateZ(.2px); }
+.cupBase { position: absolute; inset: 0; border-radius: 50%; background: #b3a58e; transform: translateZ(.3px); }
+/* Tangent faces close the cylinder; horizontal slices leave visible gaps at steep angles. */
+.cupWall, .cupInnerWall {
+  position: absolute; left: 50%; top: 50%;
+  width: calc(var(--cup-diameter) * .0656 + .35px); height: var(--cup-height);
+  background: linear-gradient(to bottom, #ffffff18, transparent 15%, #4a39221a 95%), hsl(39 28% var(--shade));
+  backface-visibility: hidden;
+  transform: translate(-50%, -50%) translateZ(calc(var(--cup-height) / 2)) rotateZ(var(--angle)) translateY(calc(var(--cup-diameter) * -.5)) rotateX(90deg);
+}
+.cupInnerWall {
+  width: calc(var(--cup-diameter) * .0565 + .35px); height: calc(var(--cup-diameter) * .16);
+  background: linear-gradient(to bottom, #8c795e, #e1d5bf);
+  transform: translate(-50%, -50%) translateZ(calc(var(--cup-diameter) * .77)) rotateZ(var(--angle)) translateY(calc(var(--cup-diameter) * -.43)) rotateX(-90deg);
+}
+.cupHandle {
+  position: absolute; left: -32%; top: 50%; width: 48%; height: 66%;
+  transform-style: preserve-3d;
+  transform: translateY(-50%) translateZ(calc(var(--cup-height) * .52)) rotateX(90deg);
+}
+.handleFace {
+  position: absolute; inset: 0; border: calc(var(--cup-diameter) * .075) solid #d4c8b2; border-radius: 50%;
+  transform: translateZ(calc(var(--cup-diameter) * .05));
+}
+.handleFace:nth-child(2) { transform: translateZ(calc(var(--cup-diameter) * -.05)); }
+.handleSide {
+  position: absolute; left: calc(var(--cup-diameter) * var(--handle-x)); top: calc(var(--cup-diameter) * var(--handle-y));
+  width: calc(var(--cup-diameter) * var(--handle-length) + .2px); height: calc(var(--cup-diameter) * .1);
+  background: hsl(39 28% var(--handle-light));
+  transform: translate(-50%, -50%) rotateZ(var(--handle-angle)) rotateX(90deg);
+}
+.cupRim {
+  position: absolute; inset: 0; border-radius: 50%; border: calc(var(--cup-diameter) * .07) solid #e7dcc7;
+  transform: translateZ(var(--cup-height)); box-shadow: inset 0 0 1px #fff4df, 0 0 1px #fff4df;
+}
+.cupCoffee {
+  position: absolute; inset: 7%; border-radius: 50%; transform: translateZ(calc(var(--cup-diameter) * .70));
+  background: radial-gradient(ellipse at 32% 25%, #e3b97b70, transparent 30%), radial-gradient(ellipse at 60% 65%, #482613, #29140a 65%, #8a542a 95%);
+  box-shadow: inset 2px 4px 5px #1d100bc0;
+}
 .top {
-  position: absolute; inset: 0; border-radius: var(--desk-radius);
+  position: absolute; inset: 0; border-radius: var(--desk-radius); overflow: hidden;
   background:
     linear-gradient(105deg, #ffffff09, transparent 45%, #0003),
     repeating-linear-gradient(0deg, #120b051c 0 1px, transparent 1px 5px, #c3a0730b 5px 7px, transparent 7px 13px),
