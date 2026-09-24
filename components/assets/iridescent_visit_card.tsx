@@ -31,6 +31,7 @@ export default function VisitCard() {
         {/* ponytail: QR placeholder, swap for a real QR image when the URL is final */}
         <div className={styles.cardQr} aria-hidden />
         <img
+          id="card-signature"
           className={styles.cardSignature}
           src="/logos/jalmeida-signature.svg"
           alt="Assinatura de João de Almeida"
