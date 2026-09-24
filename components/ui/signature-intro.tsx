@@ -16,8 +16,7 @@ export default function SignatureIntro() {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   preload(SRC, { as: "image" });
 
-  // Start drawing only once the page is idle: Grime/Stickers rasterize their feTurbulence textures on mount,
-  // on the same main thread that ticks the SVG animation, which made the first strokes stutter.
+  // Start after the page settles so the signature can draw without competing with scene setup.
   useEffect(() => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return; // overlay hidden via motion-reduce:hidden
     const idle = window.requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 300)); // Safari has no rIC

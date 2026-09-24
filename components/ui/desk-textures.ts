@@ -1,4 +1,4 @@
-import { LAYERS, layerUrl, rng, type Layer } from "@/components/ui/grime";
+import { LAYERS, rng, type Layer } from "@/components/ui/grime";
 
 // Flat desk surfaces painted once into 2D canvases, then uploaded as WebGL textures. Sizes are CSS px of the desk.
 export type Spot = { radius: number; x: number; y: number };
@@ -6,35 +6,14 @@ const coffeeSpot = (r: () => number): Spot => ({ radius: 0.038 + r() * 0.008, x:
 // Cup centre, as a fraction of desk width / height; its diameter is 2 * radius of the desk width.
 export const cupAt = (s: Spot) => [s.x - s.radius * 1.8, s.y + 0.035];
 
-// Coffee-cup rings: one spot where the mug always goes, 1–4 overlapping rings, mostly broken arcs like dried stains.
-// ponytail: spot kept on the right half, since the card lands on the left.
-const COFFEE: Layer = {
-  blend: "multiply", opacity: 0.8,
-  filter: `<feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="3" seed="S"/>
-    <feDisplacementMap in="SourceGraphic" scale="5"/>
-    <feGaussianBlur stdDeviation=".7"/>`,
-  body: (w, h, r) => {
-    const spot = coffeeSpot(r);
-    const R = w * spot.radius, cx = w * spot.x, cy = h * spot.y;
-    let rings = "";
-    for (let n = 1 + Math.floor(r() * 4); n--; ) {
-      const rad = R * (0.95 + r() * 0.1), c = 2 * Math.PI * rad, arc = c * (0.55 + r() * 0.45);
-      rings += `<circle cx="${(cx + (r() - 0.5) * R * 0.7).toFixed(1)}" cy="${(cy + (r() - 0.5) * R * 0.7).toFixed(1)}" r="${rad.toFixed(1)}"
-        fill-opacity="${(0.05 + r() * 0.12).toFixed(2)}" stroke-width="${(1.2 + r() * 2.3).toFixed(1)}" stroke-opacity="${(0.45 + r() * 0.45).toFixed(2)}"
-        stroke-dasharray="${arc.toFixed(1)} ${c.toFixed(1)}" stroke-dashoffset="${(r() * c).toFixed(1)}"/>`;
-    }
-    // The empty rect makes the filter box span the whole image, so the wobble isn't clipped at the rings' bounds.
-    return `<g fill="#6b3f1d" stroke="#3a1d0b" filter="url(#f)"><rect width="100%" height="100%" fill="none" stroke="none"/>${rings}</g>`;
-  },
-};
 // Card grime minus grease: its light smears read as bleached patches on the dark wood.
 const [DIRT, , WEAR] = LAYERS;
 // Chalk grain: noise alpha, applied with destination-in.
-const CHALK: Layer = { filter: `<feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4"/>
+export const CHALK: Layer = { filter: `<feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4"/>
   <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 3.2 -1"/>` };
 
 type Ctx = CanvasRenderingContext2D;
-type Assets = { dirt: HTMLImageElement; wear: HTMLImageElement; coffee: HTMLImageElement; grain: HTMLImageElement; font: string };
+type Assets = { dirt: HTMLImageElement; wear: HTMLImageElement; grain: HTMLImageElement; font: string };
 
 function surface(w: number, h: number, scale: number) {
   const canvas = document.createElement("canvas");
@@ -83,7 +62,7 @@ function paintTop({ ctx, shadow }: ReturnType<typeof surface>, W: number, H: num
   ctx.fillRect(0, 0, W, H);
 
   if (a) {
-    for (const [img, l] of [[a.dirt, DIRT], [a.wear, WEAR], [a.coffee, COFFEE]] as const) {
+    for (const [img, l] of [[a.dirt, DIRT], [a.wear, WEAR]] as const) {
       ctx.globalCompositeOperation = l.blend as GlobalCompositeOperation;
       ctx.globalAlpha = l.opacity ?? 1;
       ctx.drawImage(img, 0, 0, W, H);
@@ -91,6 +70,17 @@ function paintTop({ ctx, shadow }: ReturnType<typeof surface>, W: number, H: num
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1;
   }
+  // A few light coffee rings follow the cup's current position without rasterizing SVG noise.
+  ctx.save();
+  ctx.strokeStyle = "#3a1d0b88";
+  ctx.lineWidth = Math.max(1, W * 0.002);
+  const [ringX, ringY] = cupAt(spot);
+  for (const [dx, dy, radius, start, end] of [[0, 0, 1.5, 0.2, 5.6], [0.014, -0.01, 1.35, 1.4, 5.9]] as const) {
+    ctx.beginPath();
+    ctx.arc((ringX + dx) * W, (ringY + dy) * H, W * spot.radius * radius, start, end);
+    ctx.stroke();
+  }
+  ctx.restore();
   // Worn, darker rim (Grime's inset shadow) and the lit edge.
   ctx.save();
   ctx.beginPath(); ctx.roundRect(0, 0, W, H, 14); ctx.clip();
@@ -244,7 +234,7 @@ const load = (src: string) => {
   return img.decode().then(() => img);
 };
 
-// Paints what it can right away; noise images and the hand font land later, then `ready` fires with the finished top and chalk.
+// Paints what it can right away; baked images and the hand font land later, then `ready` fires with the finished top and chalk.
 export function paintDesk(W: number, H: number, mobile: boolean, seed: number, drawerHeight: number, ready: () => void) {
   const dpr = Math.min(devicePixelRatio, 2);
   const top = surface(W, H, Math.min(dpr, 4096 / W));
@@ -258,15 +248,15 @@ export function paintDesk(W: number, H: number, mobile: boolean, seed: number, d
 
   let live = true;
   const font = getComputedStyle(document.body).getPropertyValue("--font-hand-title") || "cursive";
-  // The SVG noise rasterizes on the main thread; wait for idle so it can't stutter the intro.
+  // Loading baked textures waits for idle so the intro has priority.
   const idle = window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 200));
   idle(() => Promise.all([
-    load(layerUrl(DIRT, W, H, seed)), load(layerUrl(WEAR, W, H, seed + 101)), load(layerUrl(COFFEE, W, H, seed)),
-    load(layerUrl(CHALK, W, H, 0)), // Best effort: next/font's fallback face is `local(Arial)`, which rejects on machines without Arial.
+    load("/textures/baked/dirt.webp"), load("/textures/baked/wear.webp"),
+    load("/textures/baked/chalk.webp"), // Best effort: next/font's fallback face is `local(Arial)`, which rejects on machines without Arial.
     document.fonts.load(`700 16px ${font}`).catch(() => {}),
-  ]).then(([dirt, wear, coffee, grain]) => {
+  ]).then(([dirt, wear, grain]) => {
     if (!live) return;
-    const assets = { dirt, wear, coffee, grain, font };
+    const assets = { dirt, wear, grain, font };
     paintTop(top, W, H, mobile, spot, assets);
     paintChalk(chalk, W, H, mobile, assets);
     ready();

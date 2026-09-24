@@ -53,10 +53,10 @@
 .contactLinks strong { font-weight: 500; text-align: right; overflow-wrap: anywhere; }
 .backFooter { margin-top: 3%; color: #bbced0; font-size: clamp(7px, 1.2vw, 10px); letter-spacing: .18em; }
 
-/* holographic foil: noise texture (public/textures/holo-foil.svg) sliding with the pointer */
+/* Pre-rendered holographic foil slides with the pointer. */
 .cardHolo, .cardGlare { position: absolute; inset: 0; pointer-events: none; }
 .cardHolo {
-  background: url(/textures/holo-foil.svg) var(--mx) var(--my) / 110% 110%;
+  background: url(/textures/baked/holo-foil.webp) var(--mx) var(--my) / 110% 110%;
   filter: saturate(3) contrast(1.15) brightness(.9);
 }
 /* grey veil over the foil */

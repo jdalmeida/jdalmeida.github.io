@@ -7,8 +7,8 @@ import DeskNotebook from "@/components/ui/notebook";
 import { getArticles } from "@/lib/articles";
 import { getStamps } from "@/lib/stamps";
 
-// Read at build time: new files in public/stickers show up with no code change.
-const stickers = readdirSync("public/stickers").map((f) => `/stickers/${f}`);
+// New SVG stickers need `bun run bake-assets` to produce the WebP used by the scene.
+const stickers = readdirSync("public/stickers").filter((f) => f.endsWith(".webp")).map((f) => `/stickers/${f}`);
 
 // Articles come from the blog's Postgres; refetched at most once an hour.
 export const revalidate = 3600;
