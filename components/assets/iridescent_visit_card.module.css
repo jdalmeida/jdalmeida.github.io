@@ -7,16 +7,47 @@
   aspect-ratio: 85.6 / 54;
   border-radius: 4.5% / 7%;
   corner-shape: superellipse(1.5);
-  overflow: hidden;
-  transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1)));
+  transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1) + var(--flip, 0deg)));
   transform-style: preserve-3d;
   transition: transform .4s cubic-bezier(.2,.8,.2,1);
   box-shadow: 0 var(--card-shadow-y, 30px) var(--card-shadow-blur, 60px) var(--card-shadow-spread, -20px) #000a, inset 0 0 0 1px #fff6;
-  background: linear-gradient(115deg, #8d93a1, #c9cdd6 45%, #858b99);
   font-family: var(--font-geist-mono), monospace;
   color: #f4f4f6;
 }
-.scene:hover .card { transition-duration: .08s; }
+.scene[data-flipped="true"] .card { --flip: 180deg; }
+.scene:not([data-flipped="true"]):hover .card { transition-duration: .08s; }
+.face {
+  position: absolute; inset: 0; overflow: hidden;
+  border-radius: inherit; corner-shape: inherit;
+  backface-visibility: hidden;
+}
+.front { background: linear-gradient(115deg, #8d93a1, #c9cdd6 45%, #858b99); }
+.front > :not(.flipButton) { pointer-events: none; }
+.back {
+  display: flex; flex-direction: column;
+  padding: 5% 7%;
+  transform: rotateY(180deg);
+  background: radial-gradient(circle at 92% 12%, #43535a, transparent 38%), linear-gradient(135deg, #212b30, #10191e 75%);
+  box-shadow: inset 0 0 0 1px #ffffff4d;
+}
+.back::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 2px;
+  background: linear-gradient(90deg, #a5e4e4, #bea7ec, #f2c490);
+}
+.scene:not([data-flipped="true"]) .back,
+.scene[data-flipped="true"] .front { pointer-events: none; }
+.flipButton { position: absolute; z-index: 2; inset: 0; width: 100%; cursor: pointer; background: none; border: 0; }
+.flipButton:focus-visible { outline: 3px solid #fff; outline-offset: -6px; border-radius: inherit; }
+.backTop { display: flex; justify-content: space-between; align-items: start; gap: 1em; font-size: clamp(8px, 1.5vw, 11px); letter-spacing: .18em; }
+.backButton { padding: 0 .2em; margin: -.3em -.2em 0 0; background: none; border: 0; color: inherit; cursor: pointer; font-size: clamp(22px, 4vw, 32px); line-height: 1; }
+.backButton:focus-visible, .contactLinks a:focus-visible { outline: 2px solid #a5e4e4; outline-offset: 3px; }
+.backTitle { display: flex; justify-content: space-between; align-items: baseline; margin: 7% 0 0; font: 500 clamp(23px, 5vw, 42px)/1 var(--font-geist-sans), sans-serif; letter-spacing: -.05em; }
+.backTitle span { color: #a5e4e4; font-size: .8em; }
+.contactLinks { display: grid; margin-top: auto; border-top: 1px solid #ffffff50; }
+.contactLinks a { display: flex; justify-content: space-between; align-items: baseline; gap: 1em; padding: 2.4% 0; border-bottom: 1px solid #ffffff50; color: inherit; text-decoration: none; font-size: clamp(11px, 1.8vw, 14px); }
+.contactLinks a:hover strong { color: #a5e4e4; }
+.contactLinks strong { font-weight: 500; text-align: right; overflow-wrap: anywhere; }
+.backFooter { margin-top: 3%; color: #bbced0; font-size: clamp(7px, 1.2vw, 10px); letter-spacing: .18em; }
 
 /* holographic foil: noise texture (public/textures/holo-foil.svg) sliding with the pointer */
 .cardHolo, .cardGlare { position: absolute; inset: 0; pointer-events: none; }

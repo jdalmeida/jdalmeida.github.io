@@ -24,6 +24,10 @@ const handleSides = [0, .075].flatMap((inset) => Array.from({ length: 48 }, (_, 
     "--handle-light": `${76 + 12 * Math.cos(a - Math.PI / 4)}%`,
   } as CSSProperties;
 }));
+const binSides = Array.from({ length: 24 }, (_, index) => ({
+  "--angle": `${index * 15}deg`,
+  "--shade": `${34 + 14 * Math.cos((index * 15 - 35) * Math.PI / 180)}%`,
+} as CSSProperties));
 const coffeeSpot = (r: () => number) => ({ radius: 0.038 + r() * 0.008, x: 0.87 + r() * 0.05, y: 0.12 + r() * 0.08 });
 
 // Coffee-cup rings: one spot where the mug always goes, 1–4 overlapping rings, mostly broken arcs like dried stains.
@@ -184,7 +188,6 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
                 <svg className={styles.cable} viewBox="0 0 100 100" preserveAspectRatio="none">
                   <path d="M44 38 C38 30 30 40 24 34 S14 20 2 24" />
                 </svg>
-                <div className={styles.bin}><span /><span /></div>
                 <span className={styles.paperBall} /><span className={styles.paperBall} />
               </div>
               <div className={styles.leg} /><div className={styles.leg} />
@@ -196,12 +199,49 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
               <div className={styles.top}><Grime layers={DESK_LAYERS} /></div>
             </div>
             <CoffeeCup />
+            <div className={styles.bin} aria-hidden="true">
+              <div className={styles.binBottom}><span /><span /></div>
+              {binSides.map((style, index) => <div key={index} className={styles.binSide} style={style} />)}
+              <div className={styles.binRim} />
+            </div>
             <div className={styles.clutter} aria-hidden="true">
               <div className={styles.pencil} />
               <div className={styles.pen} />
               <div className={styles.sticky}>TODO:<br />– more code<br />– more coffe</div>
               <svg className={styles.clip} viewBox="0 0 40 100"><path d="M28 30 V82 a10 10 0 0 1 -20 0 V18 a14 14 0 0 1 28 0 V72" /></svg>
               <svg className={styles.clip} viewBox="0 0 40 100"><path d="M28 30 V82 a10 10 0 0 1 -20 0 V18 a14 14 0 0 1 28 0 V72" /></svg>
+              {/* Chalk hints; units are % of desk height. The phone set is drawn upright on the 100x185 screen and turned back onto the desk. */}
+              <svg className={styles.chalk} viewBox="0 0 185 100">
+                <defs>
+                  <filter id="chalk" x="-5%" y="-5%" width="110%" height="110%">
+                    <feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4" />
+                    <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 3.2 -1" />
+                    <feComposite in="SourceGraphic" operator="in" />
+                  </filter>
+                  <marker id="chalk-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+                    <path d="M1 1 L8 5 L1 9" />
+                  </marker>
+                </defs>
+                <g className={styles.chalkWide}>
+                  <text x="50" y="36" textAnchor="end">Meus artigos e</text>
+                  <text x="50" y="43" textAnchor="end">selos dos visitantes</text>
+                  <path d="M52 34 C58 31 62 31 66 29" />
+                  <text x="8" y="94">Meus contatos</text>
+                  <path d="M30 88 C34 87 36 85 37 81" />
+                  <text x="148" y="94">Meus eventos</text>
+                  <path d="M152 88 C150 82 147 79 143 77" />
+                </g>
+                <g className={styles.chalkPhone} transform="translate(0 100) rotate(-90)">
+                  <text x="12" y="20">Meus contatos</text>
+                  <path d="M52 17 C60 16 62 22 60 28" />
+                  <text x="3" y="80">Meus artigos e</text>
+                  <text x="3" y="87">selos dos visitantes</text>
+                  <path d="M42 76 C52 73 60 77 62 84" />
+                  <text x="76" y="128">Meus</text>
+                  <text x="76" y="135">eventos</text>
+                  <path d="M74 126 C70 125 68 128 67 132" />
+                </g>
+              </svg>
             </div>
             {notebook}
             <DeskCredentials />

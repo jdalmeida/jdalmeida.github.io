@@ -1,6 +1,6 @@
 "use client";
 
-import type { PointerEvent } from "react";
+import { useState, type PointerEvent } from "react";
 import styles from "./iridescent_visit_card.module.css";
 import Grime from "@/components/ui/grime";
 
@@ -23,32 +23,50 @@ function reset(e: PointerEvent<HTMLDivElement>) {
 }
 
 export default function VisitCard() {
+  const [flipped, setFlipped] = useState(false);
+
   return (
-    <div className={styles.scene} onPointerMove={move} onPointerLeave={reset}>
+    <div className={styles.scene} data-flipped={flipped} onPointerMove={move} onPointerLeave={reset}>
       <div className={styles.card}>
-        <div className={styles.cardHolo} />
-        <div className={styles.cardChip} />
-        {/* ponytail: QR placeholder, swap for a real QR image when the URL is final */}
-        <div className={styles.cardQr} aria-hidden />
-        <img
-          id="card-signature"
-          className={styles.cardSignature}
-          src="/logos/jalmeida-signature.svg"
-          alt="Assinatura de João de Almeida"
-        />
-        <div className={styles.cardName}>
-          <p>João de Almeida</p>
-        </div>
-        <div className={styles.cardText}>
-          <div className={styles.cardStickers} aria-hidden>
-            <img src="/stickers/globe_black.svg" alt="" />
-            <img src="/stickers/star_scribble_black.svg" alt="" />
+        <div className={`${styles.face} ${styles.front}`} aria-hidden={flipped}>
+          <div className={styles.cardHolo} />
+          <div className={styles.cardChip} />
+          {/* ponytail: QR placeholder, swap for a real QR image when the URL is final */}
+          <div className={styles.cardQr} aria-hidden />
+          <img
+            id="card-signature"
+            className={styles.cardSignature}
+            src="/logos/jalmeida-signature.svg"
+            alt="Assinatura de João de Almeida"
+          />
+          <div className={styles.cardName}>
+            <p>João de Almeida</p>
           </div>
-          <p>Creative Developer</p>
-          <p>Design • Code • Build</p>
+          <div className={styles.cardText}>
+            <div className={styles.cardStickers} aria-hidden>
+              <img src="/stickers/globe_black.svg" alt="" />
+              <img src="/stickers/star_scribble_black.svg" alt="" />
+            </div>
+            <p>Creative Developer</p>
+            <p>Design • Code • Build</p>
+          </div>
+          <Grime />
+          <div className={styles.cardGlare} />
+          <button className={styles.flipButton} type="button" tabIndex={flipped ? -1 : 0} onClick={() => setFlipped(true)} aria-label="Virar cartão para ver contatos" />
         </div>
-        <Grime />
-        <div className={styles.cardGlare} />
+        <div className={`${styles.face} ${styles.back}`} aria-hidden={!flipped}>
+          <div className={styles.backTop}>
+            <span>JOÃO DE ALMEIDA / CONTATO</span>
+            <button type="button" className={styles.backButton} tabIndex={flipped ? 0 : -1} onClick={() => setFlipped(false)} aria-label="Voltar à frente do cartão">↶</button>
+          </div>
+          <p className={styles.backTitle}>Vamos conversar<span>↗</span></p>
+          <div className={styles.contactLinks}>
+            <a href="mailto:joao@allpines.com.br" tabIndex={flipped ? 0 : -1}><span>E-mail</span><strong>joao@allpines.com.br</strong></a>
+            <a href="https://linkedin.com/in/joao-de-almeida9" target="_blank" rel="noopener noreferrer" tabIndex={flipped ? 0 : -1}><span>LinkedIn</span><strong>joao-de-almeida9 ↗</strong></a>
+            <a href="https://github.com/jdalmeida" target="_blank" rel="noopener noreferrer" tabIndex={flipped ? 0 : -1}><span>GitHub</span><strong>@jdalmeida ↗</strong></a>
+          </div>
+          <span className={styles.backFooter}>DESIGN • CODE • BUILD</span>
+        </div>
       </div>
     </div>
   );
