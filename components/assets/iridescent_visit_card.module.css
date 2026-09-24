@@ -7,7 +7,7 @@
   aspect-ratio: 85.6 / 54;
   border-radius: 4.5% / 7%;
   corner-shape: superellipse(1.5);
-  transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1) + var(--flip, 0deg)));
+  transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1)));
   transform-style: preserve-3d;
   transition: transform .4s cubic-bezier(.2,.8,.2,1);
   box-shadow: inset 0 0 0 1px #fff6;
@@ -18,12 +18,21 @@
 .card::before, .card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; will-change: opacity; }
 .card::before { box-shadow: 0 30px 60px -20px #000a; opacity: calc(1 - var(--card-landing, 0)); }
 .card::after { box-shadow: 0 3px 9px 2px #000a; opacity: var(--card-landing, 0); }
-.scene[data-flipped="true"] .card { --flip: 180deg; }
+.scene[data-flip-started="true"][data-flipped="true"] .card { animation: flipToBack .4s ease-in-out; }
+.scene[data-flip-started="true"][data-flipped="false"] .card { animation: flipToFront .4s ease-in-out; }
+@keyframes flipToBack {
+  0%, 100% { transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1))) scaleX(1); }
+  50% { transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1))) scaleX(0); }
+}
+@keyframes flipToFront {
+  0%, 100% { transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1))) scaleX(1); }
+  50% { transform: rotateX(calc(var(--rx) * var(--card-tilt, 1))) rotateY(calc(var(--ry) * var(--card-tilt, 1))) scaleX(0); }
+}
 .scene:not([data-flipped="true"]):hover .card { transition-duration: .08s; }
 .face {
   position: absolute; inset: 0; overflow: hidden;
   border-radius: inherit; corner-shape: inherit;
-  /* Explicitly swap sides at the midpoint: Gecko may paint the mirrored backface. */
+  /* Swap the visible side at the midpoint of the edge-on animation. */
   backface-visibility: visible;
   transition: visibility 0s .2s;
 }
@@ -33,16 +42,11 @@
   visibility: hidden;
   display: flex; flex-direction: column;
   padding: 5% 7%;
-  transform: rotateY(180deg);
   background: radial-gradient(circle at 92% 12%, #43535a, transparent 38%), linear-gradient(135deg, #212b30, #10191e 75%);
   box-shadow: inset 0 0 0 1px #ffffff4d;
 }
 .scene[data-flipped="true"] .front { visibility: hidden; }
 .scene[data-flipped="true"] .back { visibility: visible; }
-.scene:not([data-flipped="true"]):hover .face { transition-delay: .04s; }
-@supports (-moz-appearance: none) {
-  .back > * { transform: scaleX(-1); }
-}
 .back::before {
   content: ""; position: absolute; inset: 0 0 auto; height: 2px;
   background: linear-gradient(90deg, #a5e4e4, #bea7ec, #f2c490);
@@ -125,4 +129,4 @@
   text-shadow: 0 1px 2px #000a;
 }
 
-@media (prefers-reduced-motion: reduce) { .card, .face { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .card, .face { transition: none; animation: none !important; } }

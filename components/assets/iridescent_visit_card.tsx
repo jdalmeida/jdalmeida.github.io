@@ -24,9 +24,10 @@ function reset(e: PointerEvent<HTMLDivElement>) {
 
 export default function VisitCard() {
   const [flipped, setFlipped] = useState(false);
+  const [flipStarted, setFlipStarted] = useState(false);
 
   return (
-    <div className={styles.scene} data-flipped={flipped} onPointerMove={move} onPointerLeave={reset}>
+    <div className={styles.scene} data-flipped={flipped} data-flip-started={flipStarted} onPointerMove={move} onPointerLeave={reset}>
       <div className={styles.card}>
         <div className={`${styles.face} ${styles.front}`} aria-hidden={flipped}>
           <div className={styles.cardHolo} />
@@ -52,12 +53,12 @@ export default function VisitCard() {
           </div>
           <Grime />
           <div className={styles.cardGlare} />
-          <button className={styles.flipButton} type="button" tabIndex={flipped ? -1 : 0} onClick={() => setFlipped(true)} aria-label="Virar cartão para ver contatos" />
+          <button className={styles.flipButton} type="button" tabIndex={flipped ? -1 : 0} onClick={() => { setFlipStarted(true); setFlipped(true); }} aria-label="Virar cartão para ver contatos" />
         </div>
         <div className={`${styles.face} ${styles.back}`} aria-hidden={!flipped}>
           <div className={styles.backTop}>
             <span>JOÃO DE ALMEIDA / CONTATO</span>
-            <button type="button" className={styles.backButton} tabIndex={flipped ? 0 : -1} onClick={() => setFlipped(false)} aria-label="Voltar à frente do cartão">↶</button>
+            <button type="button" className={styles.backButton} tabIndex={flipped ? 0 : -1} onClick={() => { setFlipStarted(true); setFlipped(false); }} aria-label="Voltar à frente do cartão">↶</button>
           </div>
           <p className={styles.backTitle}>Vamos conversar<span>↗</span></p>
           <div className={styles.contactLinks}>
