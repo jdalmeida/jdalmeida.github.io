@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import styles from "./desk-scene.module.css";
 import DeskCredentials from "./desk-credentials";
+import PaperToss from "./paper-toss";
 import { createDeskGL } from "./desk-gl";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
@@ -104,6 +105,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
           <div ref={desk} className={styles.desk} data-desk>
             {notebook}
             <DeskCredentials />
+            <PaperToss />
           </div>
           <div className={styles.cardAnchor}>
             <div className={styles.card} data-desk-card>{card}</div>

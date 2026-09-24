@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type 
 import type { Article } from "@/lib/articles";
 import { generateStamp, placeStamp, type Stamp } from "@/lib/stamps";
 import { rng } from "./grime";
-import StampSticker, { DOODLES, pad, strokes, TIERS, tier } from "./stamp";
+import StampSticker, { device, DOODLES, pad, strokes, TIERS, tier } from "./stamp";
 import styles from "./notebook.module.css";
 
 // A few doodles per page, kept in the margins so they don't cover the text.
@@ -26,8 +26,6 @@ function Doodles({ seed, back }: { seed: number; back: boolean }) {
   });
 }
 
-// What the client adds to the device seed (the server adds IP and browser headers).
-const device = () => [screen.width, screen.height, devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.hardwareConcurrency, navigator.language].join("|");
 // Stamps stuck at the bottom edge of the first screen are nudged up so they don't make the page scroll
 // (12.8cqi: half the box of a 20cqi sticker rotated up to 20deg).
 // ponytail: stamps further down a long page aren't clamped; the content height isn't known in CSS.
@@ -62,7 +60,7 @@ export default function DeskNotebook({ articles, stamps: initial }: { articles: 
     <>
       <button type="button" className={styles.notebook} aria-label="Abrir caderno: artigos e livro de visitas" onClick={() => setOpen(true)}>
         <span className={styles.backCover} />
-        <span className={styles.cover}><span className={styles.label}>Caderno</span>{onFace(stamps, 0)}</span>
+        <span className={styles.cover}><span className={styles.label}>Anotações</span>{onFace(stamps, 0)}</span>
         <span className={styles.band} />
       </button>
       {open && <Book articles={articles} stamps={stamps} onPlaced={(s) => setStamps((all) => [...all, s])} onClose={() => setOpen(false)} />}
@@ -133,7 +131,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   };
 
   const faces: ReactNode[] = [
-    <div key="cover" className={styles.coverFace}><span className={styles.label}>Caderno</span><small>João de Almeida</small></div>,
+    <div key="cover" className={styles.coverFace}><span className={styles.label}>Anotações</span><small>João de Almeida</small></div>,
     <div key="owner" className={styles.owner}>
       <p>Este caderno pertence a</p>
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -143,7 +141,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     <section key="guestbook" className={styles.guestbook} aria-label="Livro de visitas">
       <h2>Livro de visitas</h2>
       {mine ? (
-        <p>Seu selo {pad(mine.id)} ({mine.ff ? "Family & Friends" : TIERS[tier(mine.seed)]}) está na mão. Vire as páginas e clique onde quer colar: capa, páginas, onde quiser, só não em cima do texto.{" "}
+        <p>Seu selo {pad(mine.id)} ({mine.ff ? "Family & Friends" : TIERS[tier(mine.seed, mine.best)]}) está na mão. Vire as páginas e clique onde quer colar: capa, páginas, onde quiser, só não em cima do texto.{" "}
           <button type="button" onClick={() => setMine(null)}>Guardar para depois</button></p>
       ) : (
         <p>Passou por aqui? Gere um adesivo só seu, feito a partir do seu dispositivo, e cole neste caderno.{" "}
@@ -153,7 +151,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
       <ol className={styles.visitors}>
         {stamps.map((s) => (
           <li key={s.id}><button type="button" onClick={() => goFace(s.face!)}>
-            {pad(s.id)} · {s.country ?? "??"} · {new Date(s.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })} · {s.ff ? "family & friends" : TIERS[tier(s.seed)]}
+            {pad(s.id)} · {s.country ?? "??"} · {new Date(s.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })} · {s.ff ? "family & friends" : TIERS[tier(s.seed, s.best)]}
           </button></li>
         ))}
       </ol>

@@ -29,8 +29,16 @@ export const strokes = (s: P[][], r = () => 0.5) => s.map((st) => "M" + st.map((
 
 // Rarity is the sticker's finish: 70% matte, 25% metallic, 5% chroma.
 // Own random stream, so tweaking the look code never changes anyone's rarity.
+// A paper-toss best streak raises it (never lowers): SCORE_TIERS[i] baskets in a row earn tier i + 1.
 export const TIERS = ["comum", "raro", "lendário"] as const;
-export const tier = (seed: number) => { const v = rng(seed ^ 0x5eed)(); return v < 0.05 ? 2 : v < 0.3 ? 1 : 0; };
+export const SCORE_TIERS = [10, 25];
+export const tier = (seed: number, best = 0) => {
+  const v = rng(seed ^ 0x5eed)();
+  return Math.max(v < 0.05 ? 2 : v < 0.3 ? 1 : 0, SCORE_TIERS.filter((n) => best >= n).length);
+};
+
+// What the client adds to the device seed (the server adds IP and browser headers).
+export const device = () => [screen.width, screen.height, devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.hardwareConcurrency, navigator.language].join("|");
 export const pad = (n: number) => `Nº ${String(n).padStart(4, "0")}`;
 
 const PAPER = [["#f4ecd8", "#b3261e"], ["#1c3452", "#f4efe2"], ["#e9b949", "#1d1a16"], ["#bfe3d0", "#1c3452"], ["#f6c6cf", "#7a1f3d"], ["#ef7d3c", "#fff4e0"], ["#d8c8f0", "#3b2a7a"], ["#1d1a16", "#f2d64b"]];
@@ -57,7 +65,7 @@ function outline(r: () => number, passport: boolean): P[] {
 // The whole sticker as one SVG image, all from the seed: family (passport stamp / round sticker), shape, colours, doodle, ink wear.
 // An image, not live DOM: SVG filters inside the book's 3D transforms would freeze the page (see Grime).
 function art(s: Stamp) {
-  const r = rng(s.seed), t = tier(s.seed), passport = !s.ff && r() < 0.45, fs = s.seed & 0xffff;
+  const r = rng(s.seed), t = tier(s.seed, s.best), passport = !s.ff && r() < 0.45, fs = s.seed & 0xffff;
   const pts = s.ff ? range(180, (u) => heart(u * TAU, 40, 45)) : outline(r, passport);
   const d = path(pts), inner = path(pts.map(([x, y]) => [50 + (x - 50) * 0.84, 50 + (y - 50) * 0.84]));
   const rmin = Math.min(...pts.map(([x, y]) => Math.hypot(x - 50, y - 50)));

@@ -9,3 +9,11 @@ create table if not exists stamps (
   y real,                          -- % of face height (can pass 100 on scrolling pages)
   created_at timestamptz not null default now()
 );
+
+-- Paper-toss best streak per device (same seed as stamps). A high score raises that device's stamp rarity.
+create table if not exists scores (
+  seed integer primary key,
+  best integer not null default 0,
+  name text,                       -- set by the player; only named rows show on the leaderboard
+  updated_at timestamptz not null default now() -- when `best` was reached; ties go to whoever got there first
+);
