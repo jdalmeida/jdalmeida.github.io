@@ -13,11 +13,14 @@ const KEYS: Record<string, keyof Input> = {
   ArrowUp: "jump", KeyW: "jump", Space: "jump", KeyZ: "jump", KeyX: "whip", KeyJ: "whip", KeyK: "whip",
 };
 const idle = (): Input => ({ left: false, right: false, jump: false, whip: false });
-// One palette per stage: night gate, cellar, clock tower.
+// One palette per stage, from the night gate to the last cup.
 const LOOK = [
   { sky: "#17132e", far: "#262043", stone: "#5a5570", mortar: "#3c3852", top: "#7d7894" },
   { sky: "#140f0c", far: "#2a1f17", stone: "#5b4636", mortar: "#3a2c22", top: "#7a624d" },
   { sky: "#0e1822", far: "#1b2a38", stone: "#4d5a66", mortar: "#323c46", top: "#6f7d8a" },
+  { sky: "#102521", far: "#24483c", stone: "#506b5b", mortar: "#304b3c", top: "#8ca98d" },
+  { sky: "#29130d", far: "#542719", stone: "#76503b", mortar: "#4b2b20", top: "#c07842" },
+  { sky: "#1d1022", far: "#3d2442", stone: "#67546e", mortar: "#40344c", top: "#b394b5" },
 ];
 
 // Progress lives in localStorage (instant, offline) and in the database under a random key kept next to it.
@@ -61,11 +64,26 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
     for (let y = 16; y < H; y += 6) for (let x = -((cam * 0.5) % 16) + (y % 12 ? 8 : 0) - 16; x < W; x += 16) ctx.fillRect(x, y, 15, 5);
     ctx.fillStyle = "#3b2a1c";
     for (let x = -((cam * 0.5) % 120); x < W; x += 120) { ctx.fillRect(x + 20, 70, 18, 26); ctx.fillRect(x + 40, 76, 18, 20); ctx.fillStyle = "#2a1d13"; ctx.fillRect(x + 20, 78, 18, 2); ctx.fillRect(x + 40, 84, 18, 2); ctx.fillStyle = "#3b2a1c"; }
-  } else {
+  } else if (g.stage === 2) {
     const cx = 130 - ((cam * 0.2) % 400), cy = 40;
     for (let a = 0; a < 12; a++) ctx.fillRect(cx + Math.cos(a / 6 * Math.PI) * 26 - 2, cy + Math.sin(a / 6 * Math.PI) * 26 - 2, 4, 4);
     ctx.fillRect(cx - 1, cy - 18, 2, 18); ctx.fillRect(cx, cy - 1, 12, 2);
     for (let x = -((cam * 0.4) % 70); x < W; x += 70) { const r = (performance.now() / 600 + x) % 6; for (let a = 0; a < 8; a++) ctx.fillRect(x + 20 + Math.cos(a / 4 * Math.PI + r) * 10 - 2, 90 + Math.sin(a / 4 * Math.PI + r) * 10 - 2, 4, 4); }
+  } else if (g.stage === 3) {
+    for (let x = -((cam * 0.3) % 48); x < W; x += 48) {
+      ctx.fillRect(x + 20, 22, 3, 68); ctx.fillRect(x + 8, 32, 26, 2);
+      ctx.fillStyle = "#3e7050"; ctx.fillRect(x + 4, 25, 34, 12); ctx.fillRect(x + 10, 18, 22, 12); ctx.fillStyle = look.far;
+    }
+  } else if (g.stage === 4) {
+    for (let x = -((cam * 0.4) % 64); x < W; x += 64) {
+      ctx.fillRect(x + 8, 40, 30, 58); ctx.fillRect(x + 12, 31, 22, 9);
+      ctx.fillStyle = "#d47b32"; ctx.fillRect(x + 16, 62 + wave, 14, 18 - wave); ctx.fillStyle = look.far;
+    }
+  } else {
+    for (let x = -((cam * 0.25) % 56); x < W; x += 56) {
+      ctx.fillRect(x + 5, 24, 6, 76); ctx.fillRect(x + 39, 24, 6, 76); ctx.fillRect(x + 5, 21, 40, 4);
+      ctx.fillStyle = "#9a617a"; ctx.fillRect(x + 14, 30, 22, 30); ctx.fillStyle = look.far;
+    }
   }
 
   for (let cy = 0; cy < map.length; cy++) for (let cx = Math.floor(cam / T); cx <= (cam + W) / T; cx++) {
@@ -104,6 +122,12 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
       const up = Math.floor(f.t * 8) % 2;
       rect(f.x + 2, f.y + 2, 3, 3, "#6b3f8f"); rect(f.x + 2, f.y + 3, 1, 1, "#ff4b4b"); rect(f.x + 4, f.y + 3, 1, 1, "#ff4b4b");
       rect(f.x, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8"); rect(f.x + 5, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8");
+    } else if (f.kind === "count") {
+      const coat = f.ouch < 0.15 ? "#ff8a7a" : "#301b33";
+      rect(f.x - 1, f.y - 3, 8, 2, "#171019"); rect(f.x + 1, f.y - 6, 4, 3, "#171019");
+      rect(f.x + 1, f.y, 4, 4, "#d5a281"); rect(f.x + 2, f.y + 2, 1, 1, "#e83f48"); rect(f.x + 4, f.y + 2, 1, 1, "#e83f48");
+      rect(f.x, f.y + 4, 6, 9, coat); rect(f.x + 2, f.y + 4, 2, 7, "#a63345");
+      rect(f.x - 1, f.y - 10, 8, 1, "#542536"); rect(f.x - 1, f.y - 10, Math.ceil((f.hp / 5) * 8), 1, "#e34c55");
     } else {
       if (f.ouch < 0.6) bones(f, f.ouch, 3);
       const bone = f.ouch < 0.15 ? "#ff8a7a" : "#e6e2d3", left = f.vx < 0, step = Math.floor(f.x / 3) % 2;
@@ -162,7 +186,7 @@ function Castle({ onClose }: { onClose: () => void }) {
       if (g.state === "dead" && g.t > 1) g = fresh(g.stage);
       if (g.state === "won" && g.t > 1.5) {
         if (g.stage + 1 < STAGES.length) { setStage(g.stage + 1); return; }
-        setNote("Você zerou o castelo! Café servido."); setStage(null); return;
+        setNote("Você venceu o Conde D'arábica. O relógio voltou a andar, a última xícara foi servida e o sol nasceu."); setStage(null); return;
       }
       // Only re-render React when the HUD actually changes.
       const key = `${g.hp}|${g.beans}|${g.state}`;
@@ -211,6 +235,7 @@ function Castle({ onClose }: { onClose: () => void }) {
                 <li key={s.name}>
                   <button type="button" disabled={i > progress.cleared} onClick={() => play(i)} autoFocus={i === Math.min(progress.cleared, STAGES.length - 1)}>
                     <span>{i + 1}. {s.name}</span>
+                    <span className={styles.synopsis}>{s.story}</span>
                     <small>{i > progress.cleared ? "Trancada" : i < progress.cleared ? `✓ ${progress.best[i] ?? 0}/${loot(i)} grãos` : "Nova"}</small>
                   </button>
                 </li>
@@ -219,6 +244,7 @@ function Castle({ onClose }: { onClose: () => void }) {
           </div>
         )}
       </div>
+      {stage !== null && <p className={styles.story}>{STAGES[stage].story}</p>}
       <p className={`${room.hint} ${styles.hint}`}>← → andar · espaço/Z pular · X/J chicote · pule por baixo das plataformas finas</p>
       {stage !== null && (
         <div className={styles.pad}>

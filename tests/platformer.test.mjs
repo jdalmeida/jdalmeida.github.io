@@ -6,12 +6,39 @@ const idle = { left: false, right: false, jump: false, whip: false };
 const run = (g, input, seconds) => { for (let t = 0; t < seconds; t += 1 / 60) step(g, { ...idle, ...input }, 1 / 60); return g; };
 
 test("every stage is rectangular with one start, a door and loot", () => {
+  assert.equal(STAGES.length, 6);
   STAGES.forEach(({ map }, i) => {
     for (const row of map) assert.equal(row.length, map[0].length);
     assert.equal(map.join("").split("P").length, 2);
     assert.match(map.join(""), /D/);
     assert.ok(loot(i) > 0);
   });
+});
+
+test("ground enemies start with solid floor beneath them", () => {
+  STAGES.forEach(({ map, name }) => map.forEach((row, y) => [...row].forEach((tile, x) => {
+    if (tile === "s" || tile === "v")
+      assert.match(map[y + 1]?.[x] ?? "", /[#=]/, `${name}: ${tile} at ${x},${y} lacks floor`);
+  })));
+});
+
+test("old three-stage progress remains valid and the campaign extends to six", () => {
+  assert.ok(validProgress({ cleared: 3, best: [0, 0, 0] }));
+  assert.ok(validProgress({ cleared: 6, best: [0, 0, 0, 0, 0, 0] }));
+});
+
+test("the final door opens only after the Count is defeated", () => {
+  const g = fresh(5);
+  const count = g.foes.find((f) => f.kind === "count");
+  assert.ok(count);
+  const cy = STAGES[5].map.findIndex((row) => row.includes("D"));
+  const cx = STAGES[5].map[cy].indexOf("D");
+  Object.assign(g, { x: cx * 8, y: (cy + 1) * 8 - 13, ground: true });
+  step(g, idle, 1 / 60);
+  assert.equal(g.state, "play");
+  count.dead = true;
+  step(g, idle, 1 / 60);
+  assert.equal(g.state, "won");
 });
 
 test("hero lands and stays on the floor", () => {
@@ -72,7 +99,7 @@ test("jumping through a ledge from below lands on top of it", () => {
 });
 
 test("progress merges to the larger values and rejects nonsense", () => {
-  assert.deepEqual(merge({ cleared: 2, best: [3] }, { cleared: 1, best: [1, 4] }), { cleared: 2, best: [3, 4, 0] });
+  assert.deepEqual(merge({ cleared: 2, best: [3] }, { cleared: 1, best: [1, 4] }), { cleared: 2, best: [3, 4, 0, 0, 0, 0] });
   assert.ok(validProgress({ cleared: 1, best: [2, 0] }));
   assert.ok(!validProgress({ cleared: 9, best: [] }));
   assert.ok(!validProgress({ cleared: 1, best: [999] }));
