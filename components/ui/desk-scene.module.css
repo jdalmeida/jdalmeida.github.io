@@ -27,6 +27,7 @@
 .space { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; perspective: 1400px; }
 .desk {
   --desk-radius: 14px;
+  --leg: clamp(140px, 22vw, 250px);
   position: relative;
   flex-shrink: 0;
   width: min(82vw, 1080px, 130svh);
@@ -102,7 +103,7 @@
   background: color-mix(in srgb, #654934, #342217 calc(var(--depth) / 24 * 100%));
 }
 .leg {
-  position: absolute; top: 8%; left: 5%; width: 25px; height: clamp(140px, 22vw, 250px);
+  position: absolute; top: 8%; left: 5%; width: 25px; height: var(--leg);
   transform-origin: top; transform: translateZ(-12px) rotateX(-90deg);
   background: linear-gradient(90deg, #111211, #41423c 45%, #1b1c19 55%);
   border-radius: 0 0 4px 4px;
@@ -118,6 +119,76 @@
 }
 .drawers span { position: relative; flex: 1; background: linear-gradient(100deg, #493326, #59402f, #3a291e); }
 .drawers span::after { content: ""; position: absolute; width: 19%; height: 5px; left: 40.5%; top: 20px; background: #171815; border-bottom: 1px solid #8e8b7444; border-radius: 3px; }
+/* Floor under the desk, a flat plane at the legs' feet; fades in as the camera goes overhead so it can't cover the intro stickers. */
+.floor {
+  position: absolute; inset: -80% -60%; opacity: var(--floor, 0);
+  transform: translateZ(calc(-12px - var(--leg)));
+  background:
+    repeating-linear-gradient(0deg, transparent 0 3px, #0000000d 3px 4px, transparent 4px 11px),
+    repeating-linear-gradient(90deg, #0b0a09 0 2px, transparent 2px 6.25%),
+    repeating-linear-gradient(90deg, #2c2722 0 6.25%, #26211d 0 12.5%, #302a24 0 18.75%),
+    #2a2520;
+  mask: radial-gradient(ellipse 50% 50% at 50% 50%, #000 45%, transparent 95%);
+}
+.rug {
+  position: absolute; left: 50%; top: 50%; width: 64%; height: 60%; translate: -50% -50%;
+  border-radius: 6px; border: 3px dashed #d9c9a133; outline: 14px solid #5c2b24; outline-offset: -2px;
+  background:
+    repeating-linear-gradient(45deg, #0000 0 18px, #ffffff08 18px 20px),
+    repeating-linear-gradient(-45deg, #0000 0 18px, #0000001a 18px 20px),
+    linear-gradient(#7a3a2e, #6b3027);
+  box-shadow: 0 0 0 20px #3a1a16, 0 6px 18px 20px #0008;
+}
+.cable { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.cable path { fill: none; stroke: #0e0e0d; stroke-width: 5px; vector-effect: non-scaling-stroke; filter: drop-shadow(2px 3px 2px #0009); }
+/* Waste bin seen from above: mesh rim, dark inside, a discarded draft or two. */
+.bin {
+  position: absolute; left: 81.5%; top: 62%; width: 5.5%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%;
+  border: 5px solid #8b8d88;
+  background: repeating-conic-gradient(#0000 0 4deg, #ffffff14 4deg 5deg), radial-gradient(#141412, #222320 70%, #3d3f3a);
+  box-shadow: inset 0 0 18px #000c, 6px 10px 14px #000a;
+}
+.bin span, .paperBall {
+  position: absolute; width: 38%; aspect-ratio: 1; border-radius: 46% 54% 50% 48%;
+  background: radial-gradient(circle at 35% 30%, #fbf8ef, #d9d3c4 55%, #a39c8b), repeating-conic-gradient(from 20deg, #0000 0 30deg, #0000001f 30deg 50deg);
+  background-blend-mode: multiply;
+  box-shadow: 2px 3px 4px #0008;
+}
+.bin span { left: 22%; top: 30%; }
+.bin span + span { left: 48%; top: 44%; width: 32%; rotate: 70deg; }
+.paperBall { width: 1.3%; left: 74%; top: 72%; }
+.paperBall + .paperBall { left: 83.5%; top: 67%; width: 1.1%; rotate: 130deg; }
+/* Small things on the tabletop, flattened on one plane just above the wood. */
+.clutter { position: absolute; inset: 0; transform: translateZ(1px); pointer-events: none; }
+.clutter > * { position: absolute; }
+.pencil {
+  left: 11%; top: 17%; width: 17%; height: 1.4%;
+  background: linear-gradient(#f7c948, #e8a91c 45%, #b9800e);
+  border-radius: 0 2px 2px 0; rotate: 16deg; box-shadow: 3px 5px 3px #15100a90;
+}
+.pencil::before {
+  content: ""; position: absolute; right: 100%; top: 0; height: 100%; aspect-ratio: 2.4;
+  background: linear-gradient(90deg, #333 18%, #e8c9a0 20%); clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+.pencil::after {
+  content: ""; position: absolute; left: 100%; top: 0; height: 100%; aspect-ratio: 2.6;
+  background: linear-gradient(90deg, #bdbdb6, #eee 30%, #999 55%, #bdbdb6 60%, #e58c8a 62%, #d77471);
+  border-radius: 0 3px 3px 0;
+}
+.pen {
+  left: 90%; top: 50%; width: 14%; height: 1.1%; rotate: 78deg;
+  background: linear-gradient(#3b4b6b, #1b2438 60%, #0e1320); border-radius: 50% 2px 2px 50% / 50% 2px 2px 50%;
+  box-shadow: 3px 5px 3px #15100a90;
+}
+.pen::after { content: ""; position: absolute; right: 6%; top: -30%; width: 30%; height: 45%; background: linear-gradient(#eee, #999); border-radius: 2px; }
+.sticky {
+  left: 50%; top: 70%; width: 8.5%; aspect-ratio: 1; padding: .7em .6em; rotate: 5deg; container-type: inline-size;
+  background: linear-gradient(160deg, #fff59a, #f5e36a 70%, #e8d24f); color: #28334f;
+  font: 700 clamp(9px, 1.35vw, 17px)/1.15 var(--font-hand-title), cursive;
+  box-shadow: 1px 2px 1px #0003, 4px 8px 8px #130b0866;
+}
+.clip { width: 1.3%; fill: none; stroke: #c9ccd0; stroke-width: 5px; filter: drop-shadow(1px 2px 1px #000a); left: 61%; top: 83%; rotate: -24deg; }
+.clip + .clip { left: 63.5%; top: 80%; rotate: 38deg; }
 .cardAnchor { position: absolute; inset: 0; display: grid; place-items: center; perspective: 1400px; pointer-events: none; }
 .card {
   transform: translate3d(var(--card-x), var(--card-y), var(--card-lift))
@@ -144,10 +215,13 @@
   .scene { height: 310svh; }
   .desk { width: min(138vw, 72svh); }
   .drawers { height: 46px; }
+  .sticky { rotate: -84deg; }
+  /* edge-on once overhead, and Chrome's 3D sort then drew them over the credential fan */
+  .scene[data-landed="true"] :is(.leg, .drawers) { visibility: hidden; }
   .scrollCue { font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .scene { height: 100svh; --card-scale: 0.002; --card-tilt: 0; }
+  .scene { height: 100svh; --card-scale: 0.002; --card-tilt: 0; --floor: 1; }
   .stickers, .scrollCue { display: none; }
   .desk { transform: none; }
   .card { transform: translate3d(var(--card-x), var(--card-y), 1px) rotateZ(-8deg) scale(var(--card-scale)); }

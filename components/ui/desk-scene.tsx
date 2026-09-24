@@ -24,7 +24,7 @@ const handleSides = [0, .075].flatMap((inset) => Array.from({ length: 48 }, (_, 
     "--handle-light": `${76 + 12 * Math.cos(a - Math.PI / 4)}%`,
   } as CSSProperties;
 }));
-const coffeeSpot = (r: () => number) => ({ radius: 0.038 + r() * 0.008, x: 0.8 + r() * 0.08, y: 0.25 + r() * 0.08 });
+const coffeeSpot = (r: () => number) => ({ radius: 0.038 + r() * 0.008, x: 0.87 + r() * 0.05, y: 0.12 + r() * 0.08 });
 
 // Coffee-cup rings: one spot where the mug always goes, 1–4 overlapping rings, mostly broken arcs like dried stains.
 // ponytail: spot kept on the right half, since the card lands on the left.
@@ -131,6 +131,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
         "--turn": `${turn}deg`,
         "--card-y": `${(mobile.matches ? -width * 0.23 : width * 0.085) * travel}px`,
         "--card-x": `${mobile.matches ? 0 : -width * 0.23 * travel}px`,
+        "--floor": overhead,
         "--card-pitch": `${pitch * landing}deg`,
         "--card-turn": `${-8 * travel}deg`,
         "--card-scale": 1 - (mobile.matches ? 0.5 : 0.72) * travel,
@@ -178,6 +179,14 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
         <div className={styles.space}>
           <div ref={desk} className={styles.desk} data-desk>
             <div className={styles.furniture} aria-hidden="true">
+              <div className={styles.floor}>
+                <div className={styles.rug} />
+                <svg className={styles.cable} viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <path d="M44 38 C38 30 30 40 24 34 S14 20 2 24" />
+                </svg>
+                <div className={styles.bin}><span /><span /></div>
+                <span className={styles.paperBall} /><span className={styles.paperBall} />
+              </div>
               <div className={styles.leg} /><div className={styles.leg} />
               <div className={styles.leg} /><div className={styles.leg} />
               <div className={styles.drawers}><span /><span /></div>
@@ -187,6 +196,13 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
               <div className={styles.top}><Grime layers={DESK_LAYERS} /></div>
             </div>
             <CoffeeCup />
+            <div className={styles.clutter} aria-hidden="true">
+              <div className={styles.pencil} />
+              <div className={styles.pen} />
+              <div className={styles.sticky}>TODO:<br />– more code<br />– more coffe</div>
+              <svg className={styles.clip} viewBox="0 0 40 100"><path d="M28 30 V82 a10 10 0 0 1 -20 0 V18 a14 14 0 0 1 28 0 V72" /></svg>
+              <svg className={styles.clip} viewBox="0 0 40 100"><path d="M28 30 V82 a10 10 0 0 1 -20 0 V18 a14 14 0 0 1 28 0 V72" /></svg>
+            </div>
             {notebook}
             <DeskCredentials />
           </div>

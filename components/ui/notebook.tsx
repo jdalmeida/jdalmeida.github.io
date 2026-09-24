@@ -76,8 +76,12 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   const [seed] = useState(() => Math.floor(Math.random() * 1e5));
   const [mine, setMine] = useState<Stamp | null>(null); // generated, being placed
   const [note, setNote] = useState<ReactNode>(null);
-  const go = (n: number) => setFlip(([now]) => [Math.max(0, Math.min(leaves, n)), now]);
-  const goFace = (f: number) => go(Math.ceil(f / 2));
+  const [left, setLeft] = useState(true); // phones: which page of the spread the camera is on
+  const go = (n: number, l = true) => {
+    setFlip(([now]) => [Math.max(0, Math.min(leaves, n)), now]);
+    setLeft(l);
+  };
+  const goFace = (f: number) => go(Math.ceil(f / 2), f % 2 === 1);
 
   // Links to another post (old blog URLs) turn to it here; anything else opens in a new tab so the notebook stays open.
   const followLink = (e: MouseEvent) => {
@@ -167,13 +171,16 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
         <ul>{a.tags.map((t) => <li key={t}>{t}</li>)}</ul>
       </header>,
       <article key={a.slug + "-body"} className={styles.prose}>
-        <h2 className={styles.mobileTitle}>{a.title}</h2>
         <div dangerouslySetInnerHTML={{ __html: a.html }} onClick={followLink} />
       </article>,
     ]),
     <div key="back" className={styles.coverFace} />,
   ];
   const leaves = faces.length / 2;
+  // Phones see one page at a time: the camera pans left page -> right page before the leaf turns.
+  const pan = () => matchMedia("(max-width: 640px) and (orientation: portrait)").matches && flipped > 0 && flipped < leaves;
+  const next = () => (pan() && left ? setLeft(false) : go(flipped + 1));
+  const prev = () => (pan() && !left ? setLeft(true) : go(flipped - 1, false));
 
   useEffect(() => {
     dialog.current!.showModal();
@@ -186,8 +193,8 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   // On window, not the dialog: a clicked sumário entry goes inert after the flip and focus falls to <body>.
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") go(flipped + 1);
-      if (e.key === "ArrowLeft") go(flipped - 1);
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
     };
     addEventListener("keydown", key);
     return () => removeEventListener("keydown", key);
@@ -208,7 +215,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
       onCancel={(e) => { e.preventDefault(); close(); }}
       onAnimationEnd={(e) => { if (closing && e.target === e.currentTarget) onClose(); }}
     >
-      <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"}>
+      <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"} data-page={left ? "left" : "right"}>
         {Array.from({ length: leaves }, (_, i) => {
           const turned = i < flipped;
           // Leaves turned in one jump go one after the other, starting from the one nearest the reader.
@@ -235,9 +242,9 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
       </div>
       <button type="button" className={styles.back} onClick={close}>← Voltar à mesa</button>
       <div className={styles.nav}>
-        <button type="button" onClick={() => go(flipped - 1)} disabled={flipped === 0} aria-label="Página anterior">←</button>
+        <button type="button" onClick={prev} disabled={flipped === 0} aria-label="Página anterior">←</button>
         <button type="button" onClick={() => go(1)} disabled={flipped === 1}>Sumário</button>
-        <button type="button" onClick={() => go(flipped + 1)} disabled={flipped === leaves} aria-label="Próxima página">→</button>
+        <button type="button" onClick={next} disabled={flipped === leaves} aria-label="Próxima página">→</button>
       </div>
     </dialog>
   );

@@ -127,7 +127,6 @@
 .prose th, .prose td { padding: .3em .5em; border: 1px solid #1d1a1633; vertical-align: top; }
 .prose img { max-width: 100%; }
 .prose a { color: #1c3452; }
-.mobileTitle { display: none; }
 
 .guestbook p button, .visitors button {
   padding: 0; border: 0; background: none; font: inherit; color: #b3261e; text-decoration: underline; cursor: pointer;
@@ -148,12 +147,13 @@
 .back:hover, .back:focus-visible, .nav button:hover:not(:disabled), .nav button:focus-visible { background: #000c; border-color: #fff9; }
 .nav button:disabled { opacity: .35; cursor: default; }
 
-/* ponytail: phones show one page at a time (the right one), so right faces repeat the title; swipe-to-flip if taps feel clunky. */
+/* ponytail: phones show one page at a time and pan left -> right before turning; swipe-to-flip if taps feel clunky. */
 @media (max-width: 640px) and (orientation: portrait) {
-  .notebook { left: 54%; top: 30%; }
+  /* the desk turns 90deg on phones; counter it so the cover reads upright. flat: Chrome drew the back cover over the cover at this angle (no hover peek on phones anyway) */
+  .notebook { left: 54%; top: 30%; transform: translate(-50%, -50%) translateZ(2px) rotate(-99deg); transform-style: flat; }
   .book { width: 184vw; height: 76svh; aspect-ratio: auto; }
   .book[data-state="open"] { --shift: -25%; }
-  .mobileTitle { display: block; }
+  .book[data-state="open"][data-page="left"] { --shift: 25%; }
   .face { padding: 6cqi 5cqi 10cqi 13cqi; }
 }
 @media (prefers-reduced-motion: reduce) {
