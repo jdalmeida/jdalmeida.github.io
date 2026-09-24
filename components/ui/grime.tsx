@@ -13,7 +13,8 @@ type Props = {
 const layer: CSSProperties = { position: "absolute", inset: 0, pointerEvents: "none", backgroundSize: "100% 100%" };
 
 // Noise filters per layer. `seed="S"` is replaced by the real seed. Noise is in px, so it doesn't stretch with element size.
-const LAYERS: { blend: CSSProperties["mixBlendMode"]; opacity: number; filter: string; body?: (w: number, h: number, rand: () => number) => string }[] = [
+export type Layer = { blend?: CSSProperties["mixBlendMode"]; opacity?: number; filter: string; body?: (w: number, h: number, rand: () => number) => string };
+export const LAYERS: Layer[] = [
   { // dirt: brown blotches + dark specks
     blend: "multiply", opacity: 0.30,
     filter: `<feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="5" seed="S"/>
@@ -37,7 +38,7 @@ const LAYERS: { blend: CSSProperties["mixBlendMode"]; opacity: number; filter: s
 ];
 
 // Seeded PRNG (mulberry32): same seed -> same scratches.
-function rng(a: number) {
+export function rng(a: number) {
   return () => {
     a = (a + 0x6d2b79f5) | 0;
     let t = Math.imul(a ^ (a >>> 15), 1 | a);
@@ -65,6 +66,14 @@ function scratches(w: number, h: number, r: () => number) {
   return `<g fill="none" stroke="#ffffff40" stroke-linecap="round" filter="url(#f)">${paths}</g>`;
 }
 
+// One layer rendered to a CSS `url(...)` SVG image of w×h px.
+export function layerImage(l: Layer, w: number, h: number, seed: number) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <filter id="f" x="0" y="0" width="100%" height="100%">${l.filter.replaceAll(`seed="S"`, `seed="${seed}"`)}</filter>
+    ${l.body?.(w, h, rng(seed)) ?? `<rect width="100%" height="100%" filter="url(#f)"/>`}</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
 // Procedural dirt + grease + wear overlay. Drop inside any `position: relative; overflow: hidden` box.
 // Rendered once to an SVG image (not live DOM filters): live filters inside a 3D-transformed parent freeze the page.
 export default function Grime({ seed, amount = 1, className }: Props) {
@@ -75,18 +84,13 @@ export default function Grime({ seed, amount = 1, className }: Props) {
     if (!el) return;
     const s = seed ?? Math.floor(Math.random() * 1e5);
     const w = el.offsetWidth, h = el.offsetHeight;
-    LAYERS.forEach((l, i) => {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-        <filter id="f" x="0" y="0" width="100%" height="100%">${l.filter.replaceAll(`seed="S"`, `seed="${s + i * 101}"`)}</filter>
-        ${l.body?.(w, h, rng(s + i)) ?? `<rect width="100%" height="100%" filter="url(#f)"/>`}</svg>`;
-      (el.children[i] as HTMLElement).style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
-    });
+    LAYERS.forEach((l, i) => ((el.children[i] as HTMLElement).style.backgroundImage = layerImage(l, w, h, s + i * 101)));
   };
 
   return (
     <div ref={paint} className={className} aria-hidden
       style={{ ...layer, boxShadow: `inset 0 0 18px rgb(58 42 26 / ${opacity(0.35)})` }}>
-      {LAYERS.map((l, i) => <div key={i} style={{ ...layer, mixBlendMode: l.blend, opacity: opacity(l.opacity) }} />)}
+      {LAYERS.map((l, i) => <div key={i} style={{ ...layer, mixBlendMode: l.blend, opacity: opacity(l.opacity ?? 1) }} />)}
     </div>
   );
 }
