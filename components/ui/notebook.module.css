@@ -58,8 +58,8 @@
 .face {
   position: absolute; inset: 0; overflow: hidden auto; overscroll-behavior: contain; pointer-events: auto; container-type: inline-size; backface-visibility: visible;
   /* Gecko can paint the mirrored front of a turned leaf despite backface-visibility.
-     Swap the visible side halfway through the leaf's delayed turn. */
-  transition: visibility 0s calc(var(--delay) + .5s);
+     Swap the visible side when the leaf is edge-on: the .leaf curve reaches 90deg at ~38% of its 1s, not at 50%. */
+  transition: visibility 0s calc(var(--delay) + .38s);
   padding: 7cqi 5cqi 10cqi 13cqi; border-radius: 0 6px 6px 0;
   font: clamp(16px, 4cqi, 22px)/1.6 var(--font-hand), cursive;
   background:
