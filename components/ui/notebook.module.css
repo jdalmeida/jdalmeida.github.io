@@ -101,7 +101,11 @@
 .face[data-side="back"] .coverFace { background: linear-gradient(270deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 70% 20%, #3c5f8c, #1c3452 70%); }
 .face[data-side="back"] .coverFace::after { right: auto; left: 12%; }
 
-.owner { display: flex; flex-direction: column; justify-content: center; height: 100%; text-align: center; }
+/* Inside of the front cover: same dark board as the cover, so the white signature shows. */
+.owner {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 8cqi; text-align: center;
+  background: radial-gradient(ellipse at 70% 20%, #3c5f8c, #1c3452 70%); color: #f4efe2;
+}
 .owner img { width: 70%; margin: 4cqi auto; }
 
 .toc h2, .titlePage h2, .guestbook h2 { margin: 0 0 .6em; font: 700 9cqi/1.1 var(--font-hand-title), cursive; color: #1c3452; }
@@ -166,3 +170,4 @@
   .face { transition: none; }
   .room, .book { animation: none !important; }
 }
+.share { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; color: #b3261e; text-decoration: underline; cursor: pointer; }

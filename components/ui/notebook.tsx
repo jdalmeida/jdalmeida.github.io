@@ -49,12 +49,12 @@ function overText(face: HTMLElement, el: HTMLElement) {
 }
 
 // Closed notebook on the desk (pages, cover); hovering peeks the cover open, clicking opens the book.
-// A Family & Friends link (?ff=...) opens it straight away.
+// A Family & Friends link (?ff=...) or a post link (/blog/<slug>) opens it straight away.
 export default function DeskNotebook({ articles, stamps: initial }: { articles: Article[]; stamps: Stamp[] }) {
   const [open, setOpen] = useState(false);
   const [stamps, setStamps] = useState(initial);
   useEffect(() => {
-    if (!new URLSearchParams(location.search).has("ff")) return;
+    if (!new URLSearchParams(location.search).has("ff") && !location.pathname.startsWith("/blog/")) return;
     const timer = setTimeout(() => setOpen(true)); // after hydration: the server can't see the query (static page)
     return () => clearTimeout(timer);
   }, []);
@@ -81,6 +81,8 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   const [note, setNote] = useState<ReactNode>(null);
   const [left, setLeft] = useState(true); // phones: which page of the spread the camera is on
   const [beans] = useState(() => beanShare(readLocal())); // % of castle beans, once the Count is beaten in this browser
+  const [start] = useState(() => articles.findIndex((a) => location.pathname === `/blog/${a.slug}`)); // opened from a post link
+  const [copied, setCopied] = useState("");
   const go = (n: number, l = true) => {
     setFlip(([now]) => [Math.max(0, Math.min(leaves, n)), now]);
     setLeft(l);
@@ -95,6 +97,13 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     const i = articles.findIndex((a) => link.pathname === `/blog/${a.slug}`);
     if (i >= 0) go(i + 3);
     else open(link.href, "_blank", "noopener");
+  };
+
+  // Phones get the share sheet; elsewhere the link goes to the clipboard.
+  const share = (a: Article) => {
+    const url = `${location.origin}/blog/${a.slug}`;
+    if (navigator.share) navigator.share({ title: a.title, url }).catch(() => {});
+    else navigator.clipboard.writeText(url).then(() => setCopied(a.slug));
   };
 
   const generate = async (count = false) => {
@@ -179,6 +188,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
         <h2>{a.title}</h2>
         <p>{a.excerpt}</p>
         <ul>{a.tags.map((t) => <li key={t}>{t}</li>)}</ul>
+        <button type="button" className={styles.share} onClick={() => share(a)}>{copied === a.slug ? "Link copiado!" : "Compartilhar link"}</button>
       </header>,
       <article key={a.slug + "-body"} className={styles.prose}>
         <div dangerouslySetInnerHTML={{ __html: a.html }} onClick={followLink} />
@@ -195,10 +205,16 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   useEffect(() => {
     dialog.current!.showModal();
     // Arrive closed, then open the cover.
-    const timer = setTimeout(() => go(1), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700);
+    const timer = setTimeout(() => go(start >= 0 ? start + 3 : 1), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The address bar follows the open post, so it can be copied from there too.
+  useEffect(() => {
+    const a = articles[flipped - 3];
+    history.replaceState(null, "", (a ? `/blog/${a.slug}` : "/") + location.search);
+  }, [articles, flipped]);
 
   // On window, not the dialog: a clicked sumário entry goes inert after the flip and focus falls to <body>.
   useEffect(() => {
