@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { loadCastle, saveCastle } from "@/lib/castle";
-import { HP, PW, STAGES, T, fresh, lash, loot, merge, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
+import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
 import styles from "./coffee-run.module.css";
 
@@ -123,11 +123,15 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
       rect(f.x + 2, f.y + 2, 3, 3, "#6b3f8f"); rect(f.x + 2, f.y + 3, 1, 1, "#ff4b4b"); rect(f.x + 4, f.y + 3, 1, 1, "#ff4b4b");
       rect(f.x, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8"); rect(f.x + 5, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8");
     } else if (f.kind === "count") {
-      const coat = f.ouch < 0.15 ? "#ff8a7a" : "#301b33";
-      rect(f.x - 1, f.y - 3, 8, 2, "#171019"); rect(f.x + 1, f.y - 6, 4, 3, "#171019");
-      rect(f.x + 1, f.y, 4, 4, "#d5a281"); rect(f.x + 2, f.y + 2, 1, 1, "#e83f48"); rect(f.x + 4, f.y + 2, 1, 1, "#e83f48");
-      rect(f.x, f.y + 4, 6, 9, coat); rect(f.x + 2, f.y + 4, 2, 7, "#a63345");
-      rect(f.x - 1, f.y - 10, 8, 1, "#542536"); rect(f.x - 1, f.y - 10, Math.ceil((f.hp / 5) * 8), 1, "#e34c55");
+      // He trembles with golden eyes while winding up an attack, turns crimson in his rage and leaves smoke when he blinks.
+      const b = g.boss, wind = b.t < WIND && (b.act === "dash" || b.act === "cast" || b.act === "bats");
+      if (b.act === "blink") { for (let i = 0; i < 6; i++) rect(f.x + 3 + Math.cos(i * 1.1) * b.t * 30, f.y + 6 + Math.sin(i * 1.1) * b.t * 18, 2, 2, "#6b4a73"); continue; }
+      const x = f.x + (wind ? Math.floor(now * 30) % 2 : 0), eye = wind ? "#ffd36b" : "#e83f48";
+      const coat = f.ouch < 0.15 ? "#ff8a7a" : f.hp <= BOSS_HP / 2 ? "#5a1428" : "#301b33";
+      if (b.act === "dash" && !wind) rect(x - b.dir * 5, f.y + 5, 4, 7, "#171019");
+      rect(x - 1, f.y - 3, 8, 2, "#171019"); rect(x + 1, f.y - 6, 4, 3, "#171019");
+      rect(x + 1, f.y, 4, 4, "#d5a281"); rect(x + 2, f.y + 2, 1, 1, eye); rect(x + 4, f.y + 2, 1, 1, eye);
+      rect(x, f.y + 4, 6, 9, coat); rect(x + 2, f.y + 4, 2, 7, "#a63345");
     } else {
       if (f.ouch < 0.6) bones(f, f.ouch, 3);
       const bone = f.ouch < 0.15 ? "#ff8a7a" : "#e6e2d3", left = f.vx < 0, step = Math.floor(f.x / 3) % 2;
@@ -135,6 +139,15 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
       rect(f.x + 2, f.y + 4, 2, 5, bone); for (let r = 5; r < 9; r += 2) rect(f.x, f.y + r, 6, 1, bone);
       rect(f.x + 1 + step, f.y + 9, 1, 4, bone); rect(f.x + 4 - step, f.y + 9, 1, 4, bone);
     }
+  }
+
+  for (const s of g.shots) { rect(s.x, s.y, 3, 3, "#4a2511"); rect(s.x + 1, s.y, 1, 1, "#c98a4b"); }
+  // Once the Count wakes, iron gates close his hall and his health runs along the top.
+  const count = g.foes.find((f) => f.kind === "count" && !f.dead);
+  if (count && g.boss.act !== "sleep") {
+    for (const x of [count.home - ARENA - 2, count.home + ARENA]) { rect(x, T, 2, count.y + 13 - T, "#2a2230"); for (let y = T + 4; y < count.y + 13; y += 12) rect(x - 1, y, 4, 1, "#2a2230"); }
+    ctx.fillStyle = "#542536"; ctx.fillRect(46, 4, 100, 3);
+    ctx.fillStyle = "#e34c55"; ctx.fillRect(46, 4, Math.ceil((count.hp / BOSS_HP) * 100), 3);
   }
 
   // Hero: a hunter in a coffee-brown coat. Blinks while invulnerable.
@@ -183,7 +196,7 @@ function Castle({ onClose }: { onClose: () => void }) {
         const next = merge(saved.current, { cleared: g.stage + 1, best });
         saved.current = next; setProgress(next); store(next);
       }
-      if (g.state === "dead" && g.t > 1) g = fresh(g.stage);
+      if (g.state === "dead" && g.t > 1) g = retry(g);
       if (g.state === "won" && g.t > 1.5) {
         if (g.stage + 1 < STAGES.length) { setStage(g.stage + 1); return; }
         setNote("Você venceu o Conde D'arábica. O relógio voltou a andar, a última xícara foi servida e o sol nasceu."); setStage(null); return;

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { STAGES, fresh, lash, loot, merge, step, validProgress } from "../components/ui/platformer.ts";
+import { ARENA, BOSS_HP, STAGES, WIND, fresh, lash, loot, merge, retry, step, validProgress } from "../components/ui/platformer.ts";
 
 const idle = { left: false, right: false, jump: false, whip: false };
 const run = (g, input, seconds) => { for (let t = 0; t < seconds; t += 1 / 60) step(g, { ...idle, ...input }, 1 / 60); return g; };
@@ -104,4 +104,54 @@ test("progress merges to the larger values and rejects nonsense", () => {
   assert.ok(!validProgress({ cleared: 9, best: [] }));
   assert.ok(!validProgress({ cleared: 1, best: [999] }));
   assert.ok(!validProgress(null));
+});
+
+// Puts the hero on the hall floor a given distance left of the sleeping Count.
+const hall = (gap) => {
+  const g = fresh(5), count = g.foes.find((f) => f.kind === "count");
+  Object.assign(g, { x: count.home - gap, y: count.y, ground: true });
+  return { g, count };
+};
+
+test("the Count wakes when the hero comes near and locks the hall", () => {
+  const { g, count } = hall(100);
+  run(g, {}, 0.1);
+  assert.equal(g.boss.act, "sleep");
+  run(g, { right: true }, 0.5);
+  assert.notEqual(g.boss.act, "sleep");
+  run(g, { left: true }, 1);
+  assert.equal(g.x, count.home - ARENA);
+});
+
+test("the Count winds up, then throws boiling coffee that costs a heart", (t) => {
+  t.mock.method(Math, "random", () => 0.5); // walk, dash, cast, bats → cast
+  const { g } = hall(60);
+  run(g, {}, 0.8);
+  assert.equal(g.boss.act, "cast");
+  assert.equal(g.shots.length, 0);
+  run(g, {}, WIND);
+  assert.equal(g.shots.length, 3);
+  run(g, {}, 1.5);
+  assert.ok(g.hp < 4, `hp ${g.hp}`);
+});
+
+test("below half health the Count can blink, and whipping him stops all his tricks", (t) => {
+  t.mock.method(Math, "random", () => 0.99);
+  const { g, count } = hall(60);
+  count.hp = BOSS_HP / 2;
+  run(g, {}, 0.5);
+  assert.equal(g.boss.act, "blink");
+  run(g, {}, 0.45);
+  assert.ok(Math.abs(count.x - (g.x + 36)) < 2, "reappears beside the hero");
+  count.hp = 1; count.x = g.x + 12; g.face = 1; g.boss.act = "rest"; g.boss.t = 0;
+  run(g, { whip: true }, 0.2);
+  assert.ok(count.dead);
+  assert.equal(g.shots.length, 0);
+});
+
+test("dying to the Count restarts at his hall", () => {
+  const { g, count } = hall(60);
+  run(g, {}, 0.1);
+  assert.equal(retry(g).x, count.home - ARENA + 2);
+  assert.notEqual(retry(fresh(5)).x, count.home - ARENA + 2);
 });
