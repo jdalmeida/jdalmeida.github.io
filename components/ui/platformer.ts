@@ -332,6 +332,9 @@ export const merge = (a: Progress, b: Progress): Progress => ({
   cleared: Math.max(a.cleared, b.cleared),
   best: STAGES.map((_, i) => Math.max(a.best[i] ?? 0, b.best[i] ?? 0)),
 });
+// Share of all the castle's beans taken (best run per stage, rounded down), once the Count is beaten; null before that.
+export const beanShare = (p: Progress) => p.cleared < STAGES.length ? null
+  : Math.floor(100 * STAGES.reduce((n, _, i) => n + (p.best[i] ?? 0), 0) / STAGES.reduce((n, _, i) => n + loot(i), 0));
 export function validProgress(p: unknown): p is Progress {
   const q = p as Progress;
   return !!q && Number.isInteger(q.cleared) && q.cleared >= 0 && q.cleared <= STAGES.length && Array.isArray(q.best) &&

@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import type { Article } from "@/lib/articles";
-import { generateStamp, placeStamp, type Stamp } from "@/lib/stamps";
+import { countStamp, generateStamp, placeStamp, type Stamp } from "@/lib/stamps";
+import { readLocal } from "./coffee-run";
+import { beanShare } from "./platformer";
 import { rng } from "./grime";
 import StampSticker, { device, DOODLES, pad, strokes, TIERS, tier } from "./stamp";
 import styles from "./notebook.module.css";
@@ -78,6 +80,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   const [mine, setMine] = useState<Stamp | null>(null); // generated, being placed
   const [note, setNote] = useState<ReactNode>(null);
   const [left, setLeft] = useState(true); // phones: which page of the spread the camera is on
+  const [beans] = useState(() => beanShare(readLocal())); // % of castle beans, once the Count is beaten in this browser
   const go = (n: number, l = true) => {
     setFlip(([now]) => [Math.max(0, Math.min(leaves, n)), now]);
     setLeft(l);
@@ -94,10 +97,10 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     else open(link.href, "_blank", "noopener");
   };
 
-  const generate = async () => {
+  const generate = async (count = false) => {
     setNote("Gerando…");
     try {
-      const s = await generateStamp(device(), new URLSearchParams(location.search).get("ff") ?? "");
+      const s = count ? await countStamp(device(), beans!) : await generateStamp(device(), new URLSearchParams(location.search).get("ff") ?? "");
       if (s.face === null) {
         setMine(s);
         setNote(null);
@@ -122,7 +125,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     const x = (e.nativeEvent.offsetX / face.clientWidth) * 100, y = (e.nativeEvent.offsetY / face.clientHeight) * 100;
     if (!confirm("Colar o selo aqui? Adesivo não descola.")) return;
     try {
-      onPlaced(await placeStamp(device(), f, x, y));
+      onPlaced(await placeStamp(device(), f, x, y, mine!.beans !== null));
       setMine(null);
       setNote("Colado! Obrigado pela visita.");
     } catch {
@@ -141,17 +144,21 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     <section key="guestbook" className={styles.guestbook} aria-label="Livro de visitas">
       <h2>Livro de visitas</h2>
       {mine ? (
-        <p>Seu selo {pad(mine.id)} ({mine.ff ? "Family & Friends" : TIERS[tier(mine.seed, mine.best)]}) está na mão. Vire as páginas e clique onde quer colar: capa, páginas, onde quiser, só não em cima do texto.{" "}
+        <p>Seu selo {pad(mine.id)} ({mine.ff ? "Family & Friends" : TIERS[tier(mine)]}) está na mão. Vire as páginas e clique onde quer colar: capa, páginas, onde quiser, só não em cima do texto.{" "}
           <button type="button" onClick={() => setMine(null)}>Guardar para depois</button></p>
       ) : (
         <p>Passou por aqui? Gere um adesivo só seu, feito a partir do seu dispositivo, e cole neste caderno.{" "}
-          <button type="button" onClick={generate}>Gerar meu selo</button></p>
+          <button type="button" onClick={() => generate()}>Gerar meu selo</button></p>
+      )}
+      {!mine && beans !== null && (
+        <p>Venceu o Conde D&apos;arábica no castelo do café ({beans}% dos grãos)? O selo dele também é seu.{" "}
+          <button type="button" onClick={() => generate(true)}>Pegar selo do Conde</button></p>
       )}
       {note && <p>{note}</p>}
       <ol className={styles.visitors}>
         {stamps.map((s) => (
           <li key={s.id}><button type="button" onClick={() => goFace(s.face!)}>
-            {pad(s.id)} · {s.country ?? "??"} · {new Date(s.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })} · {s.ff ? "family & friends" : TIERS[tier(s.seed, s.best)]}
+            {pad(s.id)} · {s.country ?? "??"} · {new Date(s.date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })} · {s.ff ? "family & friends" : TIERS[tier(s)]}
           </button></li>
         ))}
       </ol>

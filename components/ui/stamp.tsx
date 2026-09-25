@@ -32,7 +32,10 @@ export const strokes = (s: P[][], r = () => 0.5) => s.map((st) => "M" + st.map((
 // A paper-toss best streak raises it (never lowers): SCORE_TIERS[i] baskets in a row earn tier i + 1.
 export const TIERS = ["comum", "raro", "lendário"] as const;
 export const SCORE_TIERS = [10, 25];
-export const tier = (seed: number, best = 0) => {
+// The Count D'arábica stamp skips both: its rarity is the % of castle beans taken, COUNT_TIERS[i] earns tier i + 1.
+export const COUNT_TIERS = [80, 100];
+export const tier = ({ seed, best, beans }: Pick<Stamp, "seed" | "best" | "beans">) => {
+  if (beans !== null) return COUNT_TIERS.filter((n) => beans >= n).length;
   const v = rng(seed ^ 0x5eed)();
   return Math.max(v < 0.05 ? 2 : v < 0.3 ? 1 : 0, SCORE_TIERS.filter((n) => best >= n).length);
 };
@@ -65,7 +68,7 @@ function outline(r: () => number, passport: boolean): P[] {
 // The whole sticker as one SVG image, all from the seed: family (passport stamp / round sticker), shape, colours, doodle, ink wear.
 // An image, not live DOM: SVG filters inside the book's 3D transforms would freeze the page (see Grime).
 function art(s: Stamp) {
-  const r = rng(s.seed), t = tier(s.seed, s.best), passport = !s.ff && r() < 0.45, fs = s.seed & 0xffff;
+  const r = rng(s.seed), t = tier(s), count = s.beans !== null, passport = !s.ff && !count && r() < 0.45, fs = s.seed & 0xffff;
   const pts = s.ff ? range(180, (u) => heart(u * TAU, 40, 45)) : outline(r, passport);
   const d = path(pts), inner = path(pts.map(([x, y]) => [50 + (x - 50) * 0.84, 50 + (y - 50) * 0.84]));
   const rmin = Math.min(...pts.map(([x, y]) => Math.hypot(x - 50, y - 50)));
@@ -79,7 +82,21 @@ function art(s: Stamp) {
   const frame = `<path class="l" d="${inner}" stroke-width="1.4" ${dashed}/>`;
   const mark = (x: number, y: number, k: number, o = 1) => `<path class="l" d="${doodle}" transform="translate(${x} ${y}) scale(${k})" stroke-width="${2.2 / k}" opacity="${o}"/>`;
 
-  const body = s.ff
+  // The Count's stamp: a coffee cup with fangs in a high-collared cape, red lined.
+  const cup = `<path d="M38 42L25 26Q33 34 41 35L50 36L59 35Q67 34 75 26L62 42L70 65Q50 70 30 65Z" fill="${ink}"/>`
+    + `<path d="M38 42L50 38L62 42L65 63Q50 67 35 63Z" fill="#a3122a"/>`
+    + `<path class="l" d="M59.5 48Q66 48 64.5 54Q63 58 58.5 57.5" stroke-width="2"/>`
+    + `<path d="M40 44H60L58 62Q50 66 42 62Z" fill="${fill}" stroke="${ink}" stroke-width="1.4" stroke-linejoin="round"/>`
+    + `<ellipse cx="50" cy="44" rx="10" ry="2.2" fill="#4a2511" stroke="${ink}" stroke-width="1"/>`
+    + `<circle cx="46" cy="51" r="1.2" fill="${ink}"/><circle cx="54" cy="51" r="1.2" fill="${ink}"/>`
+    + `<path d="M47 55.6L48 58.6L49 56.2ZM51 56.2L52 58.6L53 55.6Z" fill="#fff" stroke="${ink}" stroke-width=".5" stroke-linejoin="round"/>`
+    + `<path class="l" d="M45 55Q50 57.5 55 55" stroke-width="1.2"/>`;
+
+  const body = count
+    ? frame + `<path id="a" d="M${50 - rmin * 0.72} 50A${rmin * 0.72} ${rmin * 0.72} 0 0 1 ${50 + rmin * 0.72} 50" fill="none"/>`
+      + `<text font-size="5.5" style="letter-spacing:.6px"><textPath href="#a" startOffset="50%">• CONDE D'ARÁBICA •</textPath></text>`
+      + cup + `<rect x="24" y="69" width="52" height="12" rx="1.5" fill="${ink}"/>` + text(78, 8.5, pad(s.id), `fill:${fill}`)
+    : s.ff
     ? frame + mark(28, 30, 0.44, 0.18) + `<rect x="14" y="44" width="72" height="12" fill="${ink}" clip-path="url(#c)"/>`
       + text(52.2, 5.4, "FAMILY &amp; FRIENDS", `fill:${fill};letter-spacing:.4px`) + text(70, 9, pad(s.id))
     : passport
@@ -123,7 +140,7 @@ export default function StampSticker({ s, style, ghost }: { s: Stamp; style?: CS
   return (
     <span data-stamp data-tier={t} className={`${styles.stamp} ${ghost ? styles.ghost : ""}`} style={{ ...style, rotate: `${rot}deg`, "--mask": mask } as CSSProperties} onPointerMove={shine}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={ghost ? "" : `Selo do visitante ${pad(s.id)} (${s.ff ? "Family & Friends" : TIERS[t]})`} draggable={false} />
+      <img src={src} alt={ghost ? "" : `Selo ${s.beans !== null ? "do Conde D'arábica" : "do visitante"} ${pad(s.id)} (${s.ff ? "Family & Friends" : TIERS[t]})`} draggable={false} />
       <span className={styles.finish} />
     </span>
   );

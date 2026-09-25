@@ -9,6 +9,8 @@ create table if not exists stamps (
   y real,                          -- % of face height (can pass 100 on scrolling pages)
   created_at timestamptz not null default now()
 );
+-- Count D'arábica stamp (a second stamp per device, own seed): % of the castle's beans taken; null = visitor stamp.
+alter table stamps add column if not exists beans smallint;
 
 -- Paper-toss best streak per device (same seed as stamps). A high score raises that device's stamp rarity.
 create table if not exists scores (

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import { strict as assert } from "node:assert";
-import { ARENA, BOSS_HP, STAGES, WIND, fresh, lash, loot, merge, retry, step, validProgress } from "../components/ui/platformer.ts";
+import { ARENA, BOSS_HP, STAGES, WIND, beanShare, fresh, lash, loot, merge, retry, step, validProgress } from "../components/ui/platformer.ts";
 
 const idle = { left: false, right: false, jump: false, whip: false };
 const run = (g, input, seconds) => { for (let t = 0; t < seconds; t += 1 / 60) step(g, { ...idle, ...input }, 1 / 60); return g; };
@@ -154,4 +154,12 @@ test("dying to the Count restarts at his hall", () => {
   run(g, {}, 0.1);
   assert.equal(retry(g).x, count.home - ARENA + 2);
   assert.notEqual(retry(fresh(5)).x, count.home - ARENA + 2);
+});
+
+test("bean share counts only once the Count is beaten, rounded down", () => {
+  const all = STAGES.map((_, i) => loot(i));
+  assert.equal(beanShare({ cleared: STAGES.length - 1, best: all }), null);
+  assert.equal(beanShare({ cleared: STAGES.length, best: all }), 100);
+  assert.equal(beanShare({ cleared: STAGES.length, best: [] }), 0);
+  assert.equal(beanShare({ cleared: STAGES.length, best: all.map((n, i) => (i ? n : n - 1)) }), 98); // 94 of 95: one missing bean is no longer 100%
 });

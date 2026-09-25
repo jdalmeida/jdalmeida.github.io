@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { loadCastle, saveCastle } from "@/lib/castle";
-import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
+import { countStamp } from "@/lib/stamps";
+import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, beanShare, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
+import { device } from "./stamp";
 import styles from "./coffee-run.module.css";
 
 // Viewport in canvas px; CSS scales it up with `image-rendering: pixelated`.
@@ -32,7 +34,7 @@ function key() {
   if (!k) localStorage.setItem(KEY, (k = uuid()));
   return k;
 }
-function readLocal(): Progress {
+export function readLocal(): Progress {
   try {
     const p = JSON.parse(localStorage.getItem(SAVE) ?? "");
     if (validProgress(p)) return p;
@@ -123,15 +125,23 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
       rect(f.x + 2, f.y + 2, 3, 3, "#6b3f8f"); rect(f.x + 2, f.y + 3, 1, 1, "#ff4b4b"); rect(f.x + 4, f.y + 3, 1, 1, "#ff4b4b");
       rect(f.x, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8"); rect(f.x + 5, f.y + (up ? 0 : 3), 2, 2, "#8a4fb8");
     } else if (f.kind === "count") {
-      // He trembles with golden eyes while winding up an attack, turns crimson in his rage and leaves smoke when he blinks.
-      const b = g.boss, wind = b.t < WIND && (b.act === "dash" || b.act === "cast" || b.act === "bats");
+      // He trembles with golden eyes while winding up an attack, each with its own tell: crouching with a flared cape
+      // before a dash, raising a brewing coffee orb before a cast, spreading his cape like wings before calling bats.
+      // He turns crimson in his rage and leaves smoke when he blinks.
+      const b = g.boss, wind = b.t < WIND && (b.act === "dash" || b.act === "cast" || b.act === "bats") ? b.act : null;
       if (b.act === "blink") { for (let i = 0; i < 6; i++) rect(f.x + 3 + Math.cos(i * 1.1) * b.t * 30, f.y + 6 + Math.sin(i * 1.1) * b.t * 18, 2, 2, "#6b4a73"); continue; }
-      const x = f.x + (wind ? Math.floor(now * 30) % 2 : 0), eye = wind ? "#ffd36b" : "#e83f48";
+      const x = f.x + (wind ? Math.floor(now * 30) % 2 : 0), eye = wind ? "#ffd36b" : "#e83f48", y = f.y + (wind === "dash" ? 3 : 0);
       const coat = f.ouch < 0.15 ? "#ff8a7a" : f.hp <= BOSS_HP / 2 ? "#5a1428" : "#301b33";
       if (b.act === "dash" && !wind) rect(x - b.dir * 5, f.y + 5, 4, 7, "#171019");
-      rect(x - 1, f.y - 3, 8, 2, "#171019"); rect(x + 1, f.y - 6, 4, 3, "#171019");
-      rect(x + 1, f.y, 4, 4, "#d5a281"); rect(x + 2, f.y + 2, 1, 1, eye); rect(x + 4, f.y + 2, 1, 1, eye);
-      rect(x, f.y + 4, 6, 9, coat); rect(x + 2, f.y + 4, 2, 7, "#a63345");
+      if (wind === "dash") { rect(x - b.dir * 6, y + 1, 5, 4, "#171019"); rect(x - b.dir * 3 + Math.floor(now * 20) % 3, f.y + 12, 2, 1, "#8a7a6a"); }
+      if (wind === "bats") { const up = Math.floor(now * 10) % 2; rect(x - 5, y + 2 + up, 5, 5, "#171019"); rect(x + 6, y + 2 + up, 5, 5, "#171019"); }
+      rect(x - 1, y - 3, 8, 2, "#171019"); rect(x + 1, y - 6, 4, 3, "#171019");
+      rect(x + 1, y, 4, 4, "#d5a281"); rect(x + 2, y + 2, 1, 1, eye); rect(x + 4, y + 2, 1, 1, eye);
+      rect(x, y + 4, 6, 13 - (y - f.y) - 4, coat); rect(x + 2, y + 4, 2, 7 - (y - f.y), "#a63345");
+      if (wind === "cast") {
+        const hand = x + (b.dir > 0 ? 6 : -2), r = 1 + Math.floor((b.t / WIND) * 3);
+        rect(hand, y - 2, 2, 6, coat); rect(hand + 1 - (r >> 1), y - 3 - r, r, r, "#4a2511"); rect(hand + 1 - (r >> 1), y - 3 - r, 1, 1, "#c98a4b");
+      }
     } else {
       if (f.ouch < 0.6) bones(f, f.ouch, 3);
       const bone = f.ouch < 0.15 ? "#ff8a7a" : "#e6e2d3", left = f.vx < 0, step = Math.floor(f.x / 3) % 2;
@@ -199,7 +209,9 @@ function Castle({ onClose }: { onClose: () => void }) {
       if (g.state === "dead" && g.t > 1) g = retry(g);
       if (g.state === "won" && g.t > 1.5) {
         if (g.stage + 1 < STAGES.length) { setStage(g.stage + 1); return; }
-        setNote("Você venceu o Conde D'arábica. O relógio voltou a andar, a última xícara foi servida e o sol nasceu."); setStage(null); return;
+        // Creates (or raises the rarity of) the Count's stamp now; the notebook hands it over for sticking.
+        countStamp(device(), beanShare(saved.current)!).catch(() => {});
+        setNote(`Você venceu o Conde D'arábica. O relógio voltou a andar, a última xícara foi servida e o sol nasceu. Ganhou o selo do Conde (${beanShare(saved.current)}% dos grãos): cole no caderno.`); setStage(null); return;
       }
       // Only re-render React when the HUD actually changes.
       const key = `${g.hp}|${g.beans}|${g.state}`;
