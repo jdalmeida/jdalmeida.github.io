@@ -7,6 +7,7 @@ import { countStamp } from "@/lib/stamps";
 import { track } from "@/lib/track";
 import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, beanShare, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
+import * as audio from "./castle-audio";
 import type { DiveRequest } from "./desk-scene";
 import { device } from "./stamp";
 import styles from "./coffee-run.module.css";
@@ -294,6 +295,39 @@ function drawIntro(ctx: CanvasRenderingContext2D, t: number, calm: boolean) {
   ctx.globalAlpha = 0.35; rect(0, 0, W, 2, "#000"); rect(0, H - 2, W, 2, "#000"); rect(0, 0, 2, H, "#000"); rect(W - 2, 0, 2, H, "#000"); ctx.globalAlpha = 1;
 }
 
+// Sounds come from what changed in a frame, so the game logic stays silent (and testable in node).
+type Before = { vy: number; ground: boolean; swing: number; got: number; hp: number; shots: number; act: Game["boss"]["act"]; foes: { hp: number; dead: boolean }[]; state: Game["state"] };
+const snapshot = (g: Game): Before => ({
+  vy: g.vy, ground: g.ground, swing: g.swing, got: g.got.size, hp: g.hp, shots: g.shots.length, act: g.boss.act,
+  foes: g.foes.map((f) => ({ hp: f.hp, dead: f.dead })), state: g.state,
+});
+function listen(g: Game, b: Before) {
+  const { sfx } = audio;
+  if (g.swing > b.swing) sfx.whip();
+  if (g.hp < b.hp) sfx.hurt();
+  else if (g.vy < -100 && g.vy < b.vy - 100) sfx.jump();
+  if (!b.ground && g.ground && b.vy > 200) sfx.land();
+  for (const k of [...g.got].slice(b.got)) { const [cx, cy] = k.split(",").map(Number); if (tileAt(g.stage, cx, cy) === "i") sfx.candle(); else sfx.bean(); }
+  b.foes.forEach((was, i) => {
+    const f = g.foes[i];
+    if (f.hp >= was.hp) return;
+    if (f.kind === "count") { if (f.dead) sfx.bossDown(); else sfx.bossHit(); }
+    else if (!f.dead) sfx.hit();
+    else if (f.kind === "skel") sfx.bones();
+    else sfx.bat();
+  });
+  if (g.boss.act !== b.act) {
+    if (b.act === "sleep") sfx.wake();
+    else if (g.boss.act === "dash" || g.boss.act === "cast" || g.boss.act === "bats" || g.boss.act === "blink") sfx[g.boss.act]();
+  }
+  if (g.shots.length > b.shots) sfx.shot();
+  if (b.state === "play" && g.state === "dead") { audio.stop(); sfx.die(); }
+  if (b.state === "play" && g.state === "won") { audio.stop(); if (g.stage === STAGES.length - 1) sfx.victory(); else sfx.clear(); }
+  // The Count's theme while he is awake, silence once he falls, the stage theme otherwise.
+  const count = g.foes.find((f) => f.kind === "count");
+  if (g.state === "play") { if (!count || g.boss.act === "sleep") audio.play("stage"); else if (count.dead) audio.stop(); else audio.play("boss"); }
+}
+
 function Castle({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -305,6 +339,18 @@ function Castle({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState("");
   // Opening: the title scene (the desk camera has just dived into the mug) plays until a key or tap.
   const [intro, setIntro] = useState(true);
+  const [sound, setSound] = useState(() => !audio.muted());
+  const toggleSound = () => setSound((on) => { audio.setMuted(on); return !on; });
+  // Set when the Count falls, so the menu's nocturne waits for the victory fanfare to end.
+  const fanfare = useRef(0);
+
+  useEffect(() => {
+    audio.unlock();
+    // M toggles the sound anywhere in the castle.
+    const mute = (e: KeyboardEvent) => { if (e.code === "KeyM" && !e.repeat) toggleSound(); };
+    addEventListener("keydown", mute);
+    return () => { removeEventListener("keydown", mute); audio.stop(); };
+  }, []);
 
   useEffect(() => {
     dialog.current!.showModal();
@@ -326,7 +372,7 @@ function Castle({ onClose }: { onClose: () => void }) {
       const skip = (e: KeyboardEvent) => {
         if (e.code === "Escape" || e.code === "Tab") return;
         e.preventDefault();
-        if (e.type === "keyup") setIntro(false);
+        if (e.type === "keyup") { audio.sfx.select(); setIntro(false); }
       };
       addEventListener("keydown", skip);
       addEventListener("keyup", skip);
@@ -338,8 +384,9 @@ function Castle({ onClose }: { onClose: () => void }) {
     function tick(now: number) {
       const dt = Math.min(0.05, (now - then) / 1000);
       then = now;
-      const was = g.state;
+      const was = g.state, before = snapshot(g);
       step(g, input.current, dt);
+      listen(g, before);
       if (g.state === "won" && was === "play") {
         const best = [...saved.current.best]; best[g.stage] = g.beans;
         const next = merge(saved.current, { cleared: g.stage + 1, best });
@@ -349,6 +396,7 @@ function Castle({ onClose }: { onClose: () => void }) {
       if (g.state === "dead" && g.t > 1) g = retry(g);
       if (g.state === "won" && g.t > 1.5) {
         if (g.stage + 1 < STAGES.length) { setStage(g.stage + 1); return; }
+        fanfare.current = performance.now() + 2500;
         // Creates (or raises the rarity of) the Count's stamp now; the notebook hands it over for sticking.
         countStamp(device(), beanShare(saved.current)!).catch(() => {});
         track("stamp", "conde", { beans: beanShare(saved.current) });
@@ -372,21 +420,33 @@ function Castle({ onClose }: { onClose: () => void }) {
     return () => { cancelAnimationFrame(frame); removeEventListener("keydown", press); removeEventListener("keyup", press); };
   }, [stage, intro]);
 
+  // Title and menu play the nocturne (stages pick their own song in `listen`).
+  useEffect(() => {
+    if (stage !== null) return;
+    const wait = Math.max(0, fanfare.current - performance.now()), later = setTimeout(() => audio.play("night"), wait);
+    if (wait) audio.stop();
+    return () => clearTimeout(later);
+  }, [stage]);
+
   // Touch pad: each button holds its input while pressed.
   const pad = (k: keyof Input, label: string, glyph: string) => (
     <button type="button" aria-label={label} onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); input.current[k] = true; }}
       onPointerUp={() => { input.current[k] = false; }} onPointerCancel={() => { input.current[k] = false; }} onContextMenu={(e) => e.preventDefault()}>{glyph}</button>
   );
-  const play = (i: number) => { setNote(""); setStage(i); track("stage", String(i)); };
+  const play = (i: number) => { audio.sfx.start(); setNote(""); setStage(i); track("stage", String(i)); };
+  const speaker = (
+    <button type="button" className={styles.menu} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
+  );
 
   return (
-    <dialog ref={dialog} className={`${room.room} ${styles.arrive}`} aria-label="Castelo do Café" onClose={onClose}>
+    <dialog ref={dialog} className={`${room.room} ${styles.arrive}`} aria-label="Castelo do Café" onClose={onClose} onPointerDown={audio.unlock}>
       <p className={`${room.hud} ${styles.hud}`}>
-        {stage === null ? <span>{intro ? "\u00a0" : "Castelo do Café"}</span> : <>
+        {stage === null ? <><span>{intro ? "\u00a0" : "Castelo do Café"}</span>{speaker}</> : <>
           <span>{STAGES[stage].name}</span>
           <span aria-label={`${hud.hp} de ${HP} corações`}>{"♥".repeat(Math.max(0, hud.hp))}<span className={styles.lost}>{"♥".repeat(HP - Math.max(0, hud.hp))}</span></span>
           <span>Grãos {hud.beans}/{loot(stage)}</span>
           {hud.state !== "play" && <span role="status">{hud.state === "won" ? "Fase concluída!" : "Você caiu…"}</span>}
+          {speaker}
           <button type="button" className={styles.menu} onClick={() => setStage(null)}>Fases</button>
         </>}
       </p>
@@ -394,7 +454,7 @@ function Castle({ onClose }: { onClose: () => void }) {
         <canvas ref={canvas} className={`${room.court} ${styles.level}`} width={W} height={H}
           aria-label="Jogo de plataforma: setas ou A e D para andar, espaço ou Z para pular, X ou J para o chicote" />
         {stage === null && intro && (
-          <div className={styles.intro} onPointerUp={() => setIntro(false)}>
+          <div className={styles.intro} onPointerUp={() => { audio.sfx.select(); setIntro(false); }}>
             <h2 className={`${gothic.className} ${styles.title}`}><span>Castelo</span> <small>do</small> <span>Café</span></h2>
             <p className={styles.subtitle}>— A Brasa da Aurora —</p>
             <div className={styles.prologue}>
@@ -448,7 +508,7 @@ export default function CoffeeRun() {
   return (
     <>
       <span className={styles.steam} aria-hidden="true"><span /><span /><span /></span>
-      <button ref={mug} type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => dive(true, () => setOpen(true))} />
+      <button ref={mug} type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => { audio.unlock(); dive(true, () => setOpen(true)); }} />
       {open && <Castle onClose={() => { setOpen(false); dive(false); }} />}
     </>
   );
