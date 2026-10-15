@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "bake-assets": "node scripts/bake-stickers.mjs && bun scripts/bake-textures.ts",
+    "bake-assets": "node scripts/bake-stickers.mjs && bun scripts/bake-textures.ts && bun scripts/bake-room.ts",
     "start": "next start",
     "lint": "eslint"
   },

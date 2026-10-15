@@ -67,6 +67,11 @@ export default function EvidenceBoard({ event, onClose }: { event: Event; onClos
         <div className={styles.floor} />
         <div className={styles.side} data-side="left" />
         <div className={styles.side} data-side="right" />
+        <div className={styles.lamp} aria-hidden="true">
+          <span className={styles.beam} />
+          <span className={styles.shade} />
+          <span className={styles.bulb} />
+        </div>
         <div className={styles.wall}>
           <div className={styles.board}>
             <Cutouts text={event.name} />
@@ -74,7 +79,6 @@ export default function EvidenceBoard({ event, onClose }: { event: Event; onClos
               <p>{event.note}</p>
               <small>{event.role} · {event.place}, {event.year}</small>
             </div>
-            <span className={styles.stain} aria-hidden="true" />
             {event.images.map((src, i) => (
               <figure key={src} className={styles.polaroid} data-photo={i}>
                 <Image src={src} alt={`${event.name}, foto ${i + 1}`} width={480} height={480} />
