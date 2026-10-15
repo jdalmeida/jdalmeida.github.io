@@ -25,7 +25,7 @@ No ar, deslizar ↓ cai na hora, como no original.
 - **Lápis deitado** atravessando uma faixa: pular.
 - **Cordão de credencial** esticado no alto: deslizar por baixo.
 - **Clipe** em pé: pular ou desviar.
-- **Caderno**: bloco alto, como o trem. De frente, bate. Uma borracha na frente serve de rampa e permite correr por cima dele.
+- **Caderno**: bloco alto, como o trem. De frente, bate. Uma régua encostada serve de rampa e permite correr por cima dele.
 - **Post-it** colado de pé: parede, só desviando de faixa.
 - **Mancha de café**: não bloqueia, mas escorrega. Por meio segundo a troca de faixa sai atrasada.
 - **Xícara**: parede larga que ocupa duas faixas.
@@ -44,15 +44,18 @@ A velocidade começa em 1× e cresce até 2,2× em uns 3 minutos. A pontuação 
 
 ## Placar e selo
 
-Top 10 com nome, como no Basquete de papel, numa tabela nova `runs` (seed do dispositivo, melhor pontuação, nome), em `lib/runs.ts` e `lib/stamps.sql`. A tabela `scores` continua só do basquete. Fica em aberto se a corrida mexe na raridade do selo.
+Top 10 com nome, como no Basquete de papel, numa tabela nova `runs` (seed do dispositivo, melhor pontuação, nome), em `lib/runs.ts` e `lib/stamps.sql`. A tabela `scores` continua só do basquete; o formulário de nome já vem preenchido com o nome do basquete, se houver.
+
+O recorde melhora a raridade do selo do caderno, como o basquete: `RUN_TIERS` (2000 e 5000 pontos) dão raro e lendário. Vale o maior entre a sorte do selo, o basquete e a corrida.
 
 ## Implementação
 
-- `components/ui/desk-run.ts`: lógica pura (estado, `step`, geração de trechos, colisão), sem canvas, testável como `platformer.ts`.
+- `components/ui/runner.ts`: lógica pura (estado, `step`, geração de trechos, colisão), sem canvas, testável como `platformer.ts`.
 - `components/ui/desk-run.tsx`: dialog, desenho no canvas, entrada por toque e teclado, HUD e placar.
 - `components/ui/desk-run.module.css`: botão sobre o vaso. A sala reusa `paper-toss.module.css`.
 - `components/ui/desk-scene.tsx`: monta `<DeskRun />` ao lado dos outros jogos.
-- `lib/track.ts` e `lib/analytics.ts`: jogo `desk-run` ("Corrida na Mesa") e `score` com `{ distance, drops }`.
+- `lib/track.ts` e `lib/analytics.ts`: jogo `desk-run` ("Corrida na Mesa") e `score` com `{ cm, drops, score }`. O /admin mostra o recorde da corrida no visitante e no selo.
+- `lib/stamp-meta.ts` e `lib/stamps.ts`: `RUN_TIERS` e o recorde da corrida (`run`) no selo.
 - `tests/desk-run.test.mjs`: trechos sempre passáveis, colisão de frente encerra, tropeço duplo encerra, pulo passa o lápis, deslizar passa o cordão.
 
-A corrida pausa quando a aba perde o foco e com `Esc`. Com `prefers-reduced-motion`, a velocidade fica fixa em 1×.
+A corrida pausa quando a aba fica oculta; `Esc` fecha o jogo, como os outros. Com `prefers-reduced-motion`, a velocidade fica fixa em 1×.

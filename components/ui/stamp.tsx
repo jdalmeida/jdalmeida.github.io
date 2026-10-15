@@ -29,7 +29,7 @@ export const DOODLES: ((r: () => number) => P[][])[] = [
 export const strokes = (s: P[][], r = () => 0.5) => s.map((st) => "M" + st.map(([x, y]) => `${(x + r() - 0.5).toFixed(1)} ${(y + r() - 0.5).toFixed(1)}`).join("L")).join("");
 
 export { device } from "@/lib/track";
-export { COUNT_TIERS, pad, SCORE_TIERS, TIERS, tier } from "@/lib/stamp-meta";
+export { COUNT_TIERS, pad, RUN_TIERS, SCORE_TIERS, TIERS, tier } from "@/lib/stamp-meta";
 
 const PAPER = [["#f4ecd8", "#b3261e"], ["#1c3452", "#f4efe2"], ["#e9b949", "#1d1a16"], ["#bfe3d0", "#1c3452"], ["#f6c6cf", "#7a1f3d"], ["#ef7d3c", "#fff4e0"], ["#d8c8f0", "#3b2a7a"], ["#1d1a16", "#f2d64b"]];
 const METAL = [["#f4f6f9", "#8f97a3", "#1f2a38"], ["#f7e6a6", "#a9822f", "#3a2a0c"]]; // silver, gold: light, dark, ink

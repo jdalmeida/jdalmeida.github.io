@@ -42,3 +42,11 @@ create table if not exists ff_tokens (
 -- A stamp redeemed from one of those links keeps the token and its design.
 alter table stamps add column if not exists ff_token integer references ff_tokens (id) on delete set null;
 alter table stamps add column if not exists look jsonb;
+
+-- Corrida na Mesa best score per device (same seed as stamps). Like the paper toss, a high score raises that device's stamp rarity.
+create table if not exists runs (
+  seed integer primary key,
+  best integer not null default 0, -- distance in cm + 10 per drop
+  name text,                       -- set by the player; only named rows show on the leaderboard
+  updated_at timestamptz not null default now() -- when `best` was reached; ties go to whoever got there first
+);
