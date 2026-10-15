@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import type { Article } from "@/lib/articles";
+import projects from "@/lib/projects.json";
 import { countStamp, generateStamp, placeStamp, type Stamp } from "@/lib/stamps";
 import { readLocal } from "./coffee-run";
 import { beanShare } from "./platformer";
@@ -61,7 +62,7 @@ export default function DeskNotebook({ articles, stamps: initial }: { articles: 
   }, []);
   return (
     <>
-      <button type="button" className={styles.notebook} aria-label="Abrir caderno: artigos e livro de visitas" onClick={() => setOpen(true)}>
+      <button type="button" className={styles.notebook} aria-label="Abrir caderno: artigos, projetos e livro de visitas" onClick={() => setOpen(true)}>
         <span className={styles.backCover} />
         <span className={styles.cover}><span className={styles.label}>Anotações</span>{onFace(stamps, 0)}</span>
         <span className={styles.band} />
@@ -184,6 +185,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
         {articles.map((a, i) => (
           <li key={a.slug}><button type="button" onClick={() => go(i + 3)}><span>{a.title}</span><i>{5 + 2 * i}</i></button></li>
         ))}
+        <li><button type="button" onClick={() => go(articles.length + 3)}><span>Projetos</span><i>{5 + 2 * articles.length}</i></button></li>
       </ol>
     </nav>,
     ...articles.flatMap((a) => [
@@ -200,6 +202,30 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     ]),
     <div key="back" className={styles.coverFace} />,
   ];
+  // Projects go after the articles, so adding one never moves the stamps already stuck to earlier pages.
+  const projectsFace = faces.length - 1;
+  faces.splice(projectsFace, 0,
+    <section key="projects" className={styles.toc} aria-label="Projetos pessoais">
+      <h2>Projetos</h2>
+      <p>Coisas que construí por conta própria, fora do trabalho.</p>
+      <ol>
+        {projects.map((p, i) => (
+          <li key={p.id}><button type="button" onClick={() => goFace(projectsFace + 1 + i)}><span>{p.name}</span><i>{projectsFace + 1 + i}</i></button></li>
+        ))}
+      </ol>
+    </section>,
+    ...projects.map((p) => (
+      <article key={p.id} className={styles.titlePage}>
+        <time>{p.year}</time>
+        <h2>{p.name}</h2>
+        <p>{p.description}</p>
+        <ul>{p.tags.map((t) => <li key={t}>{t}</li>)}</ul>
+        <p className={styles.projectLinks}>{p.links.map((l) => <a key={l.href} href={l.href} target="_blank" rel="noopener">{l.label} ↗</a>)}</p>
+      </article>
+    )),
+  );
+  // Leaves have two faces: an odd count of project pages leaves one blank before the back cover.
+  if (faces.length % 2) faces.splice(faces.length - 1, 0, <div key="free-end" aria-label="Página para selos" />);
   const leaves = faces.length / 2;
   // Phones see one page at a time: the camera pans left page -> right page before the leaf turns.
   const pan = () => matchMedia("(max-width: 640px) and (orientation: portrait)").matches && flipped > 0 && flipped < leaves;

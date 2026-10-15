@@ -1,0 +1,12 @@
+[
+  {
+    "id": "escrivaninha",
+    "name": "Esta escrivaninha",
+    "year": "2026",
+    "description": "Meu portfólio: uma mesa em WebGL com caderno de artigos, livro de visitas com selos gerados a partir do dispositivo, credenciais de eventos e alguns joguinhos escondidos.",
+    "tags": ["Next.js", "WebGL", "Postgres"],
+    "links": [
+      { "label": "Código", "href": "https://github.com/jdalmeida/jdalmeida.github.io" }
+    ]
+  }
+]
