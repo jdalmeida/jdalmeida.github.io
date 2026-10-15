@@ -99,6 +99,11 @@
     #f6f1e3;
   box-shadow: inset 0 0 0 1px #0000000d, 2px 3px 6px #0005;
 }
+/* Only the open spread scrolls. iOS WebKit (Safari and in-app browsers like Instagram's) gives every overflow:auto
+   face its own native scroll layer, and inside the book's 3D context those layers ignore the face's clip and
+   visibility: text from the pages underneath bled out past the page and over it, and the dozens of large layers ran
+   out of memory, leaving pages half painted. */
+.face[inert] { overflow: hidden; }
 .leaf .face[data-side="back"], .leaf[data-turned="true"] .face[data-side="front"] { visibility: hidden; }
 .leaf[data-turned="true"] .face[data-side="back"] { visibility: visible; }
 .face[data-side="back"] {
