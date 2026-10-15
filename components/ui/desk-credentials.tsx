@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useState, type CSSProperties } from "react";
-import events from "@/lib/events.json";
+import type { Credential } from "@/lib/credential-meta";
 import { track } from "@/lib/track";
+import CredentialBadge from "./credential-badge";
 import EvidenceBoard from "./evidence-board";
 import styles from "./desk-credentials.module.css";
 
@@ -42,8 +42,8 @@ function Clasp() {
 }
 
 // Pile on the desk; hovering (or focusing) fans them out, clicking opens that event's evidence board.
-export default function DeskCredentials() {
-  const [open, setOpen] = useState<(typeof events)[number]>();
+export default function DeskCredentials({ events }: { events: Credential[] }) {
+  const [open, setOpen] = useState<Credential>();
   const mid = (events.length - 1) / 2;
   return (
     <div className={styles.pile} role="group" aria-label="Credenciais dos eventos">
@@ -64,7 +64,7 @@ export default function DeskCredentials() {
           onClick={() => { setOpen(event); track("credential", event.id); }}
         >
           <Lanyard />
-          <Image className={styles.badge} src={`/credentials/${event.id}.svg`} alt="" width={1000} height={1450} draggable={false} />
+          <CredentialBadge className={styles.badge} event={event} />
           <span className={styles.sleeve} aria-hidden="true" />
           <Clasp />
         </button>

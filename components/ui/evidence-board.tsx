@@ -2,10 +2,9 @@
 
 import Image from "next/image";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import type events from "@/lib/events.json";
+import { isUpload, type Credential } from "@/lib/credential-meta";
+import CredentialBadge from "./credential-badge";
 import styles from "./evidence-board.module.css";
-
-type Event = (typeof events)[number];
 
 // Pin spots on the board (percent of its width/height); each clipping hangs from its pin.
 const PINS = { note: [21, 43], photoA: [56, 31], photoB: [82, 47], card: [53, 71.4], badge: [80.5, 16.5] } as const;
@@ -42,7 +41,7 @@ function Cutouts({ text }: { text: string }) {
 }
 
 // Crime-investigation board in a CSS 3D room; the camera dollies in on open and back out on close.
-export default function EvidenceBoard({ event, onClose }: { event: Event; onClose: () => void }) {
+export default function EvidenceBoard({ event, onClose }: { event: Credential; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [closing, setClosing] = useState(false);
 
@@ -81,7 +80,7 @@ export default function EvidenceBoard({ event, onClose }: { event: Event; onClos
             </div>
             {event.images.map((src, i) => (
               <figure key={src} className={styles.polaroid} data-photo={i}>
-                <Image src={src} alt={`${event.name}, foto ${i + 1}`} width={480} height={480} />
+                <Image src={src} alt={`${event.name}, foto ${i + 1}`} width={480} height={480} unoptimized={isUpload(src)} />
                 <figcaption>{event.number}{i ? "-B" : "-A"}</figcaption>
                 {i === 0 && <span className={styles.tape} aria-hidden="true" />}
               </figure>
@@ -96,7 +95,7 @@ export default function EvidenceBoard({ event, onClose }: { event: Event; onClos
               </dl>
               <span className={styles.closed} aria-hidden="true">Encerrado</span>
             </div>
-            <Image className={styles.badge} src={`/credentials/${event.id}.svg`} alt={`Credencial: ${event.name}`} width={1000} height={1450} />
+            <CredentialBadge className={styles.badge} event={event} label={`Credencial: ${event.name}`} />
             <svg className={styles.threads} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
               {/* Each yarn is drawn three times: its shadow on the cork, the strand, and a lighter twist along it. */}
               {STRINGS.map(([a, b]) => <path key={a + b} className={styles.threadShadow} d={thread(PINS[a], PINS[b])} />)}
