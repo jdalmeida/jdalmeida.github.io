@@ -202,6 +202,15 @@
   .face { padding: 6cqi 5cqi 10cqi 13cqi; }
   .ribbon { display: none; } /* it would hang behind the page buttons */
 }
+/* Touch screens (Vivaldi/Chrome on phones): the GPU re-sorted the leaves, 1px apart, from frame to frame, so the pages
+   under the cover shimmered through it while the book lay closed. Spread the stack, and keep each page's blended
+   stickers and doodles inside the page instead of blending across the 3D scene. */
+@media (hover: none) {
+  .leaf { transform: translateZ(calc(var(--z) * 4)); }
+  .leaf[data-turned="true"] { transform: translateZ(calc(var(--z) * 4)) rotateY(-180deg); }
+  .ribbon { transform: translateZ(calc(var(--leaves) * -4px - 2px)) rotate(6deg); }
+  .face { isolation: isolate; }
+}
 @media (prefers-reduced-motion: reduce) {
   .cover, .book, .leaf { transition: none; }
   .face { transition: none; }
