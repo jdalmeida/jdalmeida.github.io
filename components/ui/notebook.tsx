@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import type { Article } from "@/lib/articles";
-import projects from "@/lib/projects.json";
+import type { Project } from "@/lib/projects";
 import { countStamp, generateStamp, placeStamp, type Stamp } from "@/lib/stamps";
 import { readLocal } from "./coffee-run";
 import { beanShare } from "./platformer";
@@ -52,7 +52,7 @@ function overText(face: HTMLElement, el: HTMLElement) {
 
 // Closed notebook on the desk (pages, cover); hovering peeks the cover open, clicking opens the book.
 // A Family & Friends link (?ff=...) or a post link (/blog/<slug>) opens it straight away.
-export default function DeskNotebook({ articles, stamps: initial }: { articles: Article[]; stamps: Stamp[] }) {
+export default function DeskNotebook({ articles, projects, stamps: initial }: { articles: Article[]; projects: Project[]; stamps: Stamp[] }) {
   const [open, setOpen] = useState(false);
   const [stamps, setStamps] = useState(initial);
   useEffect(() => {
@@ -67,14 +67,14 @@ export default function DeskNotebook({ articles, stamps: initial }: { articles: 
         <span className={styles.cover}><span className={styles.label}>Anotações</span>{onFace(stamps, 0)}</span>
         <span className={styles.band} />
       </button>
-      {open && <Book articles={articles} stamps={stamps} onPlaced={(s) => setStamps((all) => [...all, s])} onClose={() => setOpen(false)} />}
+      {open && <Book articles={articles} projects={projects} stamps={stamps} onPlaced={(s) => setStamps((all) => [...all, s])} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
 // Faces are read in pairs: leaf n shows faces[2n] on its front and faces[2n + 1] on its back.
 // With `flipped` leaves turned, the spread is faces[2 * flipped - 1] (left) and faces[2 * flipped] (right).
-function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; stamps: Stamp[]; onPlaced: (s: Stamp) => void; onClose: () => void }) {
+function Book({ articles, projects, stamps, onPlaced, onClose }: { articles: Article[]; projects: Project[]; stamps: Stamp[]; onPlaced: (s: Stamp) => void; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [[flipped, from], setFlip] = useState([0, 0]);
   const [closing, setClosing] = useState(false);
@@ -185,7 +185,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
         {articles.map((a, i) => (
           <li key={a.slug}><button type="button" onClick={() => go(i + 3)}><span>{a.title}</span><i>{5 + 2 * i}</i></button></li>
         ))}
-        <li><button type="button" onClick={() => go(articles.length + 3)}><span>Projetos</span><i>{5 + 2 * articles.length}</i></button></li>
+        {projects.length > 0 && <li><button type="button" onClick={() => go(articles.length + 3)}><span>Projetos</span><i>{5 + 2 * articles.length}</i></button></li>}
       </ol>
     </nav>,
     ...articles.flatMap((a) => [
@@ -204,7 +204,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   ];
   // Projects go after the articles, so adding one never moves the stamps already stuck to earlier pages.
   const projectsFace = faces.length - 1;
-  faces.splice(projectsFace, 0,
+  if (projects.length) faces.splice(projectsFace, 0,
     <section key="projects" className={styles.toc} aria-label="Projetos pessoais">
       <h2>Projetos</h2>
       <p>Coisas que construí por conta própria, fora do trabalho.</p>
