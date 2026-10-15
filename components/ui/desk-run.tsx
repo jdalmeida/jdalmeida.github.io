@@ -5,6 +5,7 @@ import { getRunBoard, setRunName, submitRun } from "@/lib/runs";
 import { rng } from "@/lib/rng";
 import { track } from "@/lib/track";
 import { act, BASE, covers, fresh, LANE, MAX, score, step, top, type Action, type Kind, type Ob, type Run } from "./runner";
+import { dive } from "./desk-dive";
 import * as audio from "./run-audio";
 import { device, RUN_TIERS, TIERS } from "./stamp";
 import room from "./paper-toss.module.css";
@@ -464,12 +465,14 @@ function Game({ onClose }: { onClose: () => void }) {
 }
 
 // Easter egg: the succulent on the desk (drawn in WebGL) gets an invisible button on top that opens the runner.
+// The desk camera zooms in on the plant first, and pulls back out when the game closes.
 export default function DeskRun() {
   const [open, setOpen] = useState(false);
+  const plant = useRef<HTMLButtonElement>(null);
   return (
     <>
-      <button type="button" className={styles.plant} aria-label="Suculenta" onClick={() => { audio.unlock(); setOpen(true); }} />
-      {open && <Game onClose={() => setOpen(false)} />}
+      <button ref={plant} type="button" className={styles.plant} aria-label="Suculenta" onClick={() => { audio.unlock(); dive(plant.current, "plant", true, () => setOpen(true)); }} />
+      {open && <Game onClose={() => { setOpen(false); dive(plant.current, "plant", false); }} />}
     </>
   );
 }

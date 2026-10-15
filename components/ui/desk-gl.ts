@@ -16,7 +16,7 @@ export type DeskView = {
   width: number; height: number; // stage
   desk: number; leg: number; mobile: boolean;
   entry: number; pitch: number; turn: number; floor: number;
-  dive?: [number, number, number]; // world shift that brings the camera down into the mug (desk-scene.tsx)
+  dive?: [number, number, number]; // world shift that brings the camera down to the mug, bin or plant (desk-scene.tsx)
   glint?: number; // 1 normally; fades highlights out at the bottom of the dive
 };
 
