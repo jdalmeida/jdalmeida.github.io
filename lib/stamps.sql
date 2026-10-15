@@ -27,3 +27,18 @@ create table if not exists castle (
   best smallint[] not null default '{}', -- most beans per stage
   updated_at timestamptz not null default now()
 );
+
+-- Family & Friends links made in /admin: one token per person, each with the sticker it gives.
+create table if not exists ff_tokens (
+  id serial primary key,
+  token text not null unique,      -- goes in the link as ?ff=
+  name text not null,              -- who it's for
+  note text,
+  look jsonb not null default '{}', -- sticker design, see Look in components/ui/stamp.tsx
+  max_uses smallint not null default 1, -- devices that can redeem it
+  revoked boolean not null default false,
+  created_at timestamptz not null default now()
+);
+-- A stamp redeemed from one of those links keeps the token and its design.
+alter table stamps add column if not exists ff_token integer references ff_tokens (id) on delete set null;
+alter table stamps add column if not exists look jsonb;

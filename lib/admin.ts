@@ -12,3 +12,8 @@ export async function isAdmin() {
   if (!process.env.ADMIN_PASSWORD) return false;
   return same((await cookies()).get(ADMIN_COOKIE)?.value ?? "", adminToken());
 }
+
+// For admin pages and server actions other than the dashboard (which shows the login form itself).
+export async function requireAdmin() {
+  if (!(await isAdmin())) (await import("next/navigation")).redirect("/admin");
+}

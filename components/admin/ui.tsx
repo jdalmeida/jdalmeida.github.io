@@ -74,3 +74,27 @@ export function DailyChart({ days }: { days: { day: string; n: number; people: n
     </div>
   );
 }
+
+// Steps as bars against the first one; the small number is the share that made it from the previous step.
+export function Funnel({ steps }: { steps: { label: string; n: number }[] }) {
+  const top = Math.max(1, steps[0]?.n ?? 0);
+  return (
+    <ol className="space-y-2 text-sm">
+      {steps.map((s, i) => {
+        const prev = steps[i - 1]?.n;
+        return (
+          <li key={s.label} className="grid grid-cols-[9rem_1fr_6.5rem] items-center gap-3 sm:grid-cols-[12rem_1fr_7rem]">
+            <span className="truncate text-neutral-300">{s.label}</span>
+            <span className="h-6 rounded bg-neutral-800/60" title={`${s.n} pessoas`}>
+              <span className="block h-full rounded bg-sky-500" style={{ width: `${(s.n / top) * 100}%`, minWidth: s.n ? 4 : 0 }} />
+            </span>
+            <span className="text-right tabular-nums text-neutral-200">
+              {s.n} <span className="text-neutral-500">· {Math.round((s.n / top) * 100)}%</span>
+              {i > 0 && <span className="block text-xs text-neutral-500">{prev ? `${Math.round((s.n / prev) * 100)}% da etapa anterior` : "—"}</span>}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

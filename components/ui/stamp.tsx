@@ -2,7 +2,8 @@
 
 import type { CSSProperties, PointerEvent } from "react";
 import type { Stamp } from "@/lib/stamps";
-import { rng } from "./grime";
+import { rng } from "@/lib/rng";
+import { pad, tier, TIERS } from "@/lib/stamp-meta";
 import styles from "./stamp.module.css";
 
 // Pen doodles in a 100x100 box, as strokes of points; `r` adds per-doodle variation.
@@ -27,26 +28,14 @@ export const DOODLES: ((r: () => number) => P[][])[] = [
 ];
 export const strokes = (s: P[][], r = () => 0.5) => s.map((st) => "M" + st.map(([x, y]) => `${(x + r() - 0.5).toFixed(1)} ${(y + r() - 0.5).toFixed(1)}`).join("L")).join("");
 
-// Rarity is the sticker's finish: 70% matte, 25% metallic, 5% chroma.
-// Own random stream, so tweaking the look code never changes anyone's rarity.
-// A paper-toss best streak raises it (never lowers): SCORE_TIERS[i] baskets in a row earn tier i + 1.
-export const TIERS = ["comum", "raro", "lendário"] as const;
-export const SCORE_TIERS = [10, 25];
-// The Count D'arábica stamp skips both: its rarity is the % of castle beans taken, COUNT_TIERS[i] earns tier i + 1.
-export const COUNT_TIERS = [80, 100];
-export const tier = ({ seed, best, beans }: Pick<Stamp, "seed" | "best" | "beans">) => {
-  if (beans !== null) return COUNT_TIERS.filter((n) => beans >= n).length;
-  const v = rng(seed ^ 0x5eed)();
-  return Math.max(v < 0.05 ? 2 : v < 0.3 ? 1 : 0, SCORE_TIERS.filter((n) => best >= n).length);
-};
-
 export { device } from "@/lib/track";
-export const pad = (n: number) => `Nº ${String(n).padStart(4, "0")}`;
+export { COUNT_TIERS, pad, SCORE_TIERS, TIERS, tier } from "@/lib/stamp-meta";
 
 const PAPER = [["#f4ecd8", "#b3261e"], ["#1c3452", "#f4efe2"], ["#e9b949", "#1d1a16"], ["#bfe3d0", "#1c3452"], ["#f6c6cf", "#7a1f3d"], ["#ef7d3c", "#fff4e0"], ["#d8c8f0", "#3b2a7a"], ["#1d1a16", "#f2d64b"]];
 const METAL = [["#f4f6f9", "#8f97a3", "#1f2a38"], ["#f7e6a6", "#a9822f", "#3a2a0c"]]; // silver, gold: light, dark, ink
 const MONTHS = "JAN FEV MAR ABR MAI JUN JUL AGO SET OUT NOV DEZ".split(" ");
 const path = (pts: P[]) => "M" + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join("L") + "Z";
+const esc = (str: string) => str.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const data = (svg: string) => `data:image/svg+xml,${encodeURIComponent(svg)}`;
 
 // Outline as a radius per angle: superellipse (circle, oval, squircle, rounded rect) or polygon, maybe scalloped or starburst.
@@ -66,16 +55,20 @@ function outline(r: () => number, passport: boolean): P[] {
 
 // The whole sticker as one SVG image, all from the seed: family (passport stamp / round sticker), shape, colours, doodle, ink wear.
 // An image, not live DOM: SVG filters inside the book's 3D transforms would freeze the page (see Grime).
-function art(s: Stamp) {
-  const r = rng(s.seed), t = tier(s), count = s.beans !== null, passport = !s.ff && !count && r() < 0.45, fs = s.seed & 0xffff;
-  const pts = s.ff ? range(180, (u) => heart(u * TAU, 40, 45)) : outline(r, passport);
+// A Family & Friends stamp may carry a Look (lib/look.ts) that overrides the seed's choices; random draws still happen in the same order.
+export function art(s: Stamp) {
+  const look = s.look ?? {};
+  const r = rng(s.seed), t = look.tier ?? tier(s), count = s.beans !== null, fs = s.seed & 0xffff;
+  const passport = s.ff ? look.shape === "passport" : !count && r() < 0.45;
+  const pts = s.ff && (look.shape ?? "heart") === "heart" ? range(180, (u) => heart(u * TAU, 40, 45)) : outline(r, passport);
   const d = path(pts), inner = path(pts.map(([x, y]) => [50 + (x - 50) * 0.84, 50 + (y - 50) * 0.84]));
   const rmin = Math.min(...pts.map(([x, y]) => Math.hypot(x - 50, y - 50)));
-  const [paper, paperInk] = PAPER[Math.floor(r() * PAPER.length)], metal = METAL[Math.floor(r() * METAL.length)];
+  const pi = Math.floor(r() * PAPER.length), [paper, paperInk] = PAPER[look.paper ?? pi], metal = METAL[Math.floor(r() * METAL.length)];
   const fill = t ? "url(#m)" : paper, ink = t === 1 ? metal[2] : t === 2 ? "#2b2350" : paperInk;
   const [g0, g1] = t === 1 ? metal : ["#fdfcff", "#d9d0ec"];
-  const doodle = strokes(DOODLES[Math.floor(r() * DOODLES.length)](r), r);
+  const di = Math.floor(r() * DOODLES.length), doodle = strokes(DOODLES[look.doodle ?? di](r), r);
   const dashed = r() < 0.5 ? `stroke-dasharray="3 2"` : "";
+  const label = look.label ?? "FAMILY & FRIENDS";
   const dt = new Date(s.date), date = `${String(dt.getUTCDate()).padStart(2, "0")} ${MONTHS[dt.getUTCMonth()]} ${String(dt.getUTCFullYear()).slice(2)}`;
   const text = (y: number, size: number, str: string, style = "") => `<text x="50" y="${y.toFixed(1)}" font-size="${size}" style="${style}">${str}</text>`;
   const frame = `<path class="l" d="${inner}" stroke-width="1.4" ${dashed}/>`;
@@ -97,7 +90,7 @@ function art(s: Stamp) {
       + cup + `<rect x="24" y="69" width="52" height="12" rx="1.5" fill="${ink}"/>` + text(78, 8.5, pad(s.id), `fill:${fill}`)
     : s.ff
     ? frame + mark(28, 30, 0.44, 0.18) + `<rect x="14" y="44" width="72" height="12" fill="${ink}" clip-path="url(#c)"/>`
-      + text(52.2, 5.4, "FAMILY &amp; FRIENDS", `fill:${fill};letter-spacing:.4px`) + text(70, 9, pad(s.id))
+      + text(52.2, Math.min(5.4, 92 / label.length), esc(label), `fill:${fill};letter-spacing:.4px`) + text(70, 9, pad(s.id))
     : passport
       ? frame + mark(28, 28, 0.44, 0.16) + text(50 - rmin * 0.84 + 9, 6.5, ["ENTRADA", "VISITA", "CHEGADA", "ARRIVAL"][Math.floor(r() * 4)], "letter-spacing:2px")
         + text(55, 12, pad(s.id)) + text(50 + rmin * 0.84 - 5.5, 5.5, `${s.country ?? "??"} · ${date}`, "letter-spacing:.5px")
