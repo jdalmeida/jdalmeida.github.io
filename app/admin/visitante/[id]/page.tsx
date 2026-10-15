@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import NoTrack from "@/components/admin/no-track";
 import { Card, duration, flag, when } from "@/components/admin/ui";
 import { STAGES } from "@/components/ui/platformer";
 import { isAdmin } from "@/lib/admin";
@@ -27,8 +26,7 @@ export default async function Visitor({ params }: PageProps<"/admin/visitante/[i
   const first = data.visits[data.visits.length - 1];
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-6 text-neutral-200 sm:px-8">
-      <NoTrack />
+    <main className="px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <header>
           <Link href="/admin" className="text-sm text-sky-400 hover:underline">← Analytics</Link>

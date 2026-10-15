@@ -1,10 +1,10 @@
 // Client-side visit log for the /admin dashboard. Table and columns: lib/visits.sql; receiver: app/api/track/route.ts.
 // Event types (name / detail):
-//   view (path) · show / hide (tab came back / went away; keeps the visit's duration honest)
+//   view (path) · show / hide (tab came back / went away; keeps the visit's duration honest) · desk (scrolled down to the desk)
 //   open (caderno) · article (slug) · share (slug) · credential (event id)
 //   game (paper-toss | coffee-run) · score (paper-toss, { throws, max }) · stage / won (castle stage index, { beans })
 //   stamp (gerado | colado | conde, { id?, beans? })
-export type TrackType = "view" | "show" | "hide" | "open" | "article" | "share" | "credential" | "game" | "score" | "stage" | "won" | "stamp";
+export type TrackType = "view" | "show" | "hide" | "desk" | "open" | "article" | "share" | "credential" | "game" | "score" | "stage" | "won" | "stamp";
 
 // What the client adds to the device seed (the server adds IP and browser headers). Same string the stamps use.
 export const device = () => [screen.width, screen.height, devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.hardwareConcurrency, navigator.language].join("|");

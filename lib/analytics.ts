@@ -20,7 +20,7 @@ export async function overview(days: number) {
   const since = q`now() - make_interval(days => ${days})`;
   // Visitors marked hidden in /admin (the owner, bots, tests) count nowhere.
   const shown = q`visitor not in (select visitor from visitor_labels where hidden)`;
-  const [[kpi], daily, breakdowns, actions] = await Promise.all([
+  const [[kpi], daily, breakdowns, actions, [funnel]] = await Promise.all([
     q`select count(*)::int visits, count(distinct visitor)::int visitors,
         coalesce(avg(extract(epoch from last_at - started_at)), 0)::int avg_seconds,
         count(distinct visitor) filter (where visitor in (select visitor from visits group by visitor having count(*) > 1))::int as returners
@@ -33,6 +33,15 @@ export async function overview(days: number) {
       from visit_events e join visits v on v.id = e.visit
       where e.at > ${since} and ${shown} and e.type in ('game', 'article', 'credential', 'won', 'stamp', 'share', 'open')
       group by 1, 2 order by 3 desc`,
+    // Each step counts people who reached it (or any later step, for the desk: a shared post link opens straight onto it).
+    q`with v as (select id, visitor from visits where started_at > ${since} and ${shown}),
+      e as (select v.visitor, e.type, e.name from visit_events e join v on v.id = e.visit)
+      select (select count(distinct visitor) from v)::int entered,
+        (select count(distinct visitor) from e where type in ('desk', 'open', 'credential', 'game', 'article'))::int desk,
+        (select count(distinct visitor) from e where type in ('open', 'credential', 'game', 'article'))::int opened,
+        (select count(distinct visitor) from e where type = 'game')::int played,
+        (select count(distinct visitor) from e where type = 'stamp' and name in ('gerado', 'conde'))::int stamped,
+        (select count(distinct visitor) from e where type = 'stamp' and name = 'colado')::int stuck`,
   ]);
   const of = (type: string) => (actions as Row[]).filter((a) => a.type === type) as unknown as Count[];
   return {
@@ -43,6 +52,7 @@ export async function overview(days: number) {
       return (daily as { day: string; n: number; people: number }[]).find((d) => d.day === day) ?? { day, n: 0, people: 0 };
     }),
     by: Object.fromEntries(COLUMNS.map((c, i) => [c, breakdowns[i]])) as unknown as Record<Column, Count[]>,
+    funnel: funnel as Record<"entered" | "desk" | "opened" | "played" | "stamped" | "stuck", number>,
     games: of("game"), articles: of("article"), credentials: of("credential"), stages: of("won"), stamps: of("stamp"), shares: of("share"), opens: of("open"),
   };
 }
@@ -119,6 +129,7 @@ export function describe(e: { type: string; name: string | null; detail: Record<
   const d = e.detail ?? {};
   switch (e.type) {
     case "view": return `Abriu a página ${e.name}`;
+    case "desk": return "Rolou até a mesa";
     case "show": return "Voltou para a aba";
     case "hide": return "Saiu da aba";
     case "open": return `Abriu o ${e.name}`;

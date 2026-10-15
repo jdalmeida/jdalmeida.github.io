@@ -49,3 +49,15 @@ create table if not exists visitor_labels (
   hidden boolean not null default false,
   updated_at timestamptz not null default now()
 );
+
+-- Tracked links made in /admin (UTM builder); visits are matched by source + campaign.
+create table if not exists campaign_links (
+  id serial primary key,
+  label text not null,
+  source text not null,
+  medium text,
+  campaign text not null,
+  content text,
+  path text not null default '/',
+  created_at timestamptz not null default now()
+);

@@ -8,7 +8,7 @@ import type { TrackType } from "@/lib/track";
 // ponytail: anyone can post here; ids are random UUIDs, so the worst case is junk rows. Add a Vercel firewall rate rule if that happens.
 const sql = () => neon(process.env.DATABASE_URL!);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const TYPES = new Set<TrackType>(["view", "show", "hide", "open", "article", "share", "credential", "game", "score", "stage", "won", "stamp"]);
+const TYPES = new Set<TrackType>(["view", "show", "hide", "desk", "open", "article", "share", "credential", "game", "score", "stage", "won", "stamp"]);
 // Crawlers, link previews (Meta's included), AI fetchers, uptime monitors and scripts. Most never run JS; this catches the ones that do.
 // lib/track.ts also waits for a human interaction before sending anything, which drops link checkers driving a real browser.
 const BOT = new RegExp([

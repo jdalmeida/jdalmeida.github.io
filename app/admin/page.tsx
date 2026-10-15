@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import NoTrack from "@/components/admin/no-track";
-import { BarList, Card, DailyChart, duration, flag, Kpi, when } from "@/components/admin/ui";
+import { BarList, Card, DailyChart, duration, flag, Funnel, Kpi, when } from "@/components/admin/ui";
 import { isAdmin } from "@/lib/admin";
 import { credentialName, gameName, overview, period, PERIODS, stageName, stampNo, visitors } from "@/lib/analytics";
 import { getArticles } from "@/lib/articles";
-import { login, logout } from "./actions";
+import { login } from "./actions";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
 
@@ -30,8 +29,7 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-6 text-neutral-200 sm:px-8">
-      <NoTrack />
+    <main className="px-4 py-6 sm:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex flex-wrap items-center gap-3">
           <h1 className="mr-auto text-xl font-semibold text-neutral-50">Analytics do site</h1>
@@ -42,7 +40,6 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
               </Link>
             ))}
           </nav>
-          <form action={logout}><button className="rounded-lg border border-neutral-800 px-3 py-1 text-sm text-neutral-400 hover:text-neutral-200">Sair</button></form>
         </header>
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -53,6 +50,17 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
         </div>
 
         <Card title="Visitas por dia">{data.daily.length > 1 ? <DailyChart days={data.daily} /> : <p className="text-sm">{data.kpi.visits} visitas nas últimas 24h.</p>}</Card>
+
+        <Card title="Funil: até onde as pessoas chegam">
+          <Funnel steps={[
+            { label: "Entraram no site", n: data.funnel.entered },
+            { label: "Chegaram à mesa", n: data.funnel.desk },
+            { label: "Abriram algo", n: data.funnel.opened },
+            { label: "Jogaram", n: data.funnel.played },
+            { label: "Geraram selo", n: data.funnel.stamped },
+            { label: "Colaram o selo", n: data.funnel.stuck },
+          ]} />
+        </Card>
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <Card title="De onde vieram"><BarList rows={data.by.source} href={(l) => link({ origem: l ?? undefined })} /></Card>
@@ -119,8 +127,7 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
 
 function Login({ error }: { error: boolean }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-neutral-950 px-4 text-neutral-200">
-      <NoTrack />
+    <main className="flex min-h-screen items-center justify-center px-4">
       <form action={login} className="w-full max-w-xs space-y-3 rounded-xl border border-neutral-800 bg-neutral-900/60 p-6">
         <h1 className="text-lg font-semibold text-neutral-50">Admin</h1>
         {!process.env.ADMIN_PASSWORD && <p className="text-sm text-amber-300">Defina ADMIN_PASSWORD nas variáveis de ambiente para entrar.</p>}

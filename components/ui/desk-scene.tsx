@@ -6,6 +6,7 @@ import DeskCredentials from "./desk-credentials";
 import PaperToss from "./paper-toss";
 import CoffeeRun from "./coffee-run";
 import { createDeskGL } from "./desk-gl";
+import { track } from "@/lib/track";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const ease = (value: number) => {
@@ -29,7 +30,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
     else for (const [key, value] of [["--cup-x", gl.cup.x], ["--cup-y", gl.cup.y], ["--cup-d", gl.cup.d]] as const) surface.style.setProperty(key, `${value * 100}%`);
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const mobile = matchMedia("(max-width: 640px) and (orientation: portrait)");
-    let frame = 0, drawn = "";
+    let frame = 0, drawn = "", arrived = false;
 
     function update() {
       frame = 0;
@@ -81,6 +82,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
       });
       root.dataset.started = String(progress > 0.03);
       root.dataset.landed = String(landing > 0.99);
+      if (landing > 0.99 && !arrived) { arrived = true; track("desk"); } // funnel step in /admin
     }
 
     function schedule() {

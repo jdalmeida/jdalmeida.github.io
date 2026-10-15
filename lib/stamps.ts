@@ -4,16 +4,18 @@ import { neon } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { deviceSeed } from "./device";
+import { cleanLook, type Look } from "./look";
 
 // Tables: see lib/stamps.sql. `id` is the visitor number; look (shape, colours, rarity) comes from `seed`, rarity can be raised by `best`.
 // `beans` is set only on the Count D'arábica stamp, and sets its rarity.
-export type Stamp = { id: number; seed: number; ff: boolean; country: string | null; face: number | null; x: number | null; y: number | null; date: string; best: number; beans: number | null };
+export type Stamp = { id: number; seed: number; ff: boolean; country: string | null; face: number | null; x: number | null; y: number | null; date: string; best: number; beans: number | null; look?: Look | null };
 
 const sql = () => neon(process.env.DATABASE_URL!);
 const toStamp = (r: Record<string, unknown>): Stamp => ({
   id: r.id as number, seed: r.seed as number, ff: r.ff as boolean, country: r.country as string | null,
   face: r.face as number | null, x: r.x as number | null, y: r.y as number | null, date: new Date(r.created_at as string).toISOString(),
   best: (r.best as number | null) ?? 0, beans: (r.beans as number | null | undefined) ?? null, // undefined before the migration adds the column
+  look: r.look ? cleanLook(r.look) : null,
 });
 
 export async function getStamps() {
@@ -21,13 +23,21 @@ export async function getStamps() {
 }
 
 // One stamp per device: generating again returns the same row. A Family & Friends link upgrades a stamp that isn't stuck yet.
+// Links come from /admin (ff_tokens, each with its sticker design and a number of devices it serves) or the old shared FF_TOKEN.
 export async function generateStamp(device: string, ff: string) {
   const seed = await deviceSeed(device);
-  const isFF = !!process.env.FF_TOKEN && ff === process.env.FF_TOKEN;
+  // This device's own earlier redemption doesn't count against the token, so generating again still works.
+  const [token] = typeof ff === "string" && ff && ff.length <= 64 ? await sql()`
+    select id, look from ff_tokens t where token = ${ff} and not revoked
+      and (select count(*) from stamps where ff_token = t.id and seed <> ${seed}) < max_uses` : [];
+  const isFF = !!token || (!!process.env.FF_TOKEN && ff === process.env.FF_TOKEN);
   const country = (await headers()).get("x-vercel-ip-country") ?? "";
   const [row] = await sql()`
-    insert into stamps (seed, ff, country) values (${seed}, ${isFF}, ${/^[A-Z]{2}$/.test(country) ? country : null})
-    on conflict (seed) do update set ff = stamps.ff or (stamps.face is null and excluded.ff)
+    insert into stamps (seed, ff, country, ff_token, look)
+    values (${seed}, ${isFF}, ${/^[A-Z]{2}$/.test(country) ? country : null}, ${token?.id ?? null}, ${token ? JSON.stringify(token.look) : null}::jsonb)
+    on conflict (seed) do update set ff = stamps.ff or (stamps.face is null and excluded.ff),
+      ff_token = case when stamps.face is null and excluded.ff_token is not null then excluded.ff_token else stamps.ff_token end,
+      look = case when stamps.face is null and excluded.ff_token is not null then excluded.look else stamps.look end
     returning *, (select best from scores where scores.seed = stamps.seed) as best`;
   return toStamp(row);
 }
