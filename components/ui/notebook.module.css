@@ -19,6 +19,13 @@
   transition: transform .5s cubic-bezier(.2, .8, .3, 1.1);
 }
 .notebook:hover .cover, .notebook:focus-visible .cover { transform: translateZ(8px) rotateY(-32deg); }
+/* Touch screens never peek, so the closed book can be one flat layer. As separate planes (cover 8px over the page block,
+   2px over the desk) they still shimmered against each other on phone GPUs, on the rotated desk. Standing a bit
+   prouder of the desk keeps that one plane clear of it too. */
+@media (hover: none) {
+  .notebook { transform-style: flat; transform: translate(-50%, -50%) translateZ(6px) rotate(-9deg); }
+  .cover, .notebook:hover .cover, .notebook:focus-visible .cover { transform: none; transition: none; }
+}
 .cover::after { content: ""; position: absolute; top: 0; bottom: 0; right: 12%; width: 4%; background: #151515; box-shadow: 1px 0 1px #0008; }
 .label {
   padding: .3em .8em; background: url(/textures/baked/paper.webp) 0 0 / 128px, #f4efe2; color: #1c3452; border: 1px solid #1c345255; border-radius: 2px;
