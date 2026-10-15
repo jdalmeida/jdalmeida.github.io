@@ -16,6 +16,8 @@ export type DeskView = {
   width: number; height: number; // stage
   desk: number; leg: number; mobile: boolean;
   entry: number; pitch: number; turn: number; floor: number;
+  dive?: [number, number, number]; // world shift that brings the camera down into the mug (desk-scene.tsx)
+  glint?: number; // 1 normally; fades highlights out at the bottom of the dive
 };
 
 const PERSPECTIVE = 1400;
@@ -34,14 +36,14 @@ export function createDeskGL(parent: HTMLElement, className: string) {
   if (!gl) return null;
   parent.prepend(canvas);
   gl.clearColor(0, 0, 0, 0);
-  const camera = new Camera(gl, { near: 50, far: 10000 });
+  const camera = new Camera(gl, { near: 10, far: 10000 });
   camera.position.set(0, 0, PERSPECTIVE);
   const scene = new Transform(), desk = new Transform();
   desk.matrixAutoUpdate = false;
   desk.setParent(scene);
 
   // Lighting uniforms are shared objects, so one write per frame reaches every program.
-  const shared = { uLight: { value: new Vec3() }, uEye: { value: new Vec3() }, uLightZ: { value: 1000 }, uExposure: { value: EXPOSURE } };
+  const shared = { uLight: { value: new Vec3() }, uEye: { value: new Vec3() }, uLightZ: { value: 1000 }, uExposure: { value: EXPOSURE }, uGlint: { value: 1 } };
   const blank = new Texture(gl, { image: new Uint8Array(4), width: 1, height: 1, generateMipmaps: false });
   const solid = (transparent: boolean) => new Program(gl, { ...SOLID, transparent, cullFace: gl.BACK, uniforms: { ...shared, uOpacity: { value: 1 } } });
   const surface = (transparent: boolean, extra: Record<string, number> = {}) => new Program(gl, {
@@ -220,10 +222,12 @@ export function createDeskGL(parent: HTMLElement, className: string) {
   function render() {
     const v = last;
     if (!v || !built) return;
-    desk.matrix.identity().translate(shift.set(0, -v.entry, 0)).rotate(-v.pitch * DEG, X).rotate(-v.turn * DEG, Z);
+    const [dx, dy, dz] = v.dive ?? [0, 0, 0];
+    desk.matrix.identity().translate(shift.set(dx, dy - v.entry, dz)).rotate(-v.pitch * DEG, X).rotate(-v.turn * DEG, Z);
     desk.worldMatrixNeedsUpdate = true;
     // The camera, seen from the desk: specular highlights slide across the varnish as the view tilts.
     shared.uEye.value.copy(camera.position).applyMatrix4(inverse.inverse(desk.matrix));
+    shared.uGlint.value = v.glint ?? 1;
     programs.faded.uniforms.uOpacity.value = programs.floor.uniforms.uOpacity.value = v.floor;
     programs.chalk.uniforms.uOpacity.value = v.floor * 0.8;
     for (const mesh of fading) mesh.visible = v.floor > 0;

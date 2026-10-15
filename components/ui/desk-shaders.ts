@@ -10,7 +10,7 @@ const PRECISION = `#ifdef GL_FRAGMENT_PRECISION_HIGH
 `;
 
 const LIGHTING = `
-uniform vec3 uLight; uniform vec3 uEye; uniform float uLightZ; uniform float uExposure;
+uniform vec3 uLight; uniform vec3 uEye; uniform float uLightZ; uniform float uExposure; uniform float uGlint;
 vec3 lampAt(vec3 p, out vec3 L) {
   L = uLight - p; float d2 = dot(L, L); L *= inversesqrt(d2);
   // Inverse-square falloff with a soft core, 1 directly under the lamp.
@@ -19,13 +19,14 @@ vec3 lampAt(vec3 p, out vec3 L) {
 vec3 sky(vec3 n) { return mix(vec3(.035, .03, .026), vec3(.1, .105, .115), n.z * .5 + .5); }
 // View-independent part: what a light map can hold.
 vec3 diffuse(vec3 p, vec3 n) { vec3 L; vec3 lamp = lampAt(p, L); return sky(n) + lamp * max(dot(n, L), 0.); }
-// View-dependent part: the lamp's highlight and a grazing sheen of the room.
+// View-dependent part: the lamp's highlight and a grazing sheen of the room, scaled by uGlint (dimmed as the camera
+// dives into the mug, where the lamp's reflection on the coffee would fill the screen).
 vec3 specular(vec3 p, vec3 n, float spec, float gloss) {
   vec3 L; vec3 lamp = lampAt(p, L);
   vec3 V = normalize(uEye - p), H = normalize(L + V);
   float fres = .04 + .96 * pow(1. - max(dot(n, V), 0.), 5.);
   float s = spec * (gloss + 2.) / 8. * pow(max(dot(n, H), 0.), gloss) * (.7 + 3. * fres);
-  return lamp * s * max(dot(n, L), 0.) + sky(n) * fres * spec * .6;
+  return (lamp * s * max(dot(n, L), 0.) + sky(n) * fres * spec * .6) * uGlint;
 }
 vec3 shade(vec3 albedo, vec3 p, vec3 n, float spec, float gloss) { return albedo * diffuse(p, n) + specular(p, n, spec, gloss); }
 vec3 tonemap(vec3 x) {

@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Pirata_One } from "next/font/google";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { loadCastle, saveCastle } from "@/lib/castle";
 import { countStamp } from "@/lib/stamps";
 import { track } from "@/lib/track";
 import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, beanShare, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
+import * as audio from "./castle-audio";
+import type { DiveRequest } from "./desk-scene";
 import { device } from "./stamp";
 import styles from "./coffee-run.module.css";
+
+// Blackletter for the title card, loaded only with the castle.
+const gothic = Pirata_One({ subsets: ["latin"], weight: "400" });
 
 // Viewport in canvas px; CSS scales it up with `image-rendering: pixelated`.
 const W = 192, H = 14 * T;
@@ -174,6 +180,154 @@ function draw(ctx: CanvasRenderingContext2D, g: Game) {
   }
 }
 
+// The prologue, one caption at a time under the title (timed in coffee-run.module.css: 3.5s in, 3s each).
+const PROLOGUE = [
+  "Toda manhã, a Brasa da Aurora torrava o café que fazia o sol nascer.",
+  "Até a noite em que o Conde D'arábica a roubou para o seu castelo.",
+  "Desde então o relógio parou, as xícaras esfriaram e a madrugada não acaba.",
+  "Esta noite, um caçador sobe a colina. A última xícara será servida.",
+];
+const ease = (x: number) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+// Fixed pseudo-random numbers, so stars and windows stay put between frames.
+const hash = (i: number) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
+
+// Title scene: out of the coffee, a stormy night, the moon behind the castle (its tallest tower is a steaming cup), bats
+// and the hunter walking up the hill to the gate. `t` is seconds since the dive; `calm` drops lightning and motion.
+function drawIntro(ctx: CanvasRenderingContext2D, t: number, calm: boolean) {
+  const rect = (x: number, y: number, w: number, h: number, color: string) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+  const ring = (cx: number, cy: number, r: number, color: string) => { for (let a = 0, n = Math.max(8, r * 6); a < n; a++) rect(cx + Math.cos(a / n * 6.283) * r, cy + Math.sin(a / n * 6.283) * r * 0.6, 1, 1, color); };
+  ctx.globalAlpha = 1;
+
+  // Sky in dithered bands, from deep night to the red glow over the horizon.
+  const SKY = ["#0b0716", "#130a20", "#1d0e28", "#2b1129", "#3f1527", "#5a1c22"];
+  for (let i = 0; i < SKY.length; i++) {
+    const y = i * 14;
+    rect(0, y, W, 14, SKY[i]);
+    if (i) for (let x = (y / 2) % 2; x < W; x += 2) { rect(x, y, 1, 1, SKY[i - 1]); rect(x + 1, y + 1, 1, 1, SKY[i - 1]); }
+  }
+  rect(0, 84, W, H - 84, SKY[SKY.length - 1]);
+
+  // Lightning: a soft lift of the whole sky (never a white flash) plus a jagged bolt, every few seconds.
+  const k = (t - 4.4) % 5.2, flash = calm || t < 4.4 ? 0 : k < 0.12 ? 1 : k > 0.22 && k < 0.3 ? 0.6 : 0;
+  if (flash) {
+    ctx.globalAlpha = 0.22 * flash; rect(0, 0, W, 84, "#b9a6d6"); ctx.globalAlpha = 1;
+    let x = 30 + hash(Math.floor((t - 4.4) / 5.2)) * 50, y = 0;
+    while (y < 62) { const nx = x + (hash(x * 3 + y) - 0.5) * 10, ny = y + 4 + hash(y + x) * 5; for (let s = 0; s < 6; s++) rect(x + (nx - x) * s / 6, y + (ny - y) * s / 6, 1, 1, "#efe6ff"); x = nx; y = ny; }
+  }
+
+  for (let i = 0; i < 40; i++) {
+    const on = calm || hash(i + Math.floor(t * 2 + i)) > 0.15;
+    if (on) rect(hash(i) * W, hash(i + 99) * 60, 1, 1, hash(i + 7) > 0.8 ? "#fff4d6" : "#8a7aa8");
+  }
+
+  // The moon rises over the graveyard.
+  const my = 52 + 14 * (1 - ease(t / 4)), mx = 54;
+  ctx.globalAlpha = 0.12; for (let dy = -20; dy <= 20; dy++) { const w = Math.sqrt(400 - dy * dy); rect(mx - w, my + dy, w * 2, 1, "#f1e6c8"); } ctx.globalAlpha = 1;
+  for (let dy = -15; dy <= 15; dy++) { const w = Math.sqrt(225 - dy * dy); rect(mx - w, my + dy, w * 2, 1, "#efe2c0"); }
+  for (const [cx, cy, s] of [[-6, -4, 4], [4, 3, 5], [-2, 8, 3], [7, -8, 2]]) rect(mx + cx, my + cy, s, s - 1, "#d6c49c");
+
+  // Clouds drift across the moon.
+  ctx.globalAlpha = 0.85;
+  for (let i = 0; i < 5; i++) {
+    const w = 40 + hash(i) * 50, x = ((hash(i + 3) * 300 - t * (4 + i * 1.5)) % 300 + 300) % 300 - 60, y = 12 + i * 9;
+    rect(x, y, w, 3, "#1a0f24"); rect(x + 6, y - 2, w - 14, 2, "#1a0f24");
+  }
+  ctx.globalAlpha = 1;
+
+  // Bats cross the sky, flapping.
+  for (let i = 0; i < 5; i++) {
+    const x = ((t * (22 + i * 5) + i * 53) % 260) - 30, y = 22 + i * 7 + Math.sin(t * 3 + i) * 5, up = Math.floor(t * 9 + i) % 2;
+    rect(x + 2, y + 1, 3, 2, "#0d0912"); rect(x, y + (up ? 0 : 2), 2, 1, "#0d0912"); rect(x + 5, y + (up ? 0 : 2), 2, 1, "#0d0912");
+  }
+
+  // The castle on its cliff, one silhouette colour; its keep's tallest tower ends in a cup.
+  const ink = "#07050c";
+  const roof = (x: number, y: number, w: number, h: number) => { for (let r = 0; r < h; r++) { const half = Math.ceil((w / 2) * (r + 1) / h); rect(x + w / 2 - half, y + r, half * 2, 1, ink); } };
+  const merlons = (x: number, y: number, w: number) => { for (let i = 0; i < w; i += 4) rect(x + i, y - 2, 2, 2, ink); };
+  for (let x = 84; x < W; x += 4) rect(x, 68 + Math.round(6 - (x - 84) / 18) + (hash(x) > 0.6 ? 1 : 0), 4, H, ink);
+  rect(116, 46, 58, 30, ink); merlons(116, 46, 58);
+  rect(100, 52, 12, 24, ink); roof(98, 38, 16, 14);
+  rect(176, 40, 12, 36, ink); roof(174, 24, 16, 16);
+  rect(124, 40, 10, 8, ink); roof(122, 30, 14, 10);
+  rect(160, 34, 9, 14, ink); merlons(160, 34, 9);
+  rect(139, 34, 14, 14, ink); merlons(139, 34, 14);
+  rect(137, 22, 18, 9, ink); rect(138, 31, 16, 1, ink); rect(155, 24, 3, 1, ink); rect(157, 24, 1, 5, ink); rect(155, 28, 3, 1, ink);
+  if (!calm) for (let i = 0; i < 6; i++) { const y = 20 - ((t * 6 + i * 3) % 16); ctx.globalAlpha = 0.5 * (1 - (20 - y) / 16); rect(140 + i * 2.4 + Math.sin(t * 2 + i + y / 3) * 2, y, 1, 2, "#e8dcc8"); }
+  ctx.globalAlpha = 1;
+  for (let i = 0; i < 12; i++) {
+    const wx = [104, 108, 120, 128, 145, 145, 152, 164, 180, 182, 132, 168][i], wy = [58, 64, 54, 44, 38, 42, 54, 56, 48, 60, 62, 40][i];
+    ctx.globalAlpha = calm ? 0.9 : 0.6 + 0.4 * Math.sin(t * 3 + i * 1.7); rect(wx, wy, 1, 2, hash(i + 40) > 0.3 ? "#ffcc55" : "#ff8a3c");
+  }
+  ctx.globalAlpha = 1;
+  rect(104, 66, 8, 10, "#1b0d08"); rect(105, 65, 6, 1, "#1b0d08"); rect(106, 64, 4, 1, "#1b0d08");
+  for (let x = 105; x < 112; x += 2) rect(x, 66, 1, 9, "#3a2414");
+
+  // Foreground hill with a dead tree, crosses and the path up to the gate.
+  for (let x = 0; x < 112; x++) rect(x, 86 - Math.round(Math.max(0, x - 64) / 4) + (x < 20 ? Math.round((20 - x) / 7) : 0), 1, H, "#040207");
+  rect(16, 56, 2, 30, "#040207"); rect(10, 62, 7, 1, "#040207"); rect(9, 61, 2, 1, "#040207"); rect(17, 66, 8, 1, "#040207"); rect(24, 64, 1, 2, "#040207"); rect(13, 58, 1, 4, "#040207");
+  for (const cx of [34, 46, 58]) { rect(cx, 80, 1, 6, "#040207"); rect(cx - 2, 82, 5, 1, "#040207"); }
+
+  // Fog rolling over the hill.
+  for (let i = 0; i < 6; i++) {
+    const x = ((i * 47 + t * (6 + i)) % 280) - 60, y = 86 + (i % 3) * 5;
+    ctx.globalAlpha = 0.1; rect(x, y, 70, 4, "#a596c0"); rect(x + 10, y - 2, 46, 2, "#a596c0");
+  }
+  ctx.globalAlpha = 1;
+
+  // The hunter walks up to the gate and stops to look at it.
+  const walking = !calm && t > 1.4 && t < 7.4, hx = calm ? 76 : -8 + 84 * ease((t - 1.4) / 6), hy = 86 - Math.round(Math.max(0, hx + 3 - 64) / 4) - 13;
+  const legs = walking ? Math.floor(t * 6) % 2 : 0;
+  rect(hx + 1, hy, 4, 2, "#140a06"); rect(hx + 1, hy + 2, 4, 3, "#140a06"); rect(hx, hy + 1, 1, 3, "#140a06");
+  rect(hx, hy + 5, 6, 5, "#160807"); rect(hx - 1 + (walking ? legs : 0), hy + 6, 1, 6, "#160807");
+  rect(hx + 1, hy + 10, 2, 3 - legs, "#140a06"); rect(hx + 3, hy + 10, 2, 3 - (1 - legs), "#140a06");
+  rect(hx - 1, hy + 7, 1, 4, "#2a1d12");
+
+  // Out of the cup: the coffee surface the dive landed in thins out over the scene, its ripples spreading.
+  if (!calm && t < 1.8) {
+    const a = 1 - ease((t - 0.3) / 1.5);
+    ctx.globalAlpha = a; rect(0, 0, W, H, "#1a0d05");
+    for (let i = 0; i < 4; i++) { const r = (t * 70 + i * 26) % 110; ring(W / 2, H / 2, r, i % 2 ? "#6b3b1f" : "#c98a4b"); }
+    for (let i = 0; i < 24; i++) { const ang = i * 0.5 + t * 3, r = i * 3.2; rect(W / 2 + Math.cos(ang) * r, H / 2 + Math.sin(ang) * r * 0.6, 2, 1, "#e0b27a"); }
+    ctx.globalAlpha = 1;
+  }
+
+  // A vignette frames it like an old title card.
+  ctx.globalAlpha = 0.35; rect(0, 0, W, 2, "#000"); rect(0, H - 2, W, 2, "#000"); rect(0, 0, 2, H, "#000"); rect(W - 2, 0, 2, H, "#000"); ctx.globalAlpha = 1;
+}
+
+// Sounds come from what changed in a frame, so the game logic stays silent (and testable in node).
+type Before = { vy: number; ground: boolean; swing: number; got: number; hp: number; shots: number; act: Game["boss"]["act"]; foes: { hp: number; dead: boolean }[]; state: Game["state"] };
+const snapshot = (g: Game): Before => ({
+  vy: g.vy, ground: g.ground, swing: g.swing, got: g.got.size, hp: g.hp, shots: g.shots.length, act: g.boss.act,
+  foes: g.foes.map((f) => ({ hp: f.hp, dead: f.dead })), state: g.state,
+});
+function listen(g: Game, b: Before) {
+  const { sfx } = audio;
+  if (g.swing > b.swing) sfx.whip();
+  if (g.hp < b.hp) sfx.hurt();
+  else if (g.vy < -100 && g.vy < b.vy - 100) sfx.jump();
+  if (!b.ground && g.ground && b.vy > 200) sfx.land();
+  for (const k of [...g.got].slice(b.got)) { const [cx, cy] = k.split(",").map(Number); if (tileAt(g.stage, cx, cy) === "i") sfx.candle(); else sfx.bean(); }
+  b.foes.forEach((was, i) => {
+    const f = g.foes[i];
+    if (f.hp >= was.hp) return;
+    if (f.kind === "count") { if (f.dead) sfx.bossDown(); else sfx.bossHit(); }
+    else if (!f.dead) sfx.hit();
+    else if (f.kind === "skel") sfx.bones();
+    else sfx.bat();
+  });
+  if (g.boss.act !== b.act) {
+    if (b.act === "sleep") sfx.wake();
+    else if (g.boss.act === "dash" || g.boss.act === "cast" || g.boss.act === "bats" || g.boss.act === "blink") sfx[g.boss.act]();
+  }
+  if (g.shots.length > b.shots) sfx.shot();
+  if (b.state === "play" && g.state === "dead") { audio.stop(); sfx.die(); }
+  if (b.state === "play" && g.state === "won") { audio.stop(); if (g.stage === STAGES.length - 1) sfx.victory(); else sfx.clear(); }
+  // The Count's theme while he is awake, silence once he falls, the stage theme otherwise.
+  const count = g.foes.find((f) => f.kind === "count");
+  if (g.state === "play") { if (!count || g.boss.act === "sleep") audio.play("stage"); else if (count.dead) audio.stop(); else audio.play("boss"); }
+}
+
 function Castle({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -183,6 +337,20 @@ function Castle({ onClose }: { onClose: () => void }) {
   const [stage, setStage] = useState<number | null>(null);
   const [hud, setHud] = useState({ hp: HP, beans: 0, state: "play" as Game["state"] });
   const [note, setNote] = useState("");
+  // Opening: the title scene (the desk camera has just dived into the mug) plays until a key or tap.
+  const [intro, setIntro] = useState(true);
+  const [sound, setSound] = useState(() => !audio.muted());
+  const toggleSound = () => setSound((on) => { audio.setMuted(on); return !on; });
+  // Set when the Count falls, so the menu's nocturne waits for the victory fanfare to end.
+  const fanfare = useRef(0);
+
+  useEffect(() => {
+    audio.unlock();
+    // M toggles the sound anywhere in the castle.
+    const mute = (e: KeyboardEvent) => { if (e.code === "KeyM" && !e.repeat) toggleSound(); };
+    addEventListener("keydown", mute);
+    return () => { removeEventListener("keydown", mute); audio.stop(); };
+  }, []);
 
   useEffect(() => {
     dialog.current!.showModal();
@@ -195,14 +363,30 @@ function Castle({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
+    if (stage === null && intro) {
+      const calm = matchMedia("(prefers-reduced-motion: reduce)").matches, start = performance.now();
+      let frame = 0;
+      const tick = () => { drawIntro(ctx, (performance.now() - start) / 1000, calm); if (!calm) frame = requestAnimationFrame(tick); };
+      frame = requestAnimationFrame(tick);
+      // Any key but Escape (closes) and Tab ends it; on keyup, so the space that skipped can't also press the menu button it focuses.
+      const skip = (e: KeyboardEvent) => {
+        if (e.code === "Escape" || e.code === "Tab") return;
+        e.preventDefault();
+        if (e.type === "keyup") { audio.sfx.select(); setIntro(false); }
+      };
+      addEventListener("keydown", skip);
+      addEventListener("keyup", skip);
+      return () => { cancelAnimationFrame(frame); removeEventListener("keydown", skip); removeEventListener("keyup", skip); };
+    }
     if (stage === null) { draw(ctx, fresh(Math.min(saved.current.cleared, STAGES.length - 1))); return; }
     input.current = idle();
     let g = fresh(stage), frame = 0, then = performance.now(), shown = "";
     function tick(now: number) {
       const dt = Math.min(0.05, (now - then) / 1000);
       then = now;
-      const was = g.state;
+      const was = g.state, before = snapshot(g);
       step(g, input.current, dt);
+      listen(g, before);
       if (g.state === "won" && was === "play") {
         const best = [...saved.current.best]; best[g.stage] = g.beans;
         const next = merge(saved.current, { cleared: g.stage + 1, best });
@@ -212,6 +396,7 @@ function Castle({ onClose }: { onClose: () => void }) {
       if (g.state === "dead" && g.t > 1) g = retry(g);
       if (g.state === "won" && g.t > 1.5) {
         if (g.stage + 1 < STAGES.length) { setStage(g.stage + 1); return; }
+        fanfare.current = performance.now() + 2500;
         // Creates (or raises the rarity of) the Count's stamp now; the notebook hands it over for sticking.
         countStamp(device(), beanShare(saved.current)!).catch(() => {});
         track("stamp", "conde", { beans: beanShare(saved.current) });
@@ -233,6 +418,14 @@ function Castle({ onClose }: { onClose: () => void }) {
     addEventListener("keydown", press);
     addEventListener("keyup", press);
     return () => { cancelAnimationFrame(frame); removeEventListener("keydown", press); removeEventListener("keyup", press); };
+  }, [stage, intro]);
+
+  // Title and menu play the nocturne (stages pick their own song in `listen`).
+  useEffect(() => {
+    if (stage !== null) return;
+    const wait = Math.max(0, fanfare.current - performance.now()), later = setTimeout(() => audio.play("night"), wait);
+    if (wait) audio.stop();
+    return () => clearTimeout(later);
   }, [stage]);
 
   // Touch pad: each button holds its input while pressed.
@@ -240,23 +433,38 @@ function Castle({ onClose }: { onClose: () => void }) {
     <button type="button" aria-label={label} onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); input.current[k] = true; }}
       onPointerUp={() => { input.current[k] = false; }} onPointerCancel={() => { input.current[k] = false; }} onContextMenu={(e) => e.preventDefault()}>{glyph}</button>
   );
-  const play = (i: number) => { setNote(""); setStage(i); track("stage", String(i)); };
+  const play = (i: number) => { audio.sfx.start(); setNote(""); setStage(i); track("stage", String(i)); };
+  const speaker = (
+    <button type="button" className={styles.menu} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
+  );
 
   return (
-    <dialog ref={dialog} className={room.room} aria-label="Castelo do Café" onClose={onClose}>
+    <dialog ref={dialog} className={`${room.room} ${styles.arrive}`} aria-label="Castelo do Café" onClose={onClose} onPointerDown={audio.unlock}>
       <p className={`${room.hud} ${styles.hud}`}>
-        {stage === null ? <span>Castelo do Café</span> : <>
+        {stage === null ? <><span>{intro ? "\u00a0" : "Castelo do Café"}</span>{speaker}</> : <>
           <span>{STAGES[stage].name}</span>
           <span aria-label={`${hud.hp} de ${HP} corações`}>{"♥".repeat(Math.max(0, hud.hp))}<span className={styles.lost}>{"♥".repeat(HP - Math.max(0, hud.hp))}</span></span>
           <span>Grãos {hud.beans}/{loot(stage)}</span>
           {hud.state !== "play" && <span role="status">{hud.state === "won" ? "Fase concluída!" : "Você caiu…"}</span>}
+          {speaker}
           <button type="button" className={styles.menu} onClick={() => setStage(null)}>Fases</button>
         </>}
       </p>
       <div className={styles.frame}>
         <canvas ref={canvas} className={`${room.court} ${styles.level}`} width={W} height={H}
           aria-label="Jogo de plataforma: setas ou A e D para andar, espaço ou Z para pular, X ou J para o chicote" />
-        {stage === null && (
+        {stage === null && intro && (
+          <div className={styles.intro} onPointerUp={() => { audio.sfx.select(); setIntro(false); }}>
+            <h2 className={`${gothic.className} ${styles.title}`}><span>Castelo</span> <small>do</small> <span>Café</span></h2>
+            <p className={styles.subtitle}>— A Brasa da Aurora —</p>
+            <div className={styles.prologue}>
+              {PROLOGUE.map((line, i) => <p key={line} style={{ "--i": i } as CSSProperties}>{line}</p>)}
+              <p className={styles.press} style={{ "--i": PROLOGUE.length } as CSSProperties}>Aperte uma tecla ou toque para entrar</p>
+            </div>
+            <button type="button" className={styles.skip} onClick={() => setIntro(false)}>Pular ›</button>
+          </div>
+        )}
+        {stage === null && !intro && (
           <div className={styles.stages}>
             {note && <p role="status">{note}</p>}
             <ol>
@@ -274,7 +482,7 @@ function Castle({ onClose }: { onClose: () => void }) {
         )}
       </div>
       {stage !== null && <p className={styles.story}>{STAGES[stage].story}</p>}
-      <p className={`${room.hint} ${styles.hint}`}>← → andar · espaço/Z pular · X/J chicote · pule por baixo das plataformas finas</p>
+      {(stage !== null || !intro) && <p className={`${room.hint} ${styles.hint}`}>← → andar · espaço/Z pular · X/J chicote · pule por baixo das plataformas finas</p>}
       {stage !== null && (
         <div className={styles.pad}>
           <span>{pad("left", "Andar para a esquerda", "◀")}{pad("right", "Andar para a direita", "▶")}</span>
@@ -288,13 +496,20 @@ function Castle({ onClose }: { onClose: () => void }) {
 }
 
 // Easter egg: the coffee mug on the desk (drawn in WebGL) gets an invisible button on top that opens a pixel castle platformer.
+// The desk camera dives into the coffee first, and climbs back out when the castle closes.
 export default function CoffeeRun() {
   const [open, setOpen] = useState(false);
+  const mug = useRef<HTMLButtonElement>(null);
+  const dive = (into: boolean, done?: () => void) => {
+    const request: DiveRequest = { into, done };
+    mug.current?.dispatchEvent(new CustomEvent("desk-dive", { bubbles: true, detail: request }));
+    if (!request.handled) done?.();
+  };
   return (
     <>
       <span className={styles.steam} aria-hidden="true"><span /><span /><span /></span>
-      <button type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => setOpen(true)} />
-      {open && <Castle onClose={() => setOpen(false)} />}
+      <button ref={mug} type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => { audio.unlock(); dive(true, () => setOpen(true)); }} />
+      {open && <Castle onClose={() => { setOpen(false); dive(false); }} />}
     </>
   );
 }
