@@ -6,6 +6,24 @@
 }
 .mug:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
 [data-landed="false"] .mug, [data-flat] .mug { visibility: hidden; }
+/* Steam off the coffee: soft blobs that rise (in z, towards the camera) and spread. Transform and opacity only,
+   so it runs on the compositor; it exists only once the desk has landed. */
+.steam { display: none; position: absolute; left: var(--cup-x); top: var(--cup-y); width: calc(var(--cup-d) * .8); aspect-ratio: 1; pointer-events: none; transform-style: preserve-3d; }
+[data-landed="true"] .steam { display: block; }
+.steam span {
+  position: absolute; inset: 0; border-radius: 50%; opacity: 0;
+  background: radial-gradient(closest-side, #fff5e83a, #fff5e814 55%, #fff5e800);
+  animation: steam 5.4s cubic-bezier(.3, .2, .5, 1) infinite;
+}
+.steam span:nth-child(2) { animation-delay: -1.8s; left: 12%; }
+.steam span:nth-child(3) { animation-delay: -3.6s; left: -10%; }
+@keyframes steam {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateZ(var(--cup-z)) scale(.5) rotate(0deg); }
+  25% { opacity: .9; }
+  100% { opacity: 0; transform: translate(-30%, -75%) translateZ(calc(var(--cup-z) + 140px)) scale(1.9) rotate(70deg); }
+}
+[data-landed="true"] [data-flat] .steam { display: none; }
+@media (prefers-reduced-motion: reduce) { [data-landed="true"] .steam { display: none; } }
 
 .hud { flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem 1.5rem; min-height: 1.6rem; }
 .lost { opacity: .25; }

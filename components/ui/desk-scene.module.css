@@ -1,14 +1,21 @@
+/* Scroll-driven variables change every frame. Inherited, they made every descendant's style differ, and Chrome
+   repainted the whole business card face per frame; non-inherited, only the element that uses them restyles. */
+@property --entry { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --pitch { syntax: "<angle>"; inherits: false; initial-value: 78deg; }
+@property --turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --card-x { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --card-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --card-lift { syntax: "<length>"; inherits: false; initial-value: 1px; }
+@property --card-pitch { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --card-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --card-scale { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --card-tilt { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --card-landing { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --sticker-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --sticker-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@property --sticker-scale { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --sticker-opacity { syntax: "<number>"; inherits: false; initial-value: 1; }
 .scene {
-  --entry: 125svh;
-  --pitch: 78deg;
-  --turn: 0deg;
-  --card-y: 0px;
-  --card-x: 0px;
-  --card-pitch: 0deg;
-  --card-turn: 0deg;
-  --card-scale: 1;
-  --card-lift: 1px;
-  --card-tilt: 1;
   position: relative;
   height: 340svh;
   background: #111110;
@@ -20,8 +27,8 @@
 }
 .stickers {
   position: absolute; inset: 0;
-  transform: translateY(var(--sticker-y, 0px)) rotate(var(--sticker-turn, 0deg)) scale(var(--sticker-scale, 1));
-  opacity: var(--sticker-opacity, 1);
+  transform: translateY(var(--sticker-y)) rotate(var(--sticker-turn)) scale(var(--sticker-scale));
+  opacity: var(--sticker-opacity);
   will-change: transform, opacity;
 }
 .space { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; perspective: 1400px; }
@@ -30,6 +37,7 @@
   flex-shrink: 0;
   width: min(82vw, 1080px, 130svh);
   aspect-ratio: 1.85;
+  --entry: 125svh;
   transform: translateY(var(--entry)) rotateX(var(--pitch)) rotateZ(var(--turn));
   transform-style: preserve-3d;
   will-change: transform;
@@ -68,13 +76,15 @@
   .scrollCue { font-size: 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .scene { height: 100svh; --card-scale: 0.002; --card-tilt: 0; }
+  .scene { height: 100svh; }
+  .card { --card-scale: 0.002; --card-tilt: 0; }
   .stickers, .scrollCue { display: none; }
   .card { transform: translate3d(var(--card-x), var(--card-y), 1px) rotateZ(-8deg) scale(var(--card-scale)); }
   .scene[data-landed="true"] .card { transition: none; }
   .scene[data-landed="true"] .card:has([data-flipped="true"]) { transform: translate3d(0, 0, 100px) scale(.9); }
   .destination { display: none; }
   @media (max-width: 640px) and (orientation: portrait) {
-    .scene { --card-scale: .05; --card-type-scale: 1.6; }
+    .scene { --card-type-scale: 1.6; }
+    .card { --card-scale: .05; }
   }
 }

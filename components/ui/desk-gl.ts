@@ -1,10 +1,17 @@
-import { Camera, Geometry, Mesh, Program, Renderer, Texture, Transform, Vec3 } from "ogl";
-import { coffeeSpot, cupAt, paintDesk } from "./desk-textures";
+import { Camera, Geometry, Mat4, Mesh, Program, Renderer, RenderTarget, Texture, Transform, Vec3 } from "ogl";
+import { ballsAt, binAt, coffeeSpot, cupAt, lampAt, legsAt, paintDesk } from "./desk-textures";
+import { bin, buf, cuboid, lathe, MAT, mug, paperBall, pen, pencil, plane, stickyNote, succulent, tabletop, type Buf, type V } from "./desk-geometry";
+import { LIGHTMAP, SOLID, SURFACE, WOOD } from "./desk-shaders";
 import { rng } from "./grime";
 
-// The desk's furniture, cup, bin and floor in one WebGL canvas, placed exactly under the CSS-transformed `.desk`
-// (which keeps only the interactive notebook and credentials). Units are CSS px; the camera mirrors `.space`'s
-// `perspective: 1400px`, so a point at z = 0 lands on the same pixel in both.
+// The desk's furniture, objects, bin and floor in one WebGL canvas, placed exactly under the CSS-transformed `.desk`
+// (which keeps only the interactive notebook, badges, mug button and bin button). Units are CSS px; the camera mirrors
+// `.space`'s `perspective: 1400px`, so a point at z = 0 lands on the same pixel in both.
+//
+// Cost model: everything expensive is computed once per layout into textures: procedural wood, shadows and decals,
+// and, since the lamp is fixed to the desk, the diffuse light of the top and floor (light maps). A scroll frame is
+// one pass of ~13k triangles; the big surfaces cost one texture read and a highlight per pixel. Nothing renders
+// while nothing moves.
 export type DeskView = {
   width: number; height: number; // stage
   desk: number; leg: number; mobile: boolean;
@@ -14,122 +21,15 @@ export type DeskView = {
 const PERSPECTIVE = 1400;
 const DEG = Math.PI / 180;
 const X = new Vec3(1, 0, 0), Z = new Vec3(0, 0, 1), shift = new Vec3();
-
-// Lit meshes use vertex colours and one fixed light in desk space, like the old baked CSS shading. Output is premultiplied.
-const LIT = {
-  vertex: `attribute vec3 position; attribute vec3 normal; attribute vec3 color;
-    uniform mat4 modelViewMatrix; uniform mat4 projectionMatrix; varying vec3 vColor;
-    void main() {
-      vColor = color * (.72 + .42 * max(dot(normal, normalize(vec3(-.35, .45, .82))), 0.));
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.);
-    }`,
-  fragment: `precision mediump float; uniform float uOpacity; varying vec3 vColor;
-    void main() { gl_FragColor = vec4(vColor, 1.) * uOpacity; }`,
-};
-const TEX = {
-  vertex: `attribute vec3 position; attribute vec2 uv; uniform mat4 modelViewMatrix; uniform mat4 projectionMatrix; varying vec2 vUv;
-    void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
-  fragment: `precision mediump float; uniform sampler2D tMap; uniform float uOpacity; varying vec2 vUv;
-    void main() { gl_FragColor = texture2D(tMap, vUv) * uOpacity; }`,
-};
-
-type V = [number, number, number];
-type Vx = { p: V; n: V; c: V; t?: [number, number] };
-type Buf = { p: number[]; n: number[]; c: number[]; t: number[] };
-const buf = (): Buf => ({ p: [], n: [], c: [], t: [] });
-const hex = (h: string): V => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255) as V;
-
-// Winding follows the vertex normals, so callers never care about vertex order.
-function tri(b: Buf, v0: Vx, v1: Vx, v2: Vx) {
-  const [a, c, d] = [v0.p, v1.p, v2.p];
-  const e = [c[0] - a[0], c[1] - a[1], c[2] - a[2]], f = [d[0] - a[0], d[1] - a[1], d[2] - a[2]];
-  const cross = [e[1] * f[2] - e[2] * f[1], e[2] * f[0] - e[0] * f[2], e[0] * f[1] - e[1] * f[0]];
-  const n = [0, 1, 2].map((i) => v0.n[i] + v1.n[i] + v2.n[i]);
-  if (cross[0] * n[0] + cross[1] * n[1] + cross[2] * n[2] < 0) [v1, v2] = [v2, v1];
-  for (const v of [v0, v1, v2]) { b.p.push(...v.p); b.n.push(...v.n); b.c.push(...v.c); b.t.push(...(v.t ?? [0, 0])); }
-}
-const quad = (b: Buf, v0: Vx, v1: Vx, v2: Vx, v3: Vx) => { tri(b, v0, v1, v2); tri(b, v0, v2, v3); };
-
-// Surface of revolution around z; profile is [radius, z, colour]. Each profile step gets its own normal, so rims stay crisp.
-function lathe(b: Buf, profile: [number, number, string][], at: V, segments = 32, ribs = 1) {
-  for (let i = 0; i < profile.length - 1; i++) {
-    const [r0, z0, c0] = profile[i], [r1, z1, c1] = profile[i + 1];
-    const len = Math.hypot(r1 - r0, z1 - z0) || 1, nr = (z1 - z0) / len, nz = (r0 - r1) / len;
-    for (let j = 0; j < segments; j++) {
-      const a0 = j / segments * 2 * Math.PI, a1 = (j + 1) / segments * 2 * Math.PI, shade = j % 2 && !nz ? ribs : 1; // ribs on walls only
-      const v = (r: number, z: number, a: number, c: string): Vx => ({
-        p: [at[0] + r * Math.cos(a), at[1] + r * Math.sin(a), at[2] + z], n: [nr * Math.cos(a), nr * Math.sin(a), nz], c: hex(c).map((x) => x * shade) as V,
-      });
-      quad(b, v(r0, z0, a0, c0), v(r0, z0, a1, c0), v(r1, z1, a1, c1), v(r1, z1, a0, c1));
-    }
-  }
-}
-const sphere = (b: Buf, r: number, at: V, color: string) =>
-  lathe(b, Array.from({ length: 9 }, (_, i) => [r * Math.sin(i / 8 * Math.PI), -r * Math.cos(i / 8 * Math.PI), color]), at, 16);
-
-function cuboid(b: Buf, [x0, y0, z0]: V, [x1, y1, z1]: V, color: string) {
-  const c = hex(color), v = (x: number, y: number, z: number, n: V): Vx => ({ p: [x, y, z], n, c });
-  for (const s of [-1, 1]) {
-    const x = s < 0 ? x0 : x1, y = s < 0 ? y0 : y1, z = s < 0 ? z0 : z1;
-    quad(b, v(x, y0, z0, [s, 0, 0]), v(x, y1, z0, [s, 0, 0]), v(x, y1, z1, [s, 0, 0]), v(x, y0, z1, [s, 0, 0]));
-    quad(b, v(x0, y, z0, [0, s, 0]), v(x1, y, z0, [0, s, 0]), v(x1, y, z1, [0, s, 0]), v(x0, y, z1, [0, s, 0]));
-    quad(b, v(x0, y0, z, [0, 0, s]), v(x1, y0, z, [0, 0, s]), v(x1, y1, z, [0, 0, s]), v(x0, y1, z, [0, 0, s]));
-  }
-}
-
-// Flat textured rectangle; `corners` go round the edge, uv follows them from (0,0).
-function plane(b: Buf, corners: V[], n: V) {
-  const uv: [number, number][] = [[0, 0], [1, 0], [1, 1], [0, 1]];
-  const v = corners.map((p, i): Vx => ({ p, n, c: [1, 1, 1], t: uv[i] }));
-  quad(b, v[0], v[1], v[2], v[3]);
-}
-
-// The tabletop: rounded outline, textured top (uv over the full rectangle) and a 24px edge darkening downwards.
-function tabletop(top: Buf, body: Buf, W: number, H: number) {
-  const R = 14, outline: [number, number][] = [];
-  for (const [cx, cy, a] of [[1, 1, 0], [-1, 1, 90], [-1, -1, 180], [1, -1, 270]])
-    for (let i = 0; i <= 6; i++) {
-      const t = (a + i * 15) * DEG;
-      outline.push([cx * (W / 2 - R) + R * Math.cos(t), cy * (H / 2 - R) + R * Math.sin(t)]);
-    }
-  const light = hex("#654934"), dark = hex("#342217");
-  const center: Vx = { p: [0, 0, 0], n: [0, 0, 1], c: [1, 1, 1], t: [0.5, 0.5] };
-  outline.forEach(([x, y], i) => {
-    const [x1, y1] = outline[(i + 1) % outline.length];
-    const at = (px: number, py: number, z: number, n: V, c: V): Vx => ({ p: [px, py, z], n, c, t: [px / W + 0.5, py / H + 0.5] });
-    tri(top, center, at(x, y, 0, [0, 0, 1], [1, 1, 1]), at(x1, y1, 0, [0, 0, 1], [1, 1, 1]));
-    const len = Math.hypot(x1 - x, y1 - y), side: V = [(y1 - y) / len, (x - x1) / len, 0];
-    quad(body, at(x, y, 0, side, light), at(x1, y1, 0, side, light), at(x1, y1, -24, side, dark), at(x, y, -24, side, dark));
-    tri(body, { ...center, p: [0, 0, -24], n: [0, 0, -1], c: dark }, at(x, y, -24, [0, 0, -1], dark), at(x1, y1, -24, [0, 0, -1], dark));
-  });
-}
-
-// Mug: open cylinder with a rim and coffee inside, plus a handle swept along half an ellipse. D is its diameter.
-function cup(b: Buf, [x, y]: [number, number], D: number) {
-  const r = D / 2, h = D * 0.85, inner = D * 0.43;
-  lathe(b, [
-    [r, 0, "#d9ceba"], [r, h, "#e2d8c6"], [inner, h, "#e7dcc7"], [inner, D * 0.7, "#8c795e"],
-    [inner, D * 0.7, "#8a542a"], [inner * 0.9, D * 0.7, "#2c150a"], [inner * 0.4, D * 0.7, "#321a0c"], [0, D * 0.7, "#4a2814"],
-  ], [x, y, 0]);
-  const cx = x - D * 0.58, cz = h * 0.52, rx = D * 0.2, rz = D * 0.29, tube = D * 0.045, c = hex("#d4c8b2");
-  const ring = (a: number, f: number): Vx => {
-    const len = Math.hypot(Math.cos(a) / rx, Math.sin(a) / rz), nx = Math.cos(a) / rx / len, nz = Math.sin(a) / rz / len;
-    const n: V = [Math.cos(f) * nx, Math.sin(f), Math.cos(f) * nz];
-    return { p: [cx + rx * Math.cos(a) + tube * n[0], y + tube * n[1], cz + rz * Math.sin(a) + tube * n[2]], n, c };
-  };
-  for (let i = 0; i < 22; i++)
-    for (let k = 0; k < 12; k++) {
-      const a0 = (70 + i * 10) * DEG, a1 = (80 + i * 10) * DEG, f0 = k / 12 * 2 * Math.PI, f1 = (k + 1) / 12 * 2 * Math.PI;
-      quad(b, ring(a0, f0), ring(a1, f0), ring(a1, f1), ring(a0, f1));
-    }
-}
+const EXPOSURE = 1;
 
 // Owns its canvas: two OGL renderers on one context (React's dev double mount) desync OGL's cached GL state.
 export function createDeskGL(parent: HTMLElement, className: string) {
   const canvas = document.createElement("canvas");
   canvas.className = className;
   canvas.setAttribute("aria-hidden", "true");
-  const renderer = new Renderer({ canvas, dpr: Math.min(devicePixelRatio, 2), alpha: true, premultipliedAlpha: true, antialias: true });
+  const dpr = Math.min(devicePixelRatio, 2);
+  const renderer = new Renderer({ canvas, dpr, alpha: true, premultipliedAlpha: true, antialias: true, powerPreference: "high-performance" });
   const gl = renderer.gl;
   if (!gl) return null;
   parent.prepend(canvas);
@@ -140,76 +40,194 @@ export function createDeskGL(parent: HTMLElement, className: string) {
   desk.matrixAutoUpdate = false;
   desk.setParent(scene);
 
-  const program = (shader: typeof LIT, transparent: boolean, extra = {}) => new Program(gl, {
-    ...shader, transparent, depthWrite: shader === LIT || !transparent, cullFace: shader === LIT && gl.BACK,
-    uniforms: { uOpacity: { value: 1 }, ...extra },
+  // Lighting uniforms are shared objects, so one write per frame reaches every program.
+  const shared = { uLight: { value: new Vec3() }, uEye: { value: new Vec3() }, uLightZ: { value: 1000 }, uExposure: { value: EXPOSURE } };
+  const blank = new Texture(gl, { image: new Uint8Array(4), width: 1, height: 1, generateMipmaps: false });
+  const solid = (transparent: boolean) => new Program(gl, { ...SOLID, transparent, cullFace: gl.BACK, uniforms: { ...shared, uOpacity: { value: 1 } } });
+  const surface = (transparent: boolean, extra: Record<string, number> = {}) => new Program(gl, {
+    ...SURFACE, transparent, depthWrite: !transparent, cullFace: gl.BACK,
+    uniforms: {
+      ...shared, tMap: { value: blank }, tDecal: { value: blank }, uTexel: { value: [0, 0] },
+      ...Object.fromEntries(Object.entries({ uBump: 0, uSpec: 0.1, uGloss: 20, uMode: 0, uFade: 0, uOpacity: 1, ...extra }).map(([k, value]) => [k, { value }])),
+    },
   });
-  const lit = program(LIT, false), fading = program(LIT, true);
-  const surfaces = { top: false, chalk: true, floor: true, drawers: false } as const;
-  const flat = Object.fromEntries(Object.entries(surfaces).map(([k, t]) => [k, program(TEX, t, { tMap: { value: null } })])) as Record<keyof typeof surfaces, Program>;
+  const programs = {
+    solid: solid(false), faded: solid(true),
+    top: surface(false, { uMode: 2, uSpec: 0.065, uGloss: 40 }),
+    edge: surface(false, { uBump: 1, uSpec: 0.1, uGloss: 40 }),
+    note: surface(false, { uSpec: 0.06, uGloss: 12 }),
+    floor: surface(true, { uMode: 2, uSpec: 0, uFade: 1 }), // matte: its light map is all it needs
+    chalk: surface(true, { uMode: 1 }),
+  };
+  const wood = new Program(gl, { ...WOOD, depthTest: false, depthWrite: false, uniforms: {
+    uSize: { value: [1, 1] }, uSeed: { value: 0 }, uBoard: { value: 100 }, uPlank: { value: 1e5 }, uRing: { value: 9 },
+    uLightWood: { value: [0, 0, 0] }, uDarkWood: { value: [0, 0, 0] }, uVertical: { value: 0 }, uSeam: { value: 0 },
+    tDirt: { value: blank }, tWear: { value: blank }, uGrime: { value: 0 },
+  } });
+  const lightmap = new Program(gl, { ...LIGHTMAP, depthTest: false, depthWrite: false, uniforms: {
+    ...shared, tMap: { value: blank }, tDecal: { value: blank }, uTexel: { value: [0, 0] }, uBump: { value: 1 },
+    uOrigin: { value: [0, 0] }, uExtent: { value: [1, 1] }, uZ: { value: 0 },
+  } });
+  const quad = new Mesh(gl, { geometry: new Geometry(gl, { position: { size: 2, data: new Float32Array([-1, -1, 3, -1, -1, 3]) }, uv: { size: 2, data: new Float32Array([0, 0, 2, 0, 0, 2]) } }), program: wood });
 
   const seed = Math.floor(Math.random() * 1e5);
   let layout = "", last: DeskView | undefined, timer = 0, built: (() => void) | undefined;
 
+  type WoodLook = { size: [number, number]; board: number; plank: number; ring: number; light: string; dark: string; vertical: boolean; seam: number };
+  const lin = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  // Renders `program` over all of `target` once, then mipmaps it so the grain doesn't shimmer when the desk tilts away.
+  function bake(target: RenderTarget, program: Program) {
+    quad.program = program;
+    renderer.render({ scene: quad, target, clear: false });
+    if (!renderer.isWebgl2) return;
+    target.texture.bind();
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    target.texture.state.minFilter = gl.LINEAR_MIPMAP_LINEAR;
+    const aniso = gl.getExtension("EXT_texture_filter_anisotropic");
+    if (aniso) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, renderer.parameters.maxAnisotropy ?? 1));
+  }
+
+  function woodInto(target: RenderTarget, look: WoodLook, grime?: { dirt: Texture; wear: Texture }) {
+    const u = wood.uniforms;
+    u.uSize.value = look.size; u.uSeed.value = seed % 997; u.uBoard.value = look.board; u.uPlank.value = look.plank; u.uRing.value = look.ring;
+    u.uLightWood.value = lin(look.light); u.uDarkWood.value = lin(look.dark); u.uVertical.value = look.vertical ? 1 : 0; u.uSeam.value = look.seam;
+    u.tDirt.value = grime?.dirt ?? blank; u.tWear.value = grime?.wear ?? blank; u.uGrime.value = grime ? 1 : 0;
+    bake(target, wood);
+  }
+  // Light map of a horizontal surface at height z covering desk [x0, x0 + w] × [y0, y0 + h].
+  function lightInto(target: RenderTarget, albedo: RenderTarget, decal: Texture, [x0, y0, w, h, z]: number[], bump: number) {
+    const u = lightmap.uniforms;
+    u.tMap.value = albedo.texture; u.tDecal.value = decal; u.uTexel.value = [1 / albedo.width, 1 / albedo.height];
+    u.uOrigin.value = [x0, y0]; u.uExtent.value = [w, h]; u.uZ.value = z; u.uBump.value = bump;
+    bake(target, lightmap);
+  }
+
+  const free = (t: RenderTarget) => { gl.deleteFramebuffer(t.buffer); gl.deleteTexture(t.texture.texture); };
+
   function build(v: DeskView) {
     built?.();
     const W = v.desk, H = W / 1.85, floorZ = -12 - v.leg, drawerHeight = v.mobile ? 46 : 65;
-    const textures: Texture[] = [];
-    const paint = paintDesk(W, H, v.mobile, seed, drawerHeight, () => {
-      for (const t of textures) t.needsUpdate = true;
+    const textures: Texture[] = [], targets: RenderTarget[] = [];
+    const lamp = lampAt(W, H);
+    shared.uLight.value.set(...lamp);
+    shared.uLightZ.value = lamp[2];
+
+    const scale = Math.min(dpr, 2048 / W);
+    const floorScale = Math.min(dpr * 0.75, 2048 / (W * 2.2));
+    const target = (w: number, h: number) => {
+      const t = new RenderTarget(gl, { width: Math.round(w), height: Math.round(h), depth: false });
+      targets.push(t);
+      return t;
+    };
+    // Albedo + gloss (the edge and drawer fronts sample it lit live), and the light maps the top and floor show.
+    const topWood = target(W * scale, H * scale), topLit = target(W * scale, H * scale);
+    const floorWood = target(W * 2.2 * floorScale, H * 2.6 * floorScale), floorLit = target(W * 2.2 * floorScale, H * 2.6 * floorScale);
+    // Wood is sized for a 1080px desk whatever its size on screen: it is the same desk, just seen from further away.
+    const S = 1080 / W;
+    const topLook: WoodLook = { size: [W * S, H * S], board: H * S / 4.6, plank: 1e5, ring: 14, light: "#6f4f37", dark: "#3b281b", vertical: false, seam: 0.22 };
+    const floorLook: WoodLook = { size: [W * 2.2 * S, H * 2.6 * S], board: W * S * 0.1375, plank: W * S * 0.95, ring: 9, light: "#5d4c3e", dark: "#2c231c", vertical: true, seam: 0.6 };
+    woodInto(topWood, topLook);
+    woodInto(floorWood, floorLook);
+
+    const upload = (image: HTMLCanvasElement | HTMLImageElement, premultiplyAlpha = true) => {
+      const t = new Texture(gl, { image, premultiplyAlpha, anisotropy: 8, minFilter: renderer.isWebgl2 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR });
+      textures.push(t);
+      return t;
+    };
+    const lightAll = () => {
+      lightInto(topLit, topWood, decal.top, [-W / 2, -H / 2, W, H, 0], 1.2);
+      lightInto(floorLit, floorWood, decal.floor, [-1.1 * W, -1.3 * H, 2.2 * W, 2.6 * H, floorZ], 0.8);
+    };
+    const paint = paintDesk(W, H, v.mobile, seed, v.leg, drawerHeight, ({ dirt, wear }) => {
+      for (const t of Object.values(decal)) t.needsUpdate = true;
+      woodInto(topWood, topLook, { dirt: upload(dirt, false), wear: upload(wear, false) });
+      lightAll();
+      // Nothing samples the floor's albedo after its last light bake: give the memory back (it is the biggest target).
+      targets.splice(targets.indexOf(floorWood), 1);
+      free(floorWood);
       render();
     });
-    for (const key of Object.keys(surfaces) as (keyof typeof surfaces)[]) {
-      const texture = new Texture(gl, { image: paint[key], premultiplyAlpha: true, anisotropy: 8 });
-      flat[key].uniforms.tMap.value = texture;
-      textures.push(texture);
+    const decal = { top: upload(paint.top), floor: upload(paint.floor), chalk: upload(paint.chalk), note: upload(paint.note) };
+    lightAll();
+    const P = programs;
+    P.top.uniforms.tMap = { value: topLit.texture };
+    P.floor.uniforms.tMap = { value: floorLit.texture };
+    Object.assign(P.edge.uniforms, { tMap: { value: topWood.texture }, uTexel: { value: [1 / topWood.width, 1 / topWood.height] } });
+    P.chalk.uniforms.tMap = { value: decal.chalk };
+    P.note.uniforms.tMap = { value: decal.note };
+
+    const parts = { top: buf(), edge: buf(), note: buf(), solid: buf(), floor: buf(), faded: buf(), chalk: buf() };
+    tabletop(parts.top, parts.edge, W, H);
+    // Desk-space position of a layout point given in canvas fractions.
+    const at = (x: number, y: number, z = 0): V => [(x - 0.5) * W, (0.5 - y) * H, z];
+    const L = paint.layout;
+    mug(parts.solid, at(L.cup.x, L.cup.y).slice(0, 2) as [number, number], L.cup.d);
+    pencil(parts.solid, at(L.pencil.x, L.pencil.y), -L.pencil.angle, L.pencil.length, L.pencil.d);
+    pen(parts.solid, at(L.pen.x, L.pen.y), -L.pen.angle, L.pen.length, L.pen.d);
+    stickyNote(parts.note, at(L.note.x, L.note.y), -L.note.angle, L.note.size);
+    succulent(parts.solid, at(L.plant.x, L.plant.y), L.plant.r, seed);
+
+    // Powder-coated steel legs with a levelling foot, hanging from under the top.
+    for (const [x, y] of legsAt(W, H))
+      lathe(parts.solid, [[0, floorZ, "#1d1e1c", MAT.matte], [11, floorZ, "#1d1e1c", MAT.matte], [12, floorZ + 4, "#2a2b28", MAT.metal], [12, floorZ + 4, "#2a2b28", MAT.metal],
+        [12.5, floorZ + 8, "#30312e", MAT.metal], [12.5, -14, "#383936", MAT.metal], [12.5, -14, "#383936", MAT.metal], [0, -14, "#383936", MAT.metal]], [x, y, 0], 24);
+    // Drawer block: dark carcass, two wood fronts with a shadow gap, brushed steel bar pulls.
+    const front = -0.43 * H, dz = -24 - drawerHeight;
+    cuboid(parts.solid, [-0.42 * W, front, dz], [0.42 * W, 0.2 * H, -24], "#1e150e");
+    const pw = (0.84 * W - 10) / 2;
+    for (const x0 of [-0.42 * W + 3, -0.42 * W + 7 + pw]) {
+      const uv = (x: number, z: number): [number, number] => [x / W + 0.5, 0.1 + (z - dz) / H];
+      const c: V[] = [[x0, front - 2, dz + 3], [x0 + pw, front - 2, dz + 3], [x0 + pw, front - 2, -27], [x0, front - 2, -27]];
+      plane(parts.edge, c, [0, -1, 0], c.map(([x, , z]) => uv(x, z)));
+      const hx = x0 + pw / 2, hz = -24 - Math.min(26, drawerHeight * 0.4);
+      cuboid(parts.solid, [hx - pw * 0.12, front - 8, hz - 2], [hx + pw * 0.12, front - 5, hz + 2], "#b9b9b2", MAT.chrome);
+      for (const s of [-1, 1]) cuboid(parts.solid, [hx + s * pw * 0.1 - 1.5, front - 6, hz - 1.5], [hx + s * pw * 0.1 + 1.5, front - 2, hz + 1.5], "#8d8d87", MAT.metal);
     }
-
-    const parts = { top: buf(), chalk: buf(), floor: buf(), drawers: buf(), solid: buf(), faded: buf() };
-    tabletop(parts.top, parts.solid, W, H);
-    const [cx, cy] = cupAt(paint.spot);
-    cup(parts.solid, [(cx - 0.5) * W, (0.5 - cy) * H], W * paint.spot.radius * 2);
-    // Legs hang from under the top at 8% / 91% of its depth, 5% in from the sides.
-    for (const x of [-1, 1]) for (const y of [0.42, -0.41])
-      lathe(parts.solid, [[0, floorZ, "#2e2f2b"], [12.5, floorZ, "#2e2f2b"], [12.5, -12, "#3a3b36"], [0, -12, "#3a3b36"]], [x * (W * 0.45 - 12.5), y * H, 0], 12);
-    const front = -0.43 * H;
-    cuboid(parts.solid, [-0.42 * W, front, -24 - drawerHeight], [0.42 * W, 0.2 * H, -24], "#231910");
-    plane(parts.drawers, [[-0.42 * W, front - 0.2, -24 - drawerHeight], [0.42 * W, front - 0.2, -24 - drawerHeight], [0.42 * W, front - 0.2, -24], [-0.42 * W, front - 0.2, -24]], [0, -1, 0]);
     plane(parts.floor, [[-1.1 * W, -1.3 * H, floorZ], [1.1 * W, -1.3 * H, floorZ], [1.1 * W, 1.3 * H, floorZ], [-1.1 * W, 1.3 * H, floorZ]], [0, 0, 1]);
-    plane(parts.chalk, [[-W / 2, -H / 2, 0.5], [W / 2, -H / 2, 0.5], [W / 2, H / 2, 0.5], [-W / 2, H / 2, 0.5]], [0, 0, 1]);
+    plane(parts.chalk, [[-W / 2, -H / 2, 0.3], [W / 2, -H / 2, 0.3], [W / 2, H / 2, 0.3], [-W / 2, H / 2, 0.3]], [0, 0, 1]);
     // Waste bin beside the desk with two paper balls in it, and two more on the floor; all fade in with the floor.
-    const bin: V = [0.69 * W, -0.31 * H, floorZ], br = 0.06 * W, bh = 0.4 * v.leg;
-    lathe(parts.faded, [[br, 0, "#3a3b38"], [br, bh, "#4a4c47"], [br - 4, bh, "#8b8d88"], [br - 4, 2, "#252623"], [0, 2, "#1c1d1a"]], bin, 48, 0.6);
-    sphere(parts.faded, br * 0.38, [bin[0] - br * 0.18, bin[1] + br * 0.02, floorZ + 2 + br * 0.38], "#e3ddcf");
-    sphere(parts.faded, br * 0.32, [bin[0] + br * 0.28, bin[1] - br * 0.2, floorZ + 2 + br * 0.32], "#d9d3c4");
-    sphere(parts.faded, W * 0.0143, [0.528 * W, -0.572 * H, floorZ + W * 0.0143], "#e3ddcf");
-    sphere(parts.faded, W * 0.0121, [0.737 * W, -0.442 * H, floorZ + W * 0.0121], "#d9d3c4");
+    const b = binAt(W, H, v.leg), bh = 0.4 * v.leg;
+    bin(parts.faded, [b.x, b.y, floorZ], b.r, bh);
+    paperBall(parts.faded, b.r * 0.4, [b.x - b.r * 0.2, b.y + b.r * 0.05, floorZ + 2 + b.r * 0.38], "#e8e2d4", seed);
+    paperBall(parts.faded, b.r * 0.34, [b.x + b.r * 0.3, b.y - b.r * 0.22, floorZ + 2 + b.r * 0.33], "#ddd6c6", seed + 1);
+    ballsAt(W, H).forEach((ball, i) => paperBall(parts.faded, ball.r, [ball.x, ball.y, floorZ + ball.r * 0.9], i ? "#ddd6c6" : "#e8e2d4", seed + 2 + i));
 
-    const meshes = Object.entries(parts).map(([key, b]) => {
+    const order: Record<keyof typeof parts, number> = { top: 0, edge: 0, note: 0, solid: 0, floor: 1, faded: 2, chalk: 3 };
+    const meshes = (Object.entries(parts) as [keyof typeof parts, Buf][]).map(([key, b]) => {
       const geometry = new Geometry(gl, {
         position: { size: 3, data: new Float32Array(b.p) }, normal: { size: 3, data: new Float32Array(b.n) },
-        color: { size: 3, data: new Float32Array(b.c) }, uv: { size: 2, data: new Float32Array(b.t) },
+        color: { size: 3, data: new Float32Array(b.c) }, uv: { size: 2, data: new Float32Array(b.t) }, mat: { size: 2, data: new Float32Array(b.m) },
       });
-      const mesh = new Mesh(gl, { geometry, program: key === "solid" ? lit : key === "faded" ? fading : flat[key as keyof typeof surfaces] });
-      mesh.renderOrder = key === "floor" ? 1 : key === "faded" ? 2 : key === "chalk" ? 3 : 0;
+      const mesh = new Mesh(gl, { geometry, program: P[key], frustumCulled: false });
+      mesh.renderOrder = order[key];
       mesh.setParent(desk);
+      if (order[key]) fading.push(mesh);
       return mesh;
     });
     built = () => {
+      fading.length = 0;
       paint.cancel();
       for (const mesh of meshes) { mesh.setParent(null); mesh.geometry.remove(); }
       for (const texture of textures) gl.deleteTexture(texture.texture);
+      targets.forEach(free);
     };
   }
 
+  // Floor, bin and chalk fade in with the overhead view; at zero they are skipped rather than drawn invisible.
+  const fading: Mesh[] = [];
+  const inverse = new Mat4();
   function render() {
     const v = last;
     if (!v || !built) return;
     desk.matrix.identity().translate(shift.set(0, -v.entry, 0)).rotate(-v.pitch * DEG, X).rotate(-v.turn * DEG, Z);
     desk.worldMatrixNeedsUpdate = true;
-    fading.uniforms.uOpacity.value = flat.floor.uniforms.uOpacity.value = v.floor;
-    flat.chalk.uniforms.uOpacity.value = v.floor * 0.8;
-    renderer.render({ scene, camera });
+    // The camera, seen from the desk: specular highlights slide across the varnish as the view tilts.
+    shared.uEye.value.copy(camera.position).applyMatrix4(inverse.inverse(desk.matrix));
+    programs.faded.uniforms.uOpacity.value = programs.floor.uniforms.uOpacity.value = v.floor;
+    programs.chalk.uniforms.uOpacity.value = v.floor * 0.8;
+    for (const mesh of fading) mesh.visible = v.floor > 0;
+    renderer.render({ scene, camera, frustumCull: false });
   }
 
   // Called from the scroll handler's animation frame, so canvas and DOM move in the same frame.
@@ -238,7 +256,7 @@ export function createDeskGL(parent: HTMLElement, className: string) {
     dispose() {
       clearTimeout(timer);
       built?.();
-      for (const p of [lit, fading, ...Object.values(flat)]) p.remove();
+      for (const p of [...Object.values(programs), wood, lightmap]) p.remove();
       gl.getExtension("WEBGL_lose_context")?.loseContext();
       canvas.remove();
     },
