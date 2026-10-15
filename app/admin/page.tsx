@@ -18,13 +18,14 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
   const days = period(q.d);
   const source = typeof q.origem === "string" ? q.origem : undefined;
   const game = typeof q.jogo === "string" ? q.jogo : undefined;
+  const hidden = q.ocultos === "1";
   const [data, people, titles] = await Promise.all([
-    overview(days), visitors(days, { source, game }),
+    overview(days), visitors(days, { source, game, hidden }),
     getArticles().then((a) => Object.fromEntries(a.map((x) => [x.slug, x.title])), () => ({} as Record<string, string>)),
   ]);
   const link = (extra: Record<string, string | number | undefined>) => {
     const p = new URLSearchParams();
-    for (const [k, v] of Object.entries({ d: days, origem: source, jogo: game, ...extra })) if (v !== undefined && v !== "") p.set(k, String(v));
+    for (const [k, v] of Object.entries({ d: days, origem: source, jogo: game, ocultos: hidden ? 1 : undefined, ...extra })) if (v !== undefined && v !== "") p.set(k, String(v));
     return `/admin?${p}`;
   };
 
@@ -78,14 +79,22 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
               <Link className="text-sky-400 hover:underline" href={link({ origem: "", jogo: "" })}>limpar</Link>
             </p>
           )}
+          <p className="mb-3 text-xs text-neutral-500">
+            Abra a jornada de alguém para dar um nome ou ocultar (você, bots, testes): ocultos saem de todos os números.{" "}
+            <Link className="text-sky-400 hover:underline" href={link({ ocultos: hidden ? "" : 1 })}>{hidden ? "Esconder ocultos" : "Mostrar ocultos"}</Link>
+          </p>
           <div className="-mx-4 overflow-x-auto">
             <table className="w-full min-w-[900px] text-left text-sm">
               <thead className="text-xs uppercase tracking-wider text-neutral-500">
-                <tr>{["Última visita", "Origem", "Local", "Dispositivo", "Visitas", "Tempo", "Jogos", "Artigos", "Selo", ""].map((h) => <th key={h} className="px-4 py-2 font-medium">{h}</th>)}</tr>
+                <tr>{["Quem", "Última visita", "Origem", "Local", "Dispositivo", "Visitas", "Tempo", "Jogos", "Artigos", "Selo", ""].map((h) => <th key={h} className="px-4 py-2 font-medium">{h}</th>)}</tr>
               </thead>
               <tbody className="divide-y divide-neutral-800">
                 {people.map((p) => (
-                  <tr key={p.visitor} className="hover:bg-neutral-800/40">
+                  <tr key={p.visitor} className={`hover:bg-neutral-800/40 ${p.hidden ? "opacity-50" : ""}`}>
+                    <td className="max-w-40 px-4 py-2" title={p.note ?? undefined}>
+                      {p.name ? <b className="font-medium text-neutral-50">{p.name}</b> : <span className="font-mono text-xs text-neutral-500">{p.visitor.slice(0, 8)}</span>}
+                      {p.hidden && <span className="ml-1 text-xs text-neutral-500">oculto</span>}
+                    </td>
                     <td className="px-4 py-2 whitespace-nowrap">{when(p.last_at)}</td>
                     <td className="px-4 py-2">{p.source}{p.campaign && <span className="text-neutral-500"> · {p.campaign}</span>}{p.ff && <span className="ml-1 rounded bg-amber-500/20 px-1 text-xs text-amber-300">F&F</span>}</td>
                     <td className="px-4 py-2">{p.place || "—"}</td>
@@ -98,7 +107,7 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
                     <td className="px-4 py-2 whitespace-nowrap"><Link className="text-sky-400 hover:underline" href={`/admin/visitante/${p.visitor}`}>jornada →</Link></td>
                   </tr>
                 ))}
-                {!people.length && <tr><td colSpan={10} className="px-4 py-6 text-center text-neutral-500">Nenhuma visita nesse período.</td></tr>}
+                {!people.length && <tr><td colSpan={11} className="px-4 py-6 text-center text-neutral-500">Nenhuma visita nesse período.</td></tr>}
               </tbody>
             </table>
           </div>

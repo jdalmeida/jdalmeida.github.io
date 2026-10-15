@@ -7,6 +7,7 @@ import { STAGES } from "@/components/ui/platformer";
 import { isAdmin } from "@/lib/admin";
 import { describe, stampNo, visitor } from "@/lib/analytics";
 import { getArticles } from "@/lib/articles";
+import { labelVisitor } from "../../actions";
 
 export const metadata: Metadata = { title: "Visitante · Admin", robots: { index: false, follow: false } };
 
@@ -31,11 +32,39 @@ export default async function Visitor({ params }: PageProps<"/admin/visitante/[i
       <div className="mx-auto max-w-5xl space-y-6">
         <header>
           <Link href="/admin" className="text-sm text-sky-400 hover:underline">← Analytics</Link>
-          <h1 className="mt-2 text-xl font-semibold text-neutral-50">Visitante <span className="font-mono text-base text-neutral-400">{id.slice(0, 8)}</span></h1>
+          <h1 className="mt-2 text-xl font-semibold text-neutral-50">
+            {data.label.name ?? "Visitante"} <span className="font-mono text-base text-neutral-400">{id.slice(0, 8)}</span>
+            {data.label.hidden && <span className="ml-2 rounded bg-neutral-800 px-1.5 py-0.5 align-middle text-xs font-normal text-neutral-400">oculto das estatísticas</span>}
+          </h1>
           <p className="text-sm text-neutral-400">
             {data.visits.length} {data.visits.length === 1 ? "visita" : "visitas"} · primeira em {when(first.started_at as string)} vindo de <b className="text-neutral-200">{first.source as string}</b>
           </p>
         </header>
+
+        <Card title="Quem é">
+          <form action={labelVisitor} className="flex flex-wrap items-end gap-3 text-sm">
+            <input type="hidden" name="visitor" value={id} />
+            <label className="flex min-w-48 flex-1 flex-col gap-1 text-neutral-400">Nome
+              <input name="name" defaultValue={data.label.name ?? ""} maxLength={60} placeholder="ex.: Ana do Inovathon"
+                className="rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-1.5 text-neutral-100 outline-none focus:border-sky-500" />
+            </label>
+            <label className="flex min-w-48 flex-[2] flex-col gap-1 text-neutral-400">Nota
+              <input name="note" defaultValue={data.label.note ?? ""} maxLength={500} placeholder="como você sabe quem é"
+                className="rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-1.5 text-neutral-100 outline-none focus:border-sky-500" />
+            </label>
+            <label className="flex items-center gap-2 py-1.5 text-neutral-300">
+              <input type="checkbox" name="hidden" defaultChecked={data.label.hidden} className="accent-sky-500" /> Ocultar das estatísticas (eu, bot, teste)
+            </label>
+            <button className="rounded-lg bg-sky-600 px-3 py-1.5 font-medium text-white hover:bg-sky-500">Salvar</button>
+          </form>
+          {!data.label.hidden && (
+            <form action={labelVisitor} className="mt-2">
+              <input type="hidden" name="visitor" value={id} /><input type="hidden" name="name" value="Eu" />
+              <input type="hidden" name="note" value={data.label.note ?? ""} /><input type="hidden" name="hidden" value="on" />
+              <button className="text-sm text-sky-400 hover:underline">Sou eu: nomear como “Eu” e ocultar</button>
+            </form>
+          )}
+        </Card>
 
         <div className="grid gap-3 md:grid-cols-3">
           <Card title="Selos">

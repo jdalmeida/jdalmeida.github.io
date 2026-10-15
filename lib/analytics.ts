@@ -18,18 +18,20 @@ export type Column = (typeof COLUMNS)[number];
 export async function overview(days: number) {
   const q = sql();
   const since = q`now() - make_interval(days => ${days})`;
+  // Visitors marked hidden in /admin (the owner, bots, tests) count nowhere.
+  const shown = q`visitor not in (select visitor from visitor_labels where hidden)`;
   const [[kpi], daily, breakdowns, actions] = await Promise.all([
     q`select count(*)::int visits, count(distinct visitor)::int visitors,
         coalesce(avg(extract(epoch from last_at - started_at)), 0)::int avg_seconds,
         count(distinct visitor) filter (where visitor in (select visitor from visits group by visitor having count(*) > 1))::int as returners
-      from visits where started_at > ${since}`,
+      from visits where started_at > ${since} and ${shown}`,
     q`select to_char(started_at at time zone ${TZ}, 'YYYY-MM-DD') as day, count(*)::int as n, count(distinct visitor)::int as people
-      from visits where started_at > ${since} group by 1 order by 1`,
+      from visits where started_at > ${since} and ${shown} group by 1 order by 1`,
     Promise.all(COLUMNS.map((c) => q`select ${q.unsafe(c)} as label, count(*)::int as n, count(distinct visitor)::int as people
-      from visits where started_at > ${since} group by 1 order by 2 desc limit 12`)),
+      from visits where started_at > ${since} and ${shown} group by 1 order by 2 desc limit 12`)),
     q`select e.type, e.name as label, count(*)::int as n, count(distinct v.visitor)::int as people
       from visit_events e join visits v on v.id = e.visit
-      where e.at > ${since} and e.type in ('game', 'article', 'credential', 'won', 'stamp', 'share', 'open')
+      where e.at > ${since} and ${shown} and e.type in ('game', 'article', 'credential', 'won', 'stamp', 'share', 'open')
       group by 1, 2 order by 3 desc`,
   ]);
   const of = (type: string) => (actions as Row[]).filter((a) => a.type === type) as unknown as Count[];
@@ -48,13 +50,17 @@ export async function overview(days: number) {
 export type VisitorRow = {
   visitor: string; visits: number; first_at: string; last_at: string; seconds: number; source: string; campaign: string | null;
   place: string; device: string; ff: boolean; events: number; games: string[] | null; articles: number; stamps: number[] | null;
+  name: string | null; note: string | null; hidden: boolean;
 };
 
 // One row per browser, most recent first, with what it played and which stamps (visitor or Count) its devices own.
-export async function visitors(days: number, filter: { source?: string; game?: string } = {}) {
+// Hidden visitors are left out unless `hidden` is set (to find and unhide them).
+export async function visitors(days: number, filter: { source?: string; game?: string; hidden?: boolean } = {}) {
   const q = sql();
   return (await q`
-    with v as (select * from visits where started_at > now() - make_interval(days => ${days})),
+    with l as (select * from visitor_labels),
+    v as (select * from visits where started_at > now() - make_interval(days => ${days})
+      and (${!!filter.hidden}::boolean or visitor not in (select visitor from l where hidden))),
     ev as (select v.visitor, e.type, e.name from visit_events e join v on v.id = e.visit),
     st as (select distinct v.visitor, s.id from v join stamps s on s.seed = v.seed or s.seed = v.count_seed)
     select v.visitor, count(*)::int visits, min(v.started_at) first_at, max(v.last_at) last_at,
@@ -67,7 +73,9 @@ export async function visitors(days: number, filter: { source?: string; game?: s
       (select count(*) from ev where ev.visitor = v.visitor and ev.type not in ('show', 'hide'))::int events,
       (select array_agg(distinct name) from ev where ev.visitor = v.visitor and ev.type = 'game') games,
       (select count(distinct name) from ev where ev.visitor = v.visitor and ev.type = 'article')::int articles,
-      (select array_agg(id order by id) from st where st.visitor = v.visitor) stamps
+      (select array_agg(id order by id) from st where st.visitor = v.visitor) stamps,
+      (select name from l where l.visitor = v.visitor) name, (select note from l where l.visitor = v.visitor) note,
+      coalesce((select hidden from l where l.visitor = v.visitor), false) hidden
     from v group by v.visitor
     having (${filter.source ?? null}::text is null or (array_agg(v.source order by v.started_at))[1] = ${filter.source ?? null})
       and (${filter.game ?? null}::text is null or exists (select 1 from ev where ev.visitor = v.visitor and ev.type = 'game' and ev.name = ${filter.game ?? null}))
@@ -83,17 +91,19 @@ export async function visitor(id: string) {
   const seeds = visits.map((v) => v.seed as number);
   const allSeeds = [...seeds, ...visits.map((v) => v.count_seed as number)];
   const castles = visits.map((v) => v.castle as string | null).filter((c): c is string => !!c);
-  const [timeline, stamps, scores, castle] = await Promise.all([
-    q`select visit, type, name, detail, at from visit_events where visit = any(${ids}::uuid[]) order by at`,
+  const [timeline, stamps, scores, castle, [label]] = await Promise.all([
+    q`select id, visit, type, name, detail, at from visit_events where visit = any(${ids}::uuid[]) order by at, id`,
     q`select id, seed, ff, beans, face, country, created_at from stamps where seed = any(${allSeeds}::int[]) order by id`,
     q`select best, name, updated_at from scores where seed = any(${seeds}::int[]) order by best desc`,
     castles.length ? q`select cleared, best, updated_at from castle where key = any(${castles}::uuid[]) order by cleared desc` : Promise.resolve([]),
+    q`select name, note, hidden from visitor_labels where visitor = ${id}`,
   ]);
   return {
     visits: visits.map((v) => ({ ...v, events: (timeline as Row[]).filter((e) => e.visit === v.id) }) as Row & { events: Row[] }),
     stamps: stamps as { id: number; ff: boolean; beans: number | null; face: number | null; country: string | null; created_at: string }[],
     scores: scores as { best: number; name: string | null; updated_at: string }[],
     castle: castle as { cleared: number; best: number[]; updated_at: string }[],
+    label: (label ?? { name: null, note: null, hidden: false }) as { name: string | null; note: string | null; hidden: boolean },
   };
 }
 

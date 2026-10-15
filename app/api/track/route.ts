@@ -9,7 +9,14 @@ import type { TrackType } from "@/lib/track";
 const sql = () => neon(process.env.DATABASE_URL!);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TYPES = new Set<TrackType>(["view", "show", "hide", "open", "article", "share", "credential", "game", "score", "stage", "won", "stamp"]);
-const BOT = /bot|crawl|spider|slurp|preview|headless|lighthouse|facebookexternalhit|embedly|whatsapp|telegram/i;
+// Crawlers, link previews (Meta's included), AI fetchers, uptime monitors and scripts. Most never run JS; this catches the ones that do.
+// lib/track.ts also waits for a human interaction before sending anything, which drops link checkers driving a real browser.
+const BOT = new RegExp([
+  "bot", "crawl", "spider", "slurp", "scrap", "preview", "headless", "lighthouse", "pagespeed", "phantom", "puppeteer", "playwright", "selenium",
+  "facebookexternalhit", "facebookcatalog", "meta-external", "embedly", "whatsapp", "telegram", "skype", "vkshare", "pinterest",
+  "chatgpt", "gptbot", "claude", "anthropic", "perplexity", "bytespider", "google-inspection", "google-read-aloud", "feedfetcher", "mediapartners",
+  "monitor", "uptime", "pingdom", "statuscake", "validator", "ia_archiver", "python", "curl", "wget", "go-http", "java/", "okhttp", "axios", "node-fetch", "httpclient",
+].join("|"), "i");
 const text = (v: unknown, max = 300) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
 
 function host(url: string | null) {
@@ -29,7 +36,8 @@ function client(ua: string) {
 export async function POST(request: Request) {
   const h = await headers();
   const ua = h.get("user-agent") ?? "";
-  if (BOT.test(ua)) return new Response(null, { status: 204 });
+  // Every real browser sends Accept-Language; scripts usually don't.
+  if (!ua || BOT.test(ua) || !h.get("accept-language")) return new Response(null, { status: 204 });
   try {
     const body = await request.json();
     const { visit, visitor } = body;

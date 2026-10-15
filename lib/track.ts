@@ -28,23 +28,50 @@ function ids() {
 }
 
 // Sent with every event; the server keeps it only from the visit's first one.
+// Landing is read once: the notebook rewrites the address bar before the first interaction flushes the queue.
+let landing = "";
 function info() {
   const q = new URLSearchParams(location.search);
   return {
-    landing: location.pathname, referrer: document.referrer, ff: q.has("ff"), castle: localStorage.getItem(CASTLE),
+    landing: landing || location.pathname, referrer: document.referrer, ff: q.has("ff"), castle: localStorage.getItem(CASTLE),
     screen: `${screen.width}x${screen.height}`, language: navigator.language,
     utm_source: q.get("utm_source") ?? q.get("ref") ?? q.get("source"), utm_medium: q.get("utm_medium"),
     utm_campaign: q.get("utm_campaign"), utm_content: q.get("utm_content"), utm_term: q.get("utm_term"),
   };
 }
 
+// Link checkers (Instagram/Meta's own included) open the page in a real browser but never touch it,
+// so nothing is sent until a person scrolls, taps, moves the mouse or presses a key. Until then events wait here;
+// a page nobody touches leaves no visit at all.
+// ponytail: a reader who opens the page and never moves isn't counted either; that's the price of dropping the checkers.
+type Event = { type: TrackType; name?: string; detail?: Record<string, unknown> };
+let queue: Event[] | null = null, human = false;
+const HUMAN = ["pointerdown", "pointermove", "touchstart", "keydown", "wheel", "scroll"] as const;
+
+function waitForHuman() {
+  queue = [];
+  landing = location.pathname;
+  const go = () => {
+    HUMAN.forEach((e) => removeEventListener(e, go, true));
+    human = true;
+    if (queue!.length) send(queue!.splice(0));
+  };
+  HUMAN.forEach((e) => addEventListener(e, go, { capture: true, passive: true }));
+}
+
+function send(events: Event[], beacon = false) {
+  const body = JSON.stringify({ ...ids(), device: device(), info: info(), events });
+  // A hidden tab may be about to die: the beacon survives that, fetch may not.
+  if (beacon && navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" }))) return;
+  fetch("/api/track", { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } }).catch(() => {});
+}
+
 // Fire and forget: tracking never breaks the page.
 export function track(type: TrackType, name?: string, detail?: Record<string, unknown>) {
   try {
-    if (localStorage.getItem(OPT_OUT) || location.pathname.startsWith("/admin")) return;
-    const body = JSON.stringify({ ...ids(), device: device(), info: info(), events: [{ type, name, detail }] });
-    // A hidden tab may be about to die: the beacon survives that, fetch may not.
-    if (type === "hide" && navigator.sendBeacon?.("/api/track", new Blob([body], { type: "application/json" }))) return;
-    fetch("/api/track", { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } }).catch(() => {});
+    if (localStorage.getItem(OPT_OUT) || location.pathname.startsWith("/admin") || navigator.webdriver) return;
+    if (!queue) waitForHuman();
+    if (!human) { if (queue!.length < 10) queue!.push({ type, name, detail }); return; }
+    send([{ type, name, detail }], type === "hide");
   } catch {}
 }
