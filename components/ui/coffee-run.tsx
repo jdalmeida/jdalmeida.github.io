@@ -288,6 +288,7 @@ export default function CoffeeRun() {
   const [open, setOpen] = useState(false);
   return (
     <>
+      <span className={styles.steam} aria-hidden="true"><span /><span /><span /></span>
       <button type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => setOpen(true)} />
       {open && <Castle onClose={() => setOpen(false)} />}
     </>

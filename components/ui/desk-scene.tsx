@@ -22,7 +22,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
     const root = scene.current!;
     const viewport = stage.current!;
     const surface = desk.current!;
-    const card = surface.nextElementSibling as HTMLElement;
+    const card = surface.nextElementSibling!.firstElementChild as HTMLElement;
     const stickers = viewport.firstElementChild as HTMLElement;
     const gl = createDeskGL(surface.parentElement!, styles.gl);
     if (!gl) surface.dataset.flat = "";
@@ -66,12 +66,15 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
         "--card-tilt": 1 - travel,
         "--card-landing": landing,
       });
+      const fade = 1 - ease((progress - 0.1) / 0.45);
       set(stickers, {
         "--sticker-y": `${-height * progress * 1.35}px`,
         "--sticker-turn": `${-12 * progress}deg`,
         "--sticker-scale": 1 + progress * 0.3,
-        "--sticker-opacity": 1 - ease((progress - 0.1) / 0.45),
+        "--sticker-opacity": fade,
       });
+      // Faded out, the sticker layer would still be composited every frame; hidden, it costs nothing.
+      stickers.style.visibility = fade > 0 ? "" : "hidden";
       gl?.draw({
         width: viewport.clientWidth, height, desk: width, leg: Math.min(250, Math.max(140, innerWidth * 0.22)),
         mobile: mobile.matches, entry, pitch, turn, floor: overhead,

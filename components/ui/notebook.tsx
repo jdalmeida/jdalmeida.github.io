@@ -241,13 +241,14 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
       onCancel={(e) => { e.preventDefault(); close(); }}
       onAnimationEnd={(e) => { if (closing && e.target === e.currentTarget) onClose(); }}
     >
-      <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"} data-page={left ? "left" : "right"}>
+      <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"} data-page={left ? "left" : "right"} style={{ "--leaves": leaves } as CSSProperties}>
+        <span className={styles.ribbon} />
         {Array.from({ length: leaves }, (_, i) => {
           const turned = i < flipped;
           // Leaves turned in one jump go one after the other, starting from the one nearest the reader.
           const order = flipped > from ? i - from : from - 1 - i;
           return (
-            <div key={i} className={styles.leaf} data-turned={turned} style={{ "--z": `${turned ? i : -i}px`, "--delay": `${Math.max(0, Math.min(order, 8)) * 90}ms` } as CSSProperties}>
+            <div key={i} className={styles.leaf} data-turned={turned} data-cover={i === 0 ? "front" : i === leaves - 1 ? "back" : undefined} style={{ "--z": `${turned ? i : -i}px`, "--delay": `${Math.max(0, Math.min(order, 8)) * 90}ms` } as CSSProperties}>
               {[2 * i, 2 * i + 1].map((f) => (
                 <div key={f} className={styles.face} data-side={f % 2 ? "back" : "front"} inert={f !== 2 * flipped - 1 && f !== 2 * flipped}>
                   {f > 0 && f < faces.length - 1 && <Doodles seed={seed + f * 7919} back={f % 2 === 1} />}

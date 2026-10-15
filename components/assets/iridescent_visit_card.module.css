@@ -1,8 +1,10 @@
 /* ---------- 3D business card ---------- */
-.scene { perspective: 1200px; width: min(92vw, 640px, 125svh); }
+.scene { perspective: 1200px; width: min(92vw, 640px, 125svh); --card-tilt: inherit; --card-landing: inherit; }
 
 .card {
   --rx: 6deg; --ry: -10deg; --mx: 35%; --my: 30%;
+  /* desk-scene registers these as non-inherited (they change every scroll frame); pass them down to here only. */
+  --card-tilt: inherit; --card-landing: inherit;
   position: relative;
   aspect-ratio: 85.6 / 54;
   border-radius: 4.5% / 7%;
@@ -15,7 +17,7 @@
   color: #f4f4f6;
 }
 /* Flight and landing shadows, cross-faded: animating the blur itself repainted it on every scroll frame. */
-.card::before, .card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; will-change: opacity; }
+.card::before, .card::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; will-change: opacity; --card-landing: inherit; }
 .card::before { box-shadow: 0 30px 60px -20px #000a; opacity: calc(1 - var(--card-landing, 0)); }
 .card::after { box-shadow: 0 3px 9px 2px #000a; opacity: var(--card-landing, 0); }
 .scene[data-flip-started="true"][data-flipped="true"] .card { animation: flipToBack .4s ease-in-out; }

@@ -1,30 +1,55 @@
-import { LAYERS, rng, type Layer } from "@/components/ui/grime";
+import { rng, type Layer } from "@/components/ui/grime";
 
-// Flat desk surfaces painted once into 2D canvases, then uploaded as WebGL textures. Sizes are CSS px of the desk.
+// Flat desk layers painted once into 2D canvases, then uploaded as WebGL textures. Sizes are CSS px of the desk.
+// The wood itself is procedural (desk-shaders.ts WOOD); these canvases only carry what sits on it: stains,
+// shadows baked from the lamp, paper clips, chalk, the rug.
 export type Spot = { radius: number; x: number; y: number };
 export const coffeeSpot = (r: () => number): Spot => ({ radius: 0.038 + r() * 0.008, x: 0.87 + r() * 0.05, y: 0.12 + r() * 0.08 });
 // Cup centre, as a fraction of desk width / height; its diameter is 2 * radius of the desk width.
 export const cupAt = (s: Spot) => [s.x - s.radius * 1.8, s.y + 0.035];
 
-// Card grime minus grease: its light smears read as bleached patches on the dark wood.
-const [DIRT, , WEAR] = LAYERS;
 // Chalk grain: noise alpha, applied with destination-in.
 export const CHALK: Layer = { filter: `<feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4"/>
   <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 3.2 -1"/>` };
 
+// The lamp, in desk space (px, origin at the tabletop centre, y towards the back, z up). Up and to the left,
+// like the CSS shadows of the notebook and badges assume.
+export const lampAt = (W: number, H: number): [number, number, number] => [-0.3 * W, 0.42 * H, 1.25 * W];
+
+// Where the objects lie, in canvas fractions (y down) with canvas-clockwise angles; desk-gl.ts builds them from this.
+export function deskLayout(W: number, H: number, mobile: boolean, spot: Spot) {
+  const note = W * 0.085, [cx, cy] = cupAt(spot);
+  return {
+    pencil: { x: 0.205, y: 0.18, angle: 16, length: W * 0.17, d: Math.max(6, H * 0.0145) },
+    pen: { x: 0.97, y: 0.506, angle: 78, length: W * 0.14, d: Math.max(5, H * 0.012) },
+    note: { x: 0.5 + note / 2 / W, y: 0.7 + note / 2 / H, angle: mobile ? -84 : 5, size: note },
+    cup: { x: cx, y: cy, d: W * spot.radius * 2 },
+    plant: { x: 0.052, y: 0.1, r: W * 0.032 },
+  };
+}
+
 type Ctx = CanvasRenderingContext2D;
-type Assets = { dirt: HTMLImageElement; wear: HTMLImageElement; grain: HTMLImageElement; font: string };
+type Assets = { grain: HTMLImageElement; font: string };
+type Surface = ReturnType<typeof surface>;
 
 function surface(w: number, h: number, scale: number) {
   const canvas = document.createElement("canvas");
-  canvas.width = Math.round(w * scale);
-  canvas.height = Math.round(h * scale);
+  canvas.width = Math.max(1, Math.round(w * scale));
+  canvas.height = Math.max(1, Math.round(h * scale));
   const ctx = canvas.getContext("2d")!;
   ctx.scale(scale, scale);
-  // Canvas shadows ignore the transform, so they're scaled by hand.
-  const shadow = (x: number, y: number, blur: number, color: string) =>
-    Object.assign(ctx, { shadowOffsetX: x * scale, shadowOffsetY: y * scale, shadowBlur: blur * scale, shadowColor: color });
-  return { canvas, ctx, shadow };
+  // Draws only the shadow of what `draw` fills: the shape goes far off-canvas and its shadow is offset back.
+  // Canvas shadows ignore the transform, so offsets and blur are converted to device px by hand.
+  const shadow = (dx: number, dy: number, blur: number, color: string, draw: () => void) => {
+    ctx.save();
+    const m = ctx.getTransform(), inv = m.inverse(), far = 4 * (canvas.width + canvas.height);
+    const a = inv.transformPoint(new DOMPoint(far, 0)), o = inv.transformPoint(new DOMPoint(0, 0));
+    ctx.translate(a.x - o.x, a.y - o.y);
+    Object.assign(ctx, { shadowOffsetX: dx * scale - far, shadowOffsetY: dy * scale, shadowBlur: blur * scale, shadowColor: color, fillStyle: "#000", strokeStyle: "#000" });
+    draw();
+    ctx.restore();
+  };
+  return { canvas, ctx, shadow, scale };
 }
 
 // CSS linear-gradient(<deg>, stops) over the w×h box at (x, y).
@@ -46,100 +71,87 @@ function box(ctx: Ctx, x: number, y: number, w: number, h: number, deg: number, 
   ctx.restore();
 }
 
-function paintTop({ ctx, shadow }: ReturnType<typeof surface>, W: number, H: number, mobile: boolean, spot: Spot, a?: Assets) {
+// Shadow offset (canvas px, y down) of a point `h` above the desk at canvas (x, y), cast by the lamp.
+function castFrom(W: number, H: number, x: number, y: number, h: number) {
+  const [lx, ly, lz] = lampAt(W, H), k = h / Math.max(1, lz - h);
+  return [(x - W / 2 - lx) * k, -(H / 2 - y - ly) * k];
+}
+
+// Shadow of something standing on the desk: a tight dark contact shadow, then a softer one cast away from the lamp,
+// swept along so tall things leave long shadows. `shape(t)` adds the footprint at fraction t of the cast.
+function standing(s: Surface, W: number, H: number, x: number, y: number, h: number, shape: (p: Path2D, dx: number, dy: number) => void, dark = 1) {
+  const [dx, dy] = castFrom(W, H, x, y, h);
+  const contact = new Path2D(), cast = new Path2D();
+  shape(contact, 0, 0);
+  for (let t = 0; t <= 1; t += 1 / 8) shape(cast, dx * t, dy * t);
+  s.shadow(0, 0, 3, `rgb(8 4 2 / ${0.55 * dark})`, () => s.ctx.fill(contact));
+  s.shadow(0, 0, 6 + h * 0.18, `rgb(10 6 3 / ${0.42 * dark})`, () => s.ctx.fill(cast));
+}
+
+function paintTop(s: Surface, W: number, H: number, mobile: boolean, spot: Spot) {
+  const { ctx } = s, L = deskLayout(W, H, mobile, spot);
   ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = linear(ctx, 95, W, H, [[0, "#493326"], [0.32, "#654938"], [0.68, "#58402e"], [1, "#3d2b20"]]);
-  ctx.fillRect(0, 0, W, H);
-  for (let y = H; y > 0; y -= 13) {
-    ctx.fillStyle = "#120b051c"; ctx.fillRect(0, y - 1, W, 1);
-    ctx.fillStyle = "#c3a0730b"; ctx.fillRect(0, y - 7, W, 2);
-  }
-  ctx.save();
-  ctx.translate(W / 2, H / 2); ctx.rotate(Math.PI / 180); ctx.fillStyle = "#21130935";
-  for (let y = -H; y < H; y += 91) ctx.fillRect(-W, y + 42.5, 2 * W, 2);
-  ctx.restore();
-  ctx.fillStyle = linear(ctx, 105, W, H, [[0, "#ffffff09"], [0.45, "#ffffff00"], [0.45, "#00000000"], [1, "#0003"]]);
-  ctx.fillRect(0, 0, W, H);
-
-  if (a) {
-    for (const [img, l] of [[a.dirt, DIRT], [a.wear, WEAR]] as const) {
-      ctx.globalCompositeOperation = l.blend as GlobalCompositeOperation;
-      ctx.globalAlpha = l.opacity ?? 1;
-      ctx.drawImage(img, 0, 0, W, H);
-    }
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 1;
-  }
-  // A few light coffee rings follow the cup's current position without rasterizing SVG noise.
-  ctx.save();
-  ctx.strokeStyle = "#3a1d0b88";
-  ctx.lineWidth = Math.max(1, W * 0.002);
+  // Coffee rings: a darker rim where the coffee dried, a faint wash inside, broken where the mug was lifted.
+  const r = rng(Math.round(spot.x * 1e6));
   const [ringX, ringY] = cupAt(spot);
-  for (const [dx, dy, radius, start, end] of [[0, 0, 1.5, 0.2, 5.6], [0.014, -0.01, 1.35, 1.4, 5.9]] as const) {
-    ctx.beginPath();
-    ctx.arc((ringX + dx) * W, (ringY + dy) * H, W * spot.radius * radius, start, end);
-    ctx.stroke();
-  }
-  ctx.restore();
-  // Worn, darker rim (Grime's inset shadow) and the lit edge.
-  ctx.save();
-  ctx.beginPath(); ctx.roundRect(0, 0, W, H, 14); ctx.clip();
-  ctx.beginPath(); ctx.rect(-100, -100, W + 200, H + 200); ctx.roundRect(0, 0, W, H, 14);
-  shadow(0, 0, 18, "rgb(58 42 26 / .35)"); ctx.fill("evenodd");
-  ctx.restore();
-  ctx.strokeStyle = "#c09b6b40"; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.roundRect(0, 0, W, H, 14); ctx.stroke();
-
-  // Cup shadow; the cup itself is 3D.
-  const [cx, cy] = cupAt(spot), D = W * spot.radius * 2;
-  ctx.save();
-  shadow(9, 12, 12, "#160c0870"); ctx.fillStyle = "#160c0880";
-  ctx.beginPath(); ctx.arc(cx * W, cy * H, D * 0.47 + 2, 0, 2 * Math.PI); ctx.fill();
-  ctx.restore();
-
-  ctx.save();
-  box(ctx, W * 0.11, H * 0.17, W * 0.17, H * 0.014, 16, () => { // pencil
-    const w = W * 0.17, h = H * 0.014;
-    ctx.save();
-    shadow(3, 5, 3, "#15100a90");
-    ctx.fillStyle = linear(ctx, 180, w, h, [[0, "#f7c948"], [0.45, "#e8a91c"], [1, "#b9800e"]]);
-    ctx.beginPath(); ctx.roundRect(0, 0, w, h, [0, 2, 2, 0]); ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = linear(ctx, 90, h * 2.4, h, [[0.18, "#333"], [0.2, "#e8c9a0"]], -h * 2.4);
-    ctx.beginPath(); ctx.moveTo(-h * 2.4, h / 2); ctx.lineTo(0, 0); ctx.lineTo(0, h); ctx.fill();
-    ctx.fillStyle = linear(ctx, 90, h * 2.6, h, [[0, "#bdbdb6"], [0.3, "#eee"], [0.55, "#999"], [0.6, "#bdbdb6"], [0.62, "#e58c8a"], [1, "#d77471"]], w);
-    ctx.beginPath(); ctx.roundRect(w, 0, h * 2.6, h, [0, 3, 3, 0]); ctx.fill();
-  });
-  box(ctx, W * 0.9, H * 0.5, W * 0.14, H * 0.011, 78, () => { // pen
-    const w = W * 0.14, h = H * 0.011;
-    ctx.save();
-    shadow(3, 5, 3, "#15100a90");
-    ctx.fillStyle = linear(ctx, 180, w, h, [[0, "#3b4b6b"], [0.6, "#1b2438"], [1, "#0e1320"]]);
-    ctx.beginPath(); ctx.ellipse(w / 2, h / 2, w / 2, h / 2, 0, Math.PI / 2, Math.PI * 1.5); ctx.lineTo(w, 0); ctx.lineTo(w, h); ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = linear(ctx, 180, w * 0.3, h * 0.45, [[0, "#eee"], [1, "#999"]], w * 0.64, -h * 0.3);
-    ctx.beginPath(); ctx.roundRect(w * 0.64, -h * 0.3, w * 0.3, h * 0.45, 2); ctx.fill();
-  });
-  const note = W * 0.085;
-  box(ctx, W * 0.5, H * 0.7, note, note, mobile ? -84 : 5, () => { // sticky note
-    ctx.fillStyle = linear(ctx, 160, note, note, [[0, "#fff59a"], [0.7, "#f5e36a"], [1, "#e8d24f"]]);
-    for (const [x, y, blur, color] of [[1, 2, 1, "#0003"], [4, 8, 8, "#130b0866"]] as const) {
-      ctx.save(); shadow(x, y, blur, color); ctx.fillRect(0, 0, note, note); ctx.restore();
+  for (const [dx, dy, radius, start, end] of [[0, 0, 1.08, 0.2, 5.6], [0.014, -0.01, 0.98, 1.4, 5.9], [-0.006, 0.02, 1.02, 3.6, 7.4]] as const) {
+    const x = (ringX + dx) * W, y = (ringY + dy) * H, R = W * spot.radius * radius;
+    ctx.fillStyle = "rgb(70 34 12 / .05)";
+    ctx.beginPath(); ctx.arc(x, y, R, 0, 2 * Math.PI); ctx.fill();
+    for (let a = start; a < end; a += 0.12) {
+      ctx.strokeStyle = `rgb(58 26 8 / ${0.25 + r() * 0.35})`;
+      ctx.lineWidth = Math.max(0.8, W * 0.0016 * (0.6 + r()));
+      ctx.beginPath(); ctx.arc(x, y, R * (0.995 + r() * 0.01), a, a + 0.14); ctx.stroke();
     }
-    if (!a) return;
-    const size = Math.min(17, Math.max(9, innerWidth * 0.0135));
-    ctx.fillStyle = "#28334f"; ctx.font = `700 ${size}px ${a.font}`; ctx.textBaseline = "middle";
-    ["TODO:", "– more code", "– more coffe"].forEach((line, i) => ctx.fillText(line, size * 0.6, size * (0.7 + 1.15 * (i + 0.5))));
+  }
+  // Shadows of everything desk-gl.ts stands on the top.
+  const c = L.cup;
+  standing(s, W, H, c.x * W, c.y * H, c.d * 0.85, (p, dx, dy) => {
+    p.moveTo(c.x * W + dx + c.d * 0.5, c.y * H + dy); p.arc(c.x * W + dx, c.y * H + dy, c.d * 0.5, 0, 2 * Math.PI);
+    p.moveTo(c.x * W + dx - c.d * 0.5, c.y * H + dy); p.ellipse(c.x * W + dx - c.d * 0.62, c.y * H + dy, c.d * 0.16, c.d * 0.05, 0, 0, 2 * Math.PI); // handle
   });
+  const plant = L.plant;
+  standing(s, W, H, plant.x * W, plant.y * H, plant.r * 1.1, (p, dx, dy) => { p.moveTo(plant.x * W + dx + plant.r, plant.y * H + dy); p.arc(plant.x * W + dx, plant.y * H + dy, plant.r, 0, 2 * Math.PI); });
+  standing(s, W, H, plant.x * W, plant.y * H, plant.r * 1.9, (p, dx, dy) => { p.moveTo(plant.x * W + dx + plant.r * 1.05, plant.y * H + dy); p.arc(plant.x * W + dx, plant.y * H + dy, plant.r * 1.05, 0, 2 * Math.PI); }, 0.6);
+  for (const k of ["pencil", "pen"] as const) {
+    const o = L[k], total = o.length + o.d * 5.2;
+    standing(s, W, H, o.x * W, o.y * H, o.d, (p, dx, dy) => {
+      const a = o.angle * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), half = total / 2, w = o.d / 2;
+      p.moveTo(o.x * W + dx - ux * half - uy * w * 0.2, o.y * H + dy - uy * half + ux * w * 0.2);
+      for (const [l, sw] of [[half, w], [half, -w], [-half + o.d * 2.6, -w], [-half, 0], [-half + o.d * 2.6, w]] as const)
+        p.lineTo(o.x * W + dx + ux * l - uy * sw, o.y * H + dy + uy * l + ux * sw);
+      p.closePath();
+    }, 0.8);
+  }
+  const n = L.note;
+  standing(s, W, H, n.x * W, n.y * H, 3, (p, dx, dy) => {
+    const a = n.angle * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a), h = n.size / 2;
+    p.moveTo(n.x * W + dx + (-h * ux + h * uy), n.y * H + dy + (-h * uy - h * ux));
+    for (const [lx, ly] of [[h, -h], [h, h * 0.4], [h * 0.4, h], [-h, h]]) p.lineTo(n.x * W + dx + lx * ux - ly * uy, n.y * H + dy + lx * uy + ly * ux);
+    p.closePath();
+  }, 0.7);
+  // Paper clips stay painted: steel wire with a highlight, and their own hairline shadow.
   const clip = new Path2D("M28 30 V82 a10 10 0 0 1 -20 0 V18 a14 14 0 0 1 28 0 V72");
   for (const [x, y, deg] of [[0.61, 0.83, -24], [0.635, 0.8, 38]]) {
-    box(ctx, W * x, H * y, W * 0.013, W * 0.0325, deg, () => { // paper clips
+    box(ctx, W * x, H * y, W * 0.013, W * 0.0325, deg, () => {
       ctx.scale(W * 0.013 / 40, W * 0.013 / 40);
-      shadow(1, 2, 1, "#000a");
-      ctx.strokeStyle = "#c9ccd0"; ctx.lineWidth = 5; ctx.stroke(clip);
+      ctx.save(); Object.assign(ctx, { shadowOffsetX: 1.5 * s.scale, shadowOffsetY: 2 * s.scale, shadowBlur: 2 * s.scale, shadowColor: "#000a" });
+      ctx.strokeStyle = "#9fa3a8"; ctx.lineWidth = 5.5; ctx.stroke(clip); ctx.restore();
+      ctx.strokeStyle = "#e4e7ea"; ctx.lineWidth = 2; ctx.stroke(clip);
     });
   }
-  ctx.restore();
+}
+
+// The sticky note's own texture (uv covers the square, text upright).
+function paintNote({ ctx }: Surface, size: number, a?: Assets) {
+  ctx.fillStyle = linear(ctx, 160, size, size, [[0, "#fff59a"], [0.7, "#f6e46c"], [1, "#e9d352"]]);
+  ctx.fillRect(0, 0, size, size);
+  // Adhesive strip along the top reads as a slightly darker, flatter band.
+  ctx.fillStyle = "#c9b23a1c"; ctx.fillRect(0, 0, size, size * 0.18);
+  if (!a) return;
+  const px = Math.min(17, Math.max(9, innerWidth * 0.0135));
+  ctx.fillStyle = "#28334f"; ctx.font = `700 ${px}px ${a.font}`; ctx.textBaseline = "middle";
+  ["TODO:", "– more code", "– more coffe"].forEach((line, i) => ctx.fillText(line, px * 0.6, px * (0.7 + 1.15 * (i + 0.5))));
 }
 
 // Chalk hints; units are % of desk height. The phone set is drawn upright on the 100x185 screen and turned back onto the desk.
@@ -150,7 +162,7 @@ const CHALK_TEXT = {
     paths: ["M52 17 C60 16 62 22 60 28", "M42 76 C52 73 60 77 62 84", "M74 126 C70 125 68 128 67 132"] },
 } as const;
 
-function paintChalk({ ctx }: ReturnType<typeof surface>, W: number, H: number, mobile: boolean, a: Assets) {
+function paintChalk({ ctx }: Surface, W: number, H: number, mobile: boolean, a: Assets) {
   const set = CHALK_TEXT[mobile ? "phone" : "wide"];
   ctx.save();
   ctx.scale(W / 185, W / 185);
@@ -178,55 +190,111 @@ function paintChalk({ ctx }: ReturnType<typeof surface>, W: number, H: number, m
   ctx.drawImage(a.grain, 0, 0, W, H);
 }
 
-// Plank floor with a rug and a cable, fading out towards its edges.
-function paintFloor({ ctx, shadow }: ReturnType<typeof surface>, w: number, h: number) {
-  const plank = w * 0.0625;
-  for (let i = 0; i * plank < w; i++) {
-    ctx.fillStyle = ["#2c2722", "#26211d", "#302a24"][i % 3];
-    ctx.fillRect(i * plank, 0, plank + 1, h);
-    ctx.fillStyle = "#0b0a09";
-    ctx.fillRect(i * plank, 0, 2, h);
-  }
-  ctx.fillStyle = "#0000000d";
-  for (let y = h; y > 0; y -= 11) ctx.fillRect(0, y - 4, w, 1);
-
-  const rw = w * 0.64, rh = h * 0.6, rx = (w - rw) / 2, ry = (h - rh) / 2;
-  const rect = (inset: number, r: number) => { ctx.beginPath(); ctx.roundRect(rx + inset, ry + inset, rw - 2 * inset, rh - 2 * inset, r); };
-  ctx.save(); shadow(0, 6, 18, "#0008"); ctx.fillStyle = "#3a1a16"; rect(-20, 26); ctx.fill(); ctx.restore();
-  ctx.fillStyle = "#5c2b24"; rect(-12, 18); ctx.fill();
-  ctx.fillStyle = linear(ctx, 180, rw, rh, [[0, "#7a3a2e"], [1, "#6b3027"]], rx, ry); rect(2, 4); ctx.fill();
+// A worn Persian-style rug: abrash-banded field, lattice, medallion, guard borders and fringe; weave grain once the noise is in.
+function paintRug(ctx: Ctx, x: number, y: number, w: number, h: number, grain?: HTMLImageElement) {
+  const u = Math.min(w, h) / 100, r = rng(7);
   ctx.save();
-  ctx.clip();
-  ctx.translate(w / 2, h / 2);
-  for (const [turn, color] of [[1, "#ffffff08"], [-1, "#0000001a"]] as const) {
-    ctx.save(); ctx.rotate(turn * Math.PI / 4); ctx.fillStyle = color;
-    for (let x = -w; x < w; x += 20) ctx.fillRect(x + 18, -w, 2, 2 * w);
-    ctx.restore();
+  ctx.beginPath(); ctx.roundRect(x, y, w, h, u); ctx.clip();
+  ctx.fillStyle = "#5a231d"; ctx.fillRect(x, y, w, h);
+  // Abrash: hand-dyed wool batches leave soft bands of slightly different red across the rug.
+  for (let k = 0; k < 14; k++) {
+    ctx.fillStyle = `rgb(${90 + r() * 26} ${30 + r() * 10} ${24 + r() * 8} / .5)`;
+    ctx.fillRect(x + w * k / 14, y, w / 14 + 1, h);
+  }
+  const band = (inset: number, width: number, color: string) => { ctx.strokeStyle = color; ctx.lineWidth = width; ctx.strokeRect(x + inset, y + inset, w - 2 * inset, h - 2 * inset); };
+  band(u * 3, u * 6, "#1d2333"); band(u * 6.6, u * 0.6, "#b9a47c"); band(u * 9.6, u * 5, "#232b3e"); band(u * 12.4, u * 0.6, "#b9a47c");
+  // Small rosettes along the main border.
+  const rosette = (px: number, py: number, s: number) => {
+    ctx.fillStyle = "#8c6230"; ctx.beginPath(); ctx.moveTo(px - s, py); ctx.lineTo(px, py - s); ctx.lineTo(px + s, py); ctx.lineTo(px, py + s); ctx.fill();
+    ctx.fillStyle = "#c2ad84"; ctx.beginPath(); ctx.arc(px, py, s * 0.3, 0, 2 * Math.PI); ctx.fill();
+  };
+  for (let t = u * 9.6; t < w - u * 9.6; t += u * 3.4) { rosette(x + t, y + u * 9.6, u * 1.3); rosette(x + t, y + h - u * 9.6, u * 1.3); }
+  for (let t = u * 9.6; t < h - u * 9.6; t += u * 3.4) { rosette(x + u * 9.6, y + t, u * 1.3); rosette(x + w - u * 9.6, y + t, u * 1.3); }
+  // Field lattice and a stepped medallion.
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x + u * 13, y + u * 13, w - u * 26, h - u * 26); ctx.clip();
+  ctx.strokeStyle = "#7a3229"; ctx.lineWidth = u * 0.45;
+  for (let k = -h; k < w + h; k += u * 7) {
+    ctx.beginPath(); ctx.moveTo(x + k, y); ctx.lineTo(x + k + h, y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x + k, y + h); ctx.lineTo(x + k + h, y); ctx.stroke();
+  }
+  const cx = x + w / 2, cy = y + h / 2;
+  for (const [s, color] of [[1, "#1f2638"], [0.9, "#b29a6c"], [0.84, "#5e241d"], [0.56, "#263049"], [0.48, "#a88a55"], [0.3, "#5e241d"], [0.14, "#c2ad84"]] as const) {
+    ctx.fillStyle = color; ctx.beginPath();
+    const rx = w * 0.17 * s, ry = h * 0.25 * s;
+    for (let i = 0; i < 16; i++) { // stepped lozenge
+      const a = i / 16 * 2 * Math.PI, k = i % 2 ? 0.86 : 1;
+      ctx.lineTo(cx + Math.cos(a) * rx * k * (1 - 0.35 * Math.abs(Math.sin(a))), cy + Math.sin(a) * ry * k * (1 - 0.35 * Math.abs(Math.cos(a))));
+    }
+    ctx.fill();
   }
   ctx.restore();
-  ctx.strokeStyle = "#d9c9a133"; ctx.lineWidth = 1; ctx.setLineDash([6, 4]); rect(2.5, 4); ctx.stroke(); ctx.setLineDash([]);
-
-  const cable = new Path2D();
-  cable.addPath(new Path2D("M44 38 C38 30 30 40 24 34 S14 20 2 24"), new DOMMatrix().scale(w / 100, h / 100));
-  ctx.save(); shadow(2, 3, 2, "#0009"); ctx.strokeStyle = "#0e0e0d"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.stroke(cable); ctx.restore();
-
-  ctx.globalCompositeOperation = "destination-in";
-  ctx.translate(w / 2, h / 2); ctx.scale(w / 2, h / 2);
-  const fade = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-  fade.addColorStop(0.45, "#000"); fade.addColorStop(0.95, "#0000");
-  ctx.fillStyle = fade; ctx.fillRect(-1, -1, 2, 2);
+  // Traffic wear: the middle is lighter and flatter, the pile darker where furniture pressed it.
+  const wear = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.6);
+  wear.addColorStop(0, "#e8c9a014"); wear.addColorStop(1, "#0000");
+  ctx.fillStyle = wear; ctx.fillRect(x, y, w, h);
+  if (grain) {
+    ctx.globalAlpha = 0.6; ctx.globalCompositeOperation = "multiply";
+    ctx.drawImage(grain, x, y, w, h);
+    ctx.drawImage(grain, x + w, y + h, -w, -h);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+  }
+  ctx.restore();
+  // Fringe on the short ends.
+  ctx.strokeStyle = "#b8a98ab0"; ctx.lineWidth = u * 0.3;
+  for (let k = y + u; k < y + h - u; k += u * 0.9)
+    for (const [x0, dir] of [[x, -1], [x + w, 1]] as const) {
+      ctx.beginPath(); ctx.moveTo(x0, k); ctx.lineTo(x0 + dir * u * (2.2 + Math.sin(k * 7.3) * 0.6), k + Math.sin(k) * u * 0.3); ctx.stroke();
+    }
 }
 
-function paintDrawers({ ctx }: ReturnType<typeof surface>, w: number, h: number) {
-  ctx.fillStyle = "#231910"; ctx.fillRect(0, 0, w, h);
-  const pw = (w - 10) / 2;
-  for (const x of [3, 7 + pw]) {
-    ctx.fillStyle = linear(ctx, 100, pw, h - 6, [[0, "#493326"], [0.5, "#59402f"], [1, "#3a291e"]], x, 3);
-    ctx.fillRect(x, 3, pw, h - 6);
-    ctx.fillStyle = "#171815"; ctx.beginPath(); ctx.roundRect(x + pw * 0.405, 23, pw * 0.19, 5, 3); ctx.fill();
-    ctx.fillStyle = "#8e8b7444"; ctx.fillRect(x + pw * 0.405 + 2, 28, pw * 0.19 - 4, 1);
+// Rug, cable and the shadows the desk, its legs and the bin throw on the floor. The floor canvas covers
+// desk x ∈ [-1.1W, 1.1W], y ∈ [-1.3H, 1.3H]; its pixel (fx, fy) is desk (fx - 1.1W, 1.3H - fy).
+function paintFloor(s: Surface, W: number, H: number, leg: number, drawerHeight: number, grain?: HTMLImageElement) {
+  const { ctx } = s, fw = W * 2.2, fh = H * 2.6, floorZ = -12 - leg, [lx, ly, lz] = lampAt(W, H);
+  ctx.clearRect(0, 0, fw, fh);
+  paintRug(ctx, fw * 0.18, fh * 0.2, fw * 0.64, fh * 0.6, grain);
+  const cable = new Path2D();
+  cable.addPath(new Path2D("M44 38 C38 30 30 40 24 34 S14 20 2 24"), new DOMMatrix().scale(fw / 100, fh / 100));
+  s.shadow(2, 3, 3, "#000a", () => { ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.strokeStyle = "#000"; ctx.stroke(cable); });
+  ctx.strokeStyle = "#141413"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.stroke(cable);
+  ctx.strokeStyle = "#ffffff14"; ctx.lineWidth = 1.2; ctx.stroke(cable);
+
+  // Lamp projection of a desk-space point onto the floor, in floor canvas px.
+  const proj = (x: number, y: number, z: number) => {
+    const k = (lz - floorZ) / (lz - z);
+    return [lx + (x - lx) * k + fw / 2, fh / 2 - (ly + (y - ly) * k)];
+  };
+  const poly = (pts: number[][]) => { const p = new Path2D(); pts.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); return p; };
+  // Ambient occlusion: the floor under the desk sees little of the room.
+  const ao = poly([[-W * 0.5, -H * 0.5], [W * 0.5, -H * 0.5], [W * 0.5, H * 0.5], [-W * 0.5, H * 0.5]].map(([x, y]) => [x + fw / 2, fh / 2 - y]));
+  s.shadow(0, 0, 70, "rgb(0 0 0 / .45)", () => ctx.fill(ao));
+  // Cast: tabletop, drawer block and legs.
+  const top = poly([[-W / 2, -H / 2], [W / 2, -H / 2], [W / 2, H / 2], [-W / 2, H / 2]].map(([x, y]) => proj(x, y, -12)));
+  const drawers = poly([[-0.42 * W, -0.43 * H], [0.42 * W, -0.43 * H], [0.42 * W, 0.2 * H], [-0.42 * W, 0.2 * H]].map(([x, y]) => proj(x, y, -24 - drawerHeight)));
+  s.shadow(0, 0, 26, "rgb(0 0 0 / .5)", () => { ctx.fill(top); ctx.fill(drawers); });
+  for (const [x, y] of legsAt(W, H)) {
+    const foot = [x + fw / 2, fh / 2 - y], head = proj(x, y, -12);
+    s.shadow(0, 0, 8, "rgb(0 0 0 / .55)", () => { ctx.lineWidth = 22; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(head[0], head[1]); ctx.stroke(); });
+    s.shadow(0, 0, 4, "rgb(0 0 0 / .7)", () => { ctx.beginPath(); ctx.arc(foot[0], foot[1], 15, 0, 2 * Math.PI); ctx.fill(); });
+  }
+  const b = binAt(W, H, leg), bh = 0.4 * leg;
+  const bf = [b.x + fw / 2, fh / 2 - b.y], bt = proj(b.x, b.y, floorZ + bh);
+  s.shadow(0, 0, 6, "rgb(0 0 0 / .65)", () => { ctx.beginPath(); ctx.arc(bf[0], bf[1], b.r * 1.02, 0, 2 * Math.PI); ctx.fill(); });
+  s.shadow(0, 0, 18, "rgb(0 0 0 / .4)", () => {
+    ctx.beginPath(); ctx.arc(bt[0], bt[1], b.r, 0, 2 * Math.PI); ctx.fill();
+    ctx.lineWidth = b.r * 2; ctx.beginPath(); ctx.moveTo(bf[0], bf[1]); ctx.lineTo(bt[0], bt[1]); ctx.stroke();
+  });
+  for (const ball of ballsAt(W, H)) {
+    const [x, y] = [ball.x + fw / 2, fh / 2 - ball.y];
+    s.shadow(2, 3, 5, "rgb(0 0 0 / .6)", () => { ctx.beginPath(); ctx.arc(x, y, ball.r * 0.8, 0, 2 * Math.PI); ctx.fill(); });
   }
 }
+
+// Furniture positions shared by the floor shadows and the meshes (desk space).
+export const legsAt = (W: number, H: number) => [-1, 1].flatMap((x) => [0.42, -0.41].map((y) => [x * (W * 0.45 - 12.5), y * H]));
+export const binAt = (W: number, H: number, leg: number) => ({ x: 0.69 * W, y: -0.31 * H, r: 0.06 * W, z: -12 - leg });
+export const ballsAt = (W: number, H: number) => [{ x: 0.528 * W, y: -0.572 * H, r: W * 0.0143 }, { x: 0.737 * W, y: -0.442 * H, r: W * 0.0121 }];
 
 const load = (src: string) => {
   const img = new Image();
@@ -234,17 +302,19 @@ const load = (src: string) => {
   return img.decode().then(() => img);
 };
 
-// Paints what it can right away; baked images and the hand font land later, then `ready` fires with the finished top and chalk.
-export function paintDesk(W: number, H: number, mobile: boolean, seed: number, drawerHeight: number, ready: () => void) {
+// Paints what it can right away; baked images and the hand font land later, then `ready` fires with the grime
+// images for the wood bake and the finished canvases.
+export function paintDesk(W: number, H: number, mobile: boolean, seed: number, leg: number, drawerHeight: number,
+  ready: (grime: { dirt: HTMLImageElement; wear: HTMLImageElement }) => void) {
   const dpr = Math.min(devicePixelRatio, 2);
-  const top = surface(W, H, Math.min(dpr, 4096 / W));
-  const chalk = surface(W, H, Math.min(dpr, 4096 / W));
+  const spot = coffeeSpot(rng(seed)), L = deskLayout(W, H, mobile, spot);
+  const top = surface(W, H, Math.min(dpr, 2048 / W));
+  const chalk = surface(W, H, Math.min(dpr, 2048 / W));
   const floor = surface(W * 2.2, H * 2.6, Math.min(dpr, 2048 / (W * 2.2)));
-  const drawers = surface(W * 0.84, drawerHeight, dpr);
-  const spot = coffeeSpot(rng(seed));
+  const note = surface(L.note.size, L.note.size, dpr * 1.5);
   paintTop(top, W, H, mobile, spot);
-  paintFloor(floor, W * 2.2, H * 2.6);
-  paintDrawers(drawers, W * 0.84, drawerHeight);
+  paintFloor(floor, W, H, leg, drawerHeight);
+  paintNote(note, L.note.size);
 
   let live = true;
   const font = getComputedStyle(document.body).getPropertyValue("--font-hand-title") || "cursive";
@@ -256,11 +326,12 @@ export function paintDesk(W: number, H: number, mobile: boolean, seed: number, d
     document.fonts.load(`700 16px ${font}`).catch(() => {}),
   ]).then(([dirt, wear, grain]) => {
     if (!live) return;
-    const assets = { dirt, wear, grain, font };
-    paintTop(top, W, H, mobile, spot, assets);
+    const assets = { grain, font };
     paintChalk(chalk, W, H, mobile, assets);
-    ready();
+    paintNote(note, L.note.size, assets);
+    paintFloor(floor, W, H, leg, drawerHeight, grain);
+    ready({ dirt, wear });
   }));
 
-  return { top: top.canvas, chalk: chalk.canvas, floor: floor.canvas, drawers: drawers.canvas, spot, cancel: () => { live = false; } };
+  return { top: top.canvas, chalk: chalk.canvas, floor: floor.canvas, note: note.canvas, spot, layout: L, cancel: () => { live = false; } };
 }
