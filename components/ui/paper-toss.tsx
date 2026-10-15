@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getScoreboard, setScoreName, submitScore } from "@/lib/stamps";
+import { track } from "@/lib/track";
 import { device, SCORE_TIERS, TIERS } from "./stamp";
 import styles from "./paper-toss.module.css";
 
@@ -87,7 +88,8 @@ function Game({ onClose }: { onClose: () => void }) {
     dialog.current!.showModal();
     const el = canvas.current!, ctx = el.getContext("2d")!;
     // First throw is windless; each later one gets a new gust.
-    let ball = fresh(), wind = 0, score = 0, best = 0, frame = 0, then = performance.now();
+    let ball = fresh(), wind = 0, score = 0, best = 0, frame = 0, then = performance.now(), throws = 0, max = 0;
+    track("game", "paper-toss");
     let drag: { x: number; y: number; pull: { x: number; y: number } } | null = null;
     const load = () => getScoreboard(device()).then((b) => {
       best = Math.max(best, b.me.best);
@@ -100,7 +102,10 @@ function Game({ onClose }: { onClose: () => void }) {
       const dt = Math.min(0.05, (now - then) / 1000);
       then = now;
       // Each basket past the record is saved right away, so closing mid-streak loses nothing.
-      if (step(ball, dt, wind) && ++score > best) { best = score; submitScore(device(), score).then(load, () => {}); }
+      if (step(ball, dt, wind)) {
+        max = Math.max(max, ++score);
+        if (score > best) { best = score; submitScore(device(), score).then(load, () => {}); }
+      }
       if ((ball.state === "in" || ball.state === "out") && ball.t > 0.6) {
         if (ball.state === "out") score = 0;
         ball = fresh(); wind = gust();
@@ -130,12 +135,14 @@ function Game({ onClose }: { onClose: () => void }) {
       drag = null;
       if (Math.hypot(x, y) < 3) return;
       Object.assign(ball, { vx: -x * POWER, vy: -y * POWER, state: "flying" });
+      throws++;
     };
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
     el.addEventListener("pointercancel", up);
     return () => {
+      if (throws) track("score", "paper-toss", { throws, max });
       cancelAnimationFrame(frame);
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);

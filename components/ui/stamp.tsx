@@ -40,8 +40,7 @@ export const tier = ({ seed, best, beans }: Pick<Stamp, "seed" | "best" | "beans
   return Math.max(v < 0.05 ? 2 : v < 0.3 ? 1 : 0, SCORE_TIERS.filter((n) => best >= n).length);
 };
 
-// What the client adds to the device seed (the server adds IP and browser headers).
-export const device = () => [screen.width, screen.height, devicePixelRatio, Intl.DateTimeFormat().resolvedOptions().timeZone, navigator.hardwareConcurrency, navigator.language].join("|");
+export { device } from "@/lib/track";
 export const pad = (n: number) => `Nº ${String(n).padStart(4, "0")}`;
 
 const PAPER = [["#f4ecd8", "#b3261e"], ["#1c3452", "#f4efe2"], ["#e9b949", "#1d1a16"], ["#bfe3d0", "#1c3452"], ["#f6c6cf", "#7a1f3d"], ["#ef7d3c", "#fff4e0"], ["#d8c8f0", "#3b2a7a"], ["#1d1a16", "#f2d64b"]];
