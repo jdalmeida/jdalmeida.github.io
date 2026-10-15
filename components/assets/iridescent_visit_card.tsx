@@ -40,10 +40,10 @@ export default function VisitCard() {
             src="/logos/jalmeida-signature.svg"
             alt="Assinatura de João de Almeida"
           />
-          <div className={styles.cardName}>
+          <div className={styles.cardName} data-card-type="name">
             <p>João de Almeida</p>
           </div>
-          <div className={styles.cardText}>
+          <div className={styles.cardText} data-card-type="text">
             <div className={styles.cardStickers} aria-hidden>
               <img src="/stickers/globe_black.webp" alt="" />
               <img src="/stickers/star_scribble_black.webp" alt="" />

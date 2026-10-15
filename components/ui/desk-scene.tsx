@@ -25,6 +25,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
     const surface = desk.current!;
     const card = surface.nextElementSibling!.firstElementChild as HTMLElement;
     const stickers = viewport.firstElementChild as HTMLElement;
+    const [name, text] = [...card.querySelectorAll<HTMLElement>("[data-card-type]")];
     const gl = createDeskGL(surface.parentElement!, styles.gl);
     if (!gl) surface.dataset.flat = "";
     else for (const [key, value] of [["--cup-x", gl.cup.x], ["--cup-y", gl.cup.y], ["--cup-d", gl.cup.d]] as const) surface.style.setProperty(key, `${value * 100}%`);
@@ -37,6 +38,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
       const height = viewport.clientHeight;
       const progress = motion.matches ? 1 : clamp(-root.getBoundingClientRect().top / Math.max(1, root.offsetHeight - height));
       const width = surface.offsetWidth;
+      const cardHeight = card.offsetHeight;
       // Past the scene (or between identical frames) nothing moves: skip the style writes and the redraw.
       const key = `${progress}|${width}|${viewport.clientWidth}|${height}|${mobile.matches}`;
       if (key === drawn) return;
@@ -62,13 +64,14 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
         "--card-pitch": `${pitch * landing}deg`,
         "--card-turn": `${-8 * travel}deg`,
         "--card-scale": 1 - (mobile.matches ? 0.5 : 0.72) * travel,
-        "--card-type-scale": mobile.matches ? 1 + 0.6 * travel : 1,
-        "--card-name-bottom": `${mobile.matches ? 9 - 5 * travel : 9}%`,
-        "--card-text-bottom": `${mobile.matches ? 9 + 4 * travel : 9}%`,
         "--card-lift": `${1 + 45 * Math.sin(Math.PI * travel)}px`,
         "--card-tilt": 1 - travel,
         "--card-landing": landing,
       });
+      // Phones: name and text grow to 1.6x (laid out at that size, see the CSS) and the name drops, the text rises.
+      const typeScale = mobile.matches ? (1 + 0.6 * travel) / 1.6 : 1;
+      set(name, { "--card-type-scale": typeScale, "--card-type-y": `${mobile.matches ? cardHeight * 0.05 * travel : 0}px` });
+      set(text, { "--card-type-scale": typeScale, "--card-type-y": `${mobile.matches ? -cardHeight * 0.04 * travel : 0}px` });
       const fade = 1 - ease((progress - 0.1) / 0.45);
       set(stickers, {
         "--sticker-y": `${-height * progress * 1.35}px`,
