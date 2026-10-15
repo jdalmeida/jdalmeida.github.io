@@ -86,6 +86,11 @@ export default async function Visitor({ params }: PageProps<"/admin/visitante/[i
               <p key={i} className="text-sm">Recorde <b className="text-neutral-50">{s.best}</b>{s.name && <> como <b className="text-neutral-50">{s.name}</b></>} <span className="text-neutral-500">· {when(s.updated_at)}</span></p>
             )) : <p className="text-sm text-neutral-500">Sem placar.</p>}
           </Card>
+          <Card title="Corrida na Mesa">
+            {data.runs.length ? data.runs.map((s, i) => (
+              <p key={i} className="text-sm">Recorde <b className="text-neutral-50">{s.best}</b>{s.name && <> como <b className="text-neutral-50">{s.name}</b></>} <span className="text-neutral-500">· {when(s.updated_at)}</span></p>
+            )) : <p className="text-sm text-neutral-500">Sem corrida.</p>}
+          </Card>
           <Card title="Castelo do Café">
             {data.castle.length ? data.castle.map((c, i) => (
               <p key={i} className="text-sm">

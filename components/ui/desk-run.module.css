@@ -1,0 +1,34 @@
+/* Sits over the WebGL succulent (desk-gl.ts): deskLayout's plant at 5.2% / 10% of the desk, radius 3.2% of its width.
+   desk-scene.tsx sets --plant-z to the rosette's height. */
+.plant {
+  position: absolute; left: 5.2%; top: 10%; width: 8.3%; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%;
+  background: none; cursor: pointer;
+  transform: translate(-50%, -50%) translateZ(var(--plant-z, 0px));
+}
+.plant:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+[data-landed="false"] .plant, [data-flat] .plant { visibility: hidden; }
+
+.hud { flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem; min-height: 1.6rem; }
+.power { color: #ffd84a; }
+.chase { color: #e79aa6; animation: blink .5s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+
+.frame { position: relative; }
+canvas.track { width: min(94vw, calc((100svh - 10rem) * .75)); cursor: default; outline: none; }
+canvas.track:active { cursor: default; }
+@media (min-width: 900px) { canvas.track { width: min(calc(94vw - 16.5rem), calc((100svh - 10rem) * .75)); } }
+
+.overlay {
+  position: absolute; inset: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .8rem;
+  padding: 1rem; background: #0b0b0a99; text-align: center;
+}
+.overlay p { margin: 0; line-height: 1.4; }
+.overlay button {
+  padding: .5rem 1.2rem; border: 2px solid #e3ddcf55; background: #1e1d1a; color: inherit; font: inherit; letter-spacing: inherit; cursor: pointer;
+}
+.overlay button:hover, .overlay button:focus-visible { border-color: #e3ddcf; outline: none; }
+.title { color: #e79aa6; }
+.story { max-width: 18rem; font-size: 11px; text-transform: none; letter-spacing: .02em; opacity: .85; }
+.record { color: #ffd84a; font-weight: normal; }
+/* The portrait track fills a phone's height, so the content starts at the top: keep it clear of the back button. */
+@media (max-width: 640px) { .room { justify-content: flex-start; padding-top: 4.5rem; } }

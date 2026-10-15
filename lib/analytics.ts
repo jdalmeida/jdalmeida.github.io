@@ -91,7 +91,7 @@ export async function visitors(days: number, filter: { source?: string; game?: s
     order by max(v.last_at) desc limit 200`) as VisitorRow[];
 }
 
-// Everything about one browser: its visits with their timelines, plus the stamps, score and castle progress linked to it.
+// Everything about one browser: its visits with their timelines, plus the stamps, scores and castle progress linked to it.
 export async function visitor(id: string) {
   const q = sql();
   const visits = (await q`select * from visits where visitor = ${id} order by started_at desc`) as Row[];
@@ -100,10 +100,11 @@ export async function visitor(id: string) {
   const seeds = visits.map((v) => v.seed as number);
   const allSeeds = [...seeds, ...visits.map((v) => v.count_seed as number)];
   const castles = visits.map((v) => v.castle as string | null).filter((c): c is string => !!c);
-  const [timeline, stamps, scores, castle, [label]] = await Promise.all([
+  const [timeline, stamps, scores, runs, castle, [label]] = await Promise.all([
     q`select id, visit, type, name, detail, at from visit_events where visit = any(${ids}::uuid[]) order by at, id`,
     q`select id, seed, ff, beans, face, country, created_at from stamps where seed = any(${allSeeds}::int[]) order by id`,
     q`select best, name, updated_at from scores where seed = any(${seeds}::int[]) order by best desc`,
+    q`select best, name, updated_at from runs where seed = any(${seeds}::int[]) order by best desc`,
     castles.length ? q`select cleared, best, updated_at from castle where key = any(${castles}::uuid[]) order by cleared desc` : Promise.resolve([]),
     q`select name, note, hidden from visitor_labels where visitor = ${id}`,
   ]);
@@ -111,13 +112,14 @@ export async function visitor(id: string) {
     visits: visits.map((v) => ({ ...v, events: (timeline as Row[]).filter((e) => e.visit === v.id) }) as Row & { events: Row[] }),
     stamps: stamps as { id: number; ff: boolean; beans: number | null; face: number | null; country: string | null; created_at: string }[],
     scores: scores as { best: number; name: string | null; updated_at: string }[],
+    runs: runs as { best: number; name: string | null; updated_at: string }[],
     castle: castle as { cleared: number; best: number[]; updated_at: string }[],
     label: (label ?? { name: null, note: null, hidden: false }) as { name: string | null; note: string | null; hidden: boolean },
   };
 }
 
 // Human labels (pt-BR) for event rows and breakdown keys.
-const GAMES: Record<string, string> = { "paper-toss": "Basquete de papel", "coffee-run": "Castelo do Café" };
+const GAMES: Record<string, string> = { "paper-toss": "Basquete de papel", "coffee-run": "Castelo do Café", "desk-run": "Corrida na Mesa" };
 export const gameName = (g: string | null) => (g && GAMES[g]) ?? g ?? "—";
 // `names`: credential id → event name, from getCredentials().
 export const credentialName = (c: string | null, names: Record<string, string> = {}) => (c && names[c]) ?? c ?? "—";
@@ -136,7 +138,9 @@ export function describe(e: { type: string; name: string | null; detail: Record<
     case "share": return `Compartilhou o artigo “${titles[e.name ?? ""] ?? e.name}”`;
     case "credential": return `Abriu a credencial ${credentialName(e.name, credentials)}`;
     case "game": return `Começou a jogar ${gameName(e.name)}`;
-    case "score": return `Basquete de papel: ${d.throws} arremessos, melhor sequência ${d.max}`;
+    case "score":
+      if (e.name === "desk-run") return `Corrida na Mesa: ${d.score} pontos (${d.cm} cm, ${d.drops} gotas)`;
+      return `Basquete de papel: ${d.throws} arremessos, melhor sequência ${d.max}`;
     case "stage": return `Castelo do Café: entrou na fase ${Number(e.name) + 1} (${stageName(e.name)})`;
     case "won": return `Castelo do Café: venceu a fase ${Number(e.name) + 1} (${stageName(e.name)}) com ${d.beans} grãos`;
     case "stamp":

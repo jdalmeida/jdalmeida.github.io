@@ -23,9 +23,10 @@ export default async function Stamps({ searchParams }: PageProps<"/admin/selos">
   const f = String((await searchParams).f ?? "todos") as keyof typeof FILTERS;
   const [rows, articles] = await Promise.all([
     neon(process.env.DATABASE_URL!)`
-      select s.*, sc.best, sc.name as player, t.name as token_name, v.visitor, l.name as visitor_name
+      select s.*, sc.best, sc.name as player, ru.best as run, ru.name as runner, t.name as token_name, v.visitor, l.name as visitor_name
       from stamps s
       left join scores sc on sc.seed = s.seed
+      left join runs ru on ru.seed = s.seed
       left join ff_tokens t on t.id = s.ff_token
       left join lateral (select visitor from visits where seed = s.seed or count_seed = s.seed order by started_at desc limit 1) v on true
       left join visitor_labels l on l.visitor = v.visitor
@@ -36,7 +37,7 @@ export default async function Stamps({ searchParams }: PageProps<"/admin/selos">
   const stamps = rows.map((r) => ({
     r, s: {
       id: r.id as number, seed: r.seed as number, ff: r.ff as boolean, country: r.country as string | null, face: r.face as number | null,
-      x: r.x as number | null, y: r.y as number | null, date: new Date(r.created_at as string).toISOString(), best: (r.best as number | null) ?? 0,
+      x: r.x as number | null, y: r.y as number | null, date: new Date(r.created_at as string).toISOString(), best: (r.best as number | null) ?? 0, run: (r.run as number | null) ?? 0,
       beans: r.beans as number | null, look: r.look ? cleanLook(r.look) : null,
     } satisfies Stamp,
   })).filter(({ s }) => f === "ff" ? s.ff : f === "conde" ? s.beans !== null : f === "visitante" ? !s.ff && s.beans === null : f === "soltos" ? s.face === null : true);
@@ -73,6 +74,7 @@ export default async function Stamps({ searchParams }: PageProps<"/admin/selos">
                 <p className="text-neutral-500">
                   {r.visitor ? <Link className="text-sky-400 hover:underline" href={`/admin/visitante/${r.visitor}`}>{(r.visitor_name as string) ?? `visitante ${(r.visitor as string).slice(0, 8)}`}</Link> : "sem visita registrada"}
                   {s.best > 0 && <> · basquete {s.best}{r.player ? ` (${r.player})` : ""}</>}
+                  {!!s.run && <> · corrida {s.run}{r.runner ? ` (${r.runner})` : ""}</>}
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 text-xs">

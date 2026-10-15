@@ -7,19 +7,20 @@ import { deviceSeed } from "./device";
 import { cleanLook, type Look } from "./look";
 
 // Tables: see lib/stamps.sql. `id` is the visitor number; look (shape, colours, rarity) comes from `seed`, rarity can be raised by `best`.
+// `run` is the Corrida na Mesa best, which can raise rarity too.
 // `beans` is set only on the Count D'arábica stamp, and sets its rarity.
-export type Stamp = { id: number; seed: number; ff: boolean; country: string | null; face: number | null; x: number | null; y: number | null; date: string; best: number; beans: number | null; look?: Look | null };
+export type Stamp = { id: number; seed: number; ff: boolean; country: string | null; face: number | null; x: number | null; y: number | null; date: string; best: number; beans: number | null; run?: number; look?: Look | null };
 
 const sql = () => neon(process.env.DATABASE_URL!);
 const toStamp = (r: Record<string, unknown>): Stamp => ({
   id: r.id as number, seed: r.seed as number, ff: r.ff as boolean, country: r.country as string | null,
   face: r.face as number | null, x: r.x as number | null, y: r.y as number | null, date: new Date(r.created_at as string).toISOString(),
-  best: (r.best as number | null) ?? 0, beans: (r.beans as number | null | undefined) ?? null, // undefined before the migration adds the column
+  best: (r.best as number | null) ?? 0, run: (r.run as number | null | undefined) ?? 0, beans: (r.beans as number | null | undefined) ?? null, // undefined before the migration adds the column
   look: r.look ? cleanLook(r.look) : null,
 });
 
 export async function getStamps() {
-  return (await sql()`select stamps.*, scores.best from stamps left join scores using (seed) where face is not null order by id`).map(toStamp);
+  return (await sql()`select stamps.*, scores.best, runs.best as run from stamps left join scores using (seed) left join runs using (seed) where face is not null order by id`).map(toStamp);
 }
 
 // One stamp per device: generating again returns the same row. A Family & Friends link upgrades a stamp that isn't stuck yet.
@@ -38,7 +39,7 @@ export async function generateStamp(device: string, ff: string) {
     on conflict (seed) do update set ff = stamps.ff or (stamps.face is null and excluded.ff),
       ff_token = case when stamps.face is null and excluded.ff_token is not null then excluded.ff_token else stamps.ff_token end,
       look = case when stamps.face is null and excluded.ff_token is not null then excluded.look else stamps.look end
-    returning *, (select best from scores where scores.seed = stamps.seed) as best`;
+    returning *, (select best from scores where scores.seed = stamps.seed) as best, (select best from runs where runs.seed = stamps.seed) as run`;
   return toStamp(row);
 }
 
@@ -47,7 +48,7 @@ export async function placeStamp(device: string, face: number, x: number, y: num
   const seed = await deviceSeed(device, count ? "conde" : "");
   if (!Number.isInteger(face) || face < 0 || face > 500 || !(x >= 0 && x <= 100) || !(y >= 0 && y <= 5000)) throw new Error("Posição inválida");
   const [row] = await sql()`update stamps set face = ${face}, x = ${x}, y = ${y} where seed = ${seed} and face is null
-    returning *, (select best from scores where scores.seed = stamps.seed) as best`;
+    returning *, (select best from scores where scores.seed = stamps.seed) as best, (select best from runs where runs.seed = stamps.seed) as run`;
   if (!row) throw new Error("Selo já colado");
   revalidatePath("/");
   return toStamp(row);

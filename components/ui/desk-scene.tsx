@@ -4,6 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import styles from "./desk-scene.module.css";
 import PaperToss from "./paper-toss";
 import CoffeeRun from "./coffee-run";
+import DeskRun from "./desk-run";
 import { createDeskGL } from "./desk-gl";
 import { track } from "@/lib/track";
 
@@ -51,8 +52,10 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
       const set = (el: HTMLElement, values: Record<string, string | number>) => {
         for (const [key, value] of Object.entries(values)) el.style.setProperty(key, String(value));
       };
-      // The mug is 0.85 of its diameter tall (desk-gl.ts `cup`); its button floats at rim height.
-      set(surface, { "--entry": `${entry}px`, "--pitch": `${pitch}deg`, "--turn": `${turn}deg`, "--cup-z": `${width * (gl?.cup.d ?? 0) * 0.85}px` });
+      // The mug is 0.85 of its diameter tall (desk-gl.ts `cup`); its button floats at rim height. The succulent's rosette tops out near 1.4 pot radii.
+      set(surface, {
+        "--entry": `${entry}px`, "--pitch": `${pitch}deg`, "--turn": `${turn}deg`, "--cup-z": `${width * (gl?.cup.d ?? 0) * 0.85}px`, "--plant-z": `${width * 0.032 * 1.4}px`,
+      });
       set(card, {
         "--card-y": `${(mobile.matches ? -width * 0.23 : width * 0.085) * travel}px`,
         "--card-x": `${mobile.matches ? 0 : -width * 0.23 * travel}px`,
@@ -114,6 +117,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
             {credentials}
             <PaperToss />
             <CoffeeRun />
+            <DeskRun />
           </div>
           <div className={styles.cardAnchor}>
             <div className={styles.card} data-desk-card>{card}</div>
