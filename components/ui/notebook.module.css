@@ -54,24 +54,26 @@
   animation: arrive 1s cubic-bezier(.15, .7, .2, 1) both;
 }
 .book[data-state="closed"] { --shift: -25%; }
-/* Hardcover boards: they stand a little proud of the page block and carry the book's shadow on the desk.
-   Each shows only while its cover lies on that side (the left one once the book is opened, the right one until the end). */
-.board {
-  position: absolute; top: -1.8%; bottom: -1.8%; width: 51.4%; transform: translateZ(calc(var(--leaves) * -1px - 3px));
-  background: radial-gradient(ellipse at 30% 20%, #ffffff12, #0000 60%), url(/textures/baked/linen.webp) 0 0 / 96px, linear-gradient(#2c4a74, #1c3452);
-  box-shadow: inset 0 0 0 1px #ffffff14, 0 .4vw .6vw #0009, 0 2.6vw 4vw -.6vw #000c;
-  transition: visibility 0s .45s;
-}
-.board[data-side="left"] { right: 50%; border-radius: 8px 0 0 8px; }
-.board[data-side="right"] { left: 50%; border-radius: 0 8px 8px 0; }
-.book[data-state="closed"] .board[data-side="left"], .book[data-state="end"] .board[data-side="right"] { visibility: hidden; transition-delay: 0s; }
-/* Satin ribbon marker: its tail hangs out under the bottom edge of the left-hand pages. */
+/* Hardcover: the first and last leaves are the boards. They stand a little proud of the page block on the three free
+   sides and carry the book's shadow, so each cover is the same board closed, opened, or seen from inside. */
+.leaf[data-cover] { top: -1.8%; height: 103.6%; width: 51.4%; }
+.leaf[data-cover] .face { box-shadow: inset 0 0 0 1px #ffffff14, 0 .4vw .6vw #0009, 0 2.6vw 4vw -.6vw #000c; }
+.leaf[data-cover] .face[data-side="front"] { border-radius: 0 8px 8px 0; }
+.leaf[data-cover] .face[data-side="back"] { border-radius: 8px 0 0 8px; }
+/* Inside of the back board: the last page is its endpaper, glued down short of the board's edges (by the overhang). */
+.leaf[data-cover="back"] { border-radius: 0 8px 8px 0; background: url(/textures/baked/linen.webp) 0 0 / 96px, linear-gradient(#2c4a74, #1c3452); }
+.leaf[data-cover="back"] .face[data-side="front"] { border: solid #0000; border-width: 2.5cqi 2.7cqi 2.5cqi 0; background-clip: padding-box; border-radius: 0 8px 8px 0; }
+/* Satin ribbon marker: its tail hangs out under the bottom edge, from the left-hand pages while the book is open and
+   from beside the spine while it lies closed. Under the back board, so it never shows past a cover. */
 .ribbon {
-  position: absolute; left: 37%; top: 99%; width: 1.1%; height: 8%; transform: translateZ(calc(var(--leaves) * -1px - 2px)) rotate(6deg); transform-origin: top;
+  position: absolute; left: 37%; top: 101.5%; width: 1.1%; height: 8%; transform: translateZ(calc(var(--leaves) * -1px - 2px)) rotate(6deg); transform-origin: top;
   background: linear-gradient(90deg, #6d0d12, #c0262d 40%, #e8585c 52%, #a3171d 70%, #6d0d12);
   clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%);
   filter: drop-shadow(.2vw .4vw .2vw #0008);
+  transition: left 0s .45s; /* moves while the turning cover hides it */
 }
+.book[data-state="closed"] .ribbon { left: 54%; }
+.book[data-state="end"] .ribbon { left: 44%; }
 .book[data-state="end"] { --shift: 25%; }
 .leaf {
   position: absolute; left: 50%; top: 0; width: 50%; height: 100%;
