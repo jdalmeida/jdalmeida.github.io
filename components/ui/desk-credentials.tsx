@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, type CSSProperties } from "react";
 import events from "@/lib/events.json";
+import { track } from "@/lib/track";
 import EvidenceBoard from "./evidence-board";
 import styles from "./desk-credentials.module.css";
 
@@ -60,7 +61,7 @@ export default function DeskCredentials() {
           className={styles.credential}
           style={{ "--i": index, "--fan": `${(index - mid) * 16}deg`, "--tilt": `${(index % 2 ? 1 : -1) * (2 + index * 1.5)}deg`, "--color": event.color, "--dark": event.darkColor } as CSSProperties}
           aria-label={`${event.name}, ${event.year}`}
-          onClick={() => setOpen(event)}
+          onClick={() => { setOpen(event); track("credential", event.id); }}
         >
           <Lanyard />
           <Image className={styles.badge} src={`/credentials/${event.id}.svg`} alt="" width={1000} height={1450} draggable={false} />

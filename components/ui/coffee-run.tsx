@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { loadCastle, saveCastle } from "@/lib/castle";
 import { countStamp } from "@/lib/stamps";
+import { track } from "@/lib/track";
 import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, beanShare, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
 import { device } from "./stamp";
@@ -185,6 +186,7 @@ function Castle({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     dialog.current!.showModal();
+    track("game", "coffee-run");
     const apply = (p: Progress, remote: boolean) => { saved.current = p; setProgress(p); store(p, remote); };
     apply(readLocal(), false);
     // Server and local copies merge, so progress made offline or on an older tab isn't lost; the merged copy goes back up.
@@ -205,12 +207,14 @@ function Castle({ onClose }: { onClose: () => void }) {
         const best = [...saved.current.best]; best[g.stage] = g.beans;
         const next = merge(saved.current, { cleared: g.stage + 1, best });
         saved.current = next; setProgress(next); store(next);
+        track("won", String(g.stage), { beans: g.beans });
       }
       if (g.state === "dead" && g.t > 1) g = retry(g);
       if (g.state === "won" && g.t > 1.5) {
         if (g.stage + 1 < STAGES.length) { setStage(g.stage + 1); return; }
         // Creates (or raises the rarity of) the Count's stamp now; the notebook hands it over for sticking.
         countStamp(device(), beanShare(saved.current)!).catch(() => {});
+        track("stamp", "conde", { beans: beanShare(saved.current) });
         setNote(`Você venceu o Conde D'arábica. O relógio voltou a andar, a última xícara foi servida e o sol nasceu. Ganhou o selo do Conde (${beanShare(saved.current)}% dos grãos): cole no caderno.`); setStage(null); return;
       }
       // Only re-render React when the HUD actually changes.
@@ -236,7 +240,7 @@ function Castle({ onClose }: { onClose: () => void }) {
     <button type="button" aria-label={label} onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); input.current[k] = true; }}
       onPointerUp={() => { input.current[k] = false; }} onPointerCancel={() => { input.current[k] = false; }} onContextMenu={(e) => e.preventDefault()}>{glyph}</button>
   );
-  const play = (i: number) => { setNote(""); setStage(i); };
+  const play = (i: number) => { setNote(""); setStage(i); track("stage", String(i)); };
 
   return (
     <dialog ref={dialog} className={room.room} aria-label="Castelo do Café" onClose={onClose}>

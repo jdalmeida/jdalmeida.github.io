@@ -1,9 +1,9 @@
 "use server";
 
-import { createHash } from "node:crypto";
 import { neon } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { deviceSeed } from "./device";
 
 // Tables: see lib/stamps.sql. `id` is the visitor number; look (shape, colours, rarity) comes from `seed`, rarity can be raised by `best`.
 // `beans` is set only on the Count D'arábica stamp, and sets its rarity.
@@ -18,16 +18,6 @@ const toStamp = (r: Record<string, unknown>): Stamp => ({
 
 export async function getStamps() {
   return (await sql()`select stamps.*, scores.best from stamps left join scores using (seed) where face is not null order by id`).map(toStamp);
-}
-
-// Seed = hash of what the server sees (IP, browser headers) + what the client reports (screen, timezone...). Only the hash is stored.
-// ponytail: `device` is client-supplied, so a determined visitor can re-roll seeds (and rarity); add a per-IP limit (e.g. Vercel firewall rate rule) if that gets abused.
-// `salt` gives the same device another seed (the Count's stamp); "" keeps the visitor stamp's seed.
-async function deviceSeed(device: unknown, salt = "") {
-  if (typeof device !== "string" || device.length > 300) throw new Error("Dispositivo inválido");
-  const h = await headers();
-  const ip = h.get("x-forwarded-for")?.split(",")[0].trim() ?? "";
-  return createHash("sha256").update([ip, h.get("user-agent"), h.get("accept-language"), device].join("\n") + salt).digest().readInt32BE(0);
 }
 
 // One stamp per device: generating again returns the same row. A Family & Friends link upgrades a stamp that isn't stuck yet.

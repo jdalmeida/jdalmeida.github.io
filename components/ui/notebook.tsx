@@ -6,6 +6,7 @@ import { countStamp, generateStamp, placeStamp, type Stamp } from "@/lib/stamps"
 import { readLocal } from "./coffee-run";
 import { beanShare } from "./platformer";
 import { rng } from "./grime";
+import { track } from "@/lib/track";
 import StampSticker, { device, DOODLES, pad, strokes, TIERS, tier } from "./stamp";
 import styles from "./notebook.module.css";
 
@@ -102,6 +103,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   // Phones get the share sheet; elsewhere the link goes to the clipboard.
   const share = (a: Article) => {
     const url = `${location.origin}/blog/${a.slug}`;
+    track("share", a.slug);
     if (navigator.share) navigator.share({ title: a.title, url }).catch(() => {});
     else navigator.clipboard.writeText(url).then(() => setCopied(a.slug));
   };
@@ -111,6 +113,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     try {
       const s = count ? await countStamp(device(), beans!) : await generateStamp(device(), new URLSearchParams(location.search).get("ff") ?? "");
       if (s.face === null) {
+        if (!count) track("stamp", "gerado", { id: s.id });
         setMine(s);
         setNote(null);
       } else setNote(<>Este dispositivo já colou o selo {pad(s.id)}. <button type="button" onClick={() => goFace(s.face!)}>Ver onde →</button></>);
@@ -135,6 +138,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
     if (!confirm("Colar o selo aqui? Adesivo não descola.")) return;
     try {
       onPlaced(await placeStamp(device(), f, x, y, mine!.beans !== null));
+      track("stamp", "colado", { id: mine!.id, face: f });
       setMine(null);
       setNote("Colado! Obrigado pela visita.");
     } catch {
@@ -204,6 +208,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
 
   useEffect(() => {
     dialog.current!.showModal();
+    track("open", "caderno");
     // Arrive closed, then open the cover.
     const timer = setTimeout(() => go(start >= 0 ? start + 3 : 1), matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 700);
     return () => clearTimeout(timer);
@@ -213,6 +218,7 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
   // The address bar follows the open post, so it can be copied from there too.
   useEffect(() => {
     const a = articles[flipped - 3];
+    if (a) track("article", a.slug);
     history.replaceState(null, "", (a ? `/blog/${a.slug}` : "/") + location.search);
   }, [articles, flipped]);
 
