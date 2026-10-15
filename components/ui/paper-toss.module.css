@@ -14,7 +14,8 @@
   overflow: auto; background: #0b0b0a; color: #e3ddcf; font: 14px var(--font-geist-mono), monospace; text-transform: uppercase; letter-spacing: .12em;
 }
 .room:not([open]) { display: none; }
-.hud { display: flex; gap: 2rem; margin: 0; }
+.hud { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem 2rem; margin: 0; }
+.sound { padding: .2rem .7rem; border: 1px solid #e3ddcf55; border-radius: 999px; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
 .court {
   width: min(94vw, calc((100svh - 9rem) * 1.6)); height: auto; image-rendering: pixelated; touch-action: none; cursor: grab;
   border: 4px solid #1e1d1a; box-shadow: 0 1rem 3rem #000a;

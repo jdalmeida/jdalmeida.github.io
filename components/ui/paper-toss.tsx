@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getScoreboard, setScoreName, submitScore } from "@/lib/stamps";
 import { track } from "@/lib/track";
+import * as audio from "./paper-audio";
 import { device, SCORE_TIERS, TIERS } from "./stamp";
 import styles from "./paper-toss.module.css";
 
@@ -75,6 +76,16 @@ function draw(ctx: CanvasRenderingContext2D, b: Ball, pull: { x: number; y: numb
   ctx.fillStyle = "#8b8d88"; ctx.fillRect(CAN.left - 1, CAN.top - 1, CAN.right - CAN.left + 2, 2);
 }
 
+// Sounds come from what changed in a step, so `step` stays pure. The rim and the bin's sides are told apart from the
+// floor by where the ball is; any kick beyond gravity and wind means it hit something.
+function listen(b: Ball, was: Ball, dt: number, wind: number) {
+  if (was.state !== "flying") return;
+  const { sfx } = audio;
+  const kick = Math.hypot(b.vx - (was.vx + wind * dt), b.vy - (was.vy + G * dt));
+  if (b.y >= FLOOR - R && was.vy > 0 && b.vy <= 0) sfx.floor(was.vy / 150);
+  else if (kick > 20 && b.state === "flying") { if (b.y < CAN.top + R) sfx.rim(); else sfx.side(); }
+}
+
 type Board = Awaited<ReturnType<typeof getScoreboard>>;
 
 function Game({ onClose }: { onClose: () => void }) {
@@ -83,12 +94,23 @@ function Game({ onClose }: { onClose: () => void }) {
   const [hud, setHud] = useState({ score: 0, best: 0, wind: 0 });
   const [board, setBoard] = useState<Board>();
   const [note, setNote] = useState("");
+  const [sound, setSound] = useState(() => !audio.muted());
+  const toggleSound = () => setSound((on) => { audio.setMuted(on); return !on; });
+
+  useEffect(() => {
+    audio.unlock();
+    audio.play();
+    // M toggles the sound anywhere in the game (but not while typing a name).
+    const mute = (e: KeyboardEvent) => { if (e.code === "KeyM" && !e.repeat && !(e.target instanceof HTMLInputElement)) toggleSound(); };
+    addEventListener("keydown", mute);
+    return () => { removeEventListener("keydown", mute); audio.stop(); };
+  }, []);
 
   useEffect(() => {
     dialog.current!.showModal();
     const el = canvas.current!, ctx = el.getContext("2d")!;
     // First throw is windless; each later one gets a new gust.
-    let ball = fresh(), wind = 0, score = 0, best = 0, frame = 0, then = performance.now(), throws = 0, max = 0;
+    let ball = fresh(), wind = 0, score = 0, best = 0, frame = 0, then = performance.now(), throws = 0, max = 0, cheered = false;
     track("game", "paper-toss");
     let drag: { x: number; y: number; pull: { x: number; y: number } } | null = null;
     const load = () => getScoreboard(device()).then((b) => {
@@ -102,13 +124,20 @@ function Game({ onClose }: { onClose: () => void }) {
       const dt = Math.min(0.05, (now - then) / 1000);
       then = now;
       // Each basket past the record is saved right away, so closing mid-streak loses nothing.
+      const was = { ...ball };
       if (step(ball, dt, wind)) {
         max = Math.max(max, ++score);
-        if (score > best) { best = score; submitScore(device(), score).then(load, () => {}); }
-      }
+        audio.sfx.basket(score);
+        if (score > best) {
+          // One fanfare per visit, the first time a streak passes the saved record.
+          if (best > 0 && !cheered) { cheered = true; setTimeout(audio.sfx.record, 450); }
+          best = score; submitScore(device(), score).then(load, () => {});
+        }
+      } else listen(ball, was, dt, wind);
       if ((ball.state === "in" || ball.state === "out") && ball.t > 0.6) {
-        if (ball.state === "out") score = 0;
+        if (ball.state === "out") { if (score > 0) audio.sfx.miss(); score = 0; }
         ball = fresh(); wind = gust();
+        if (wind) audio.sfx.wind(Math.abs(wind) / 30);
         setHud({ score, best, wind });
       }
       draw(ctx, ball, drag?.pull ?? null);
@@ -127,6 +156,9 @@ function Game({ onClose }: { onClose: () => void }) {
       let x = (e.clientX - drag.x) * scale, y = (e.clientY - drag.y) * scale;
       const len = Math.hypot(x, y);
       if (len > PULL) { x *= PULL / len; y *= PULL / len; }
+      // A creak each time the pull stretches another notch.
+      const notch = Math.floor(Math.min(len, PULL) / 8), last = Math.floor(Math.hypot(drag.pull.x, drag.pull.y) / 8);
+      if (notch > last) audio.sfx.stretch(notch / (PULL / 8));
       drag.pull = { x, y };
     };
     const up = () => {
@@ -135,6 +167,7 @@ function Game({ onClose }: { onClose: () => void }) {
       drag = null;
       if (Math.hypot(x, y) < 3) return;
       Object.assign(ball, { vx: -x * POWER, vy: -y * POWER, state: "flying" });
+      audio.sfx.throw(Math.hypot(x, y) / PULL);
       throws++;
     };
     el.addEventListener("pointerdown", down);
@@ -162,11 +195,12 @@ function Game({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <dialog ref={dialog} className={styles.room} aria-label="Basquete de papel" onClose={onClose}>
+    <dialog ref={dialog} className={styles.room} aria-label="Basquete de papel" onClose={onClose} onPointerDown={audio.unlock}>
       <p className={styles.hud}>
         <span>Cestas {hud.score}</span>
         <span>Recorde {hud.best}</span>
         <span>Vento {hud.wind < 0 ? "←" : hud.wind > 0 ? "→" : "·"} {Math.abs(hud.wind / 10).toFixed(1)}</span>
+        <button type="button" className={styles.sound} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
       </p>
       <div className={styles.table}>
         <canvas ref={canvas} className={styles.court} width={W} height={H} aria-label="Arraste para trás e solte para arremessar a bolinha de papel na lata de lixo" />
@@ -187,7 +221,7 @@ function Game({ onClose }: { onClose: () => void }) {
           <small>Acertos seguidos melhoram seu selo do caderno: {SCORE_TIERS[0]} deixam ele {TIERS[1]}, {SCORE_TIERS[1]} deixam ele {TIERS[2]}.</small>
         </aside>
       </div>
-      <p className={styles.hint}>Arraste para trás e solte para arremessar</p>
+      <p className={styles.hint}>Arraste para trás e solte para arremessar · M som</p>
       <button type="button" className={styles.back} onClick={() => dialog.current!.close()}>← Voltar à mesa</button>
     </dialog>
   );
@@ -198,7 +232,7 @@ export default function PaperToss() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className={styles.bin} aria-label="Lata de lixo" onClick={() => setOpen(true)} />
+      <button type="button" className={styles.bin} aria-label="Lata de lixo" onClick={() => { audio.unlock(); setOpen(true); }} />
       {open && <Game onClose={() => setOpen(false)} />}
     </>
   );
