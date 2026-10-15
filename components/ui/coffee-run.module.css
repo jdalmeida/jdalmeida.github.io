@@ -23,6 +23,8 @@
   100% { opacity: 0; transform: translate(-30%, -75%) translateZ(calc(var(--cup-z) + 140px)) scale(1.9) rotate(70deg); }
 }
 [data-landed="true"] [data-flat] .steam { display: none; }
+/* While the camera dives into the cup the blobs would pass right through it, as big white blurs. */
+[data-diving="true"] .steam { display: none; }
 @media (prefers-reduced-motion: reduce) { [data-landed="true"] .steam { display: none; } }
 
 .hud { flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem 1.5rem; min-height: 1.6rem; }
@@ -71,28 +73,10 @@ canvas.level:active { cursor: default; }
   .pad span { flex-direction: column; }
 }
 
-/* Dive into the mug: the room stays see-through while a disc of coffee grows from the mug's spot on the desk until it
-   fills the screen, its crema swirling; the canvas then picks up from the same brown. */
-dialog.diving { background: transparent; overflow: hidden; }
-dialog.diving::backdrop { background: transparent; }
-.diving > :not(.dive) { visibility: hidden; }
-.dive {
-  position: fixed; aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; pointer-events: none;
-  background: radial-gradient(closest-side, #2b160b 0 62%, #4a2511 72%, #c98a4b 82%, #e0b27a 88%, #6b3b1f 94%, #2b160b00);
-  box-shadow: 0 0 0 100vmax #0b0b0a00;
-  animation: dive 1.15s cubic-bezier(.55, 0, .85, .3) forwards;
-}
-.dive::before {
-  content: ""; position: absolute; inset: 14%; border-radius: 50%; opacity: .55;
-  background: conic-gradient(from 0deg, #c98a4b00, #e0b27a88 12%, #c98a4b00 25%, #6b3b1f66 45%, #c98a4b00 60%, #e0b27a66 78%, #c98a4b00);
-  animation: swirl 1.15s linear forwards;
-}
-@keyframes dive {
-  0% { transform: scale(1); box-shadow: 0 0 0 100vmax #0b0b0a00; }
-  35% { transform: scale(1.6); }
-  100% { transform: scale(var(--s)); box-shadow: 0 0 0 100vmax #0b0b0a; }
-}
-@keyframes swirl { to { rotate: 540deg; opacity: 0; } }
+/* Out of the coffee the desk camera dived into: the room fades in over it, and the canvas starts in the same brown. */
+.arrive[open] { animation: arrive .5s ease-out both; }
+@keyframes arrive { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .arrive[open] { animation: none; } }
 
 /* Title card over the intro scene, sized off the canvas width so it scales with it. */
 .intro {

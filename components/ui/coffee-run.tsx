@@ -1,12 +1,13 @@
 "use client";
 
 import { Pirata_One } from "next/font/google";
-import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { loadCastle, saveCastle } from "@/lib/castle";
 import { countStamp } from "@/lib/stamps";
 import { track } from "@/lib/track";
 import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, beanShare, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
+import type { DiveRequest } from "./desk-scene";
 import { device } from "./stamp";
 import styles from "./coffee-run.module.css";
 
@@ -283,7 +284,7 @@ function drawIntro(ctx: CanvasRenderingContext2D, t: number, calm: boolean) {
   // Out of the cup: the coffee surface the dive landed in thins out over the scene, its ripples spreading.
   if (!calm && t < 1.8) {
     const a = 1 - ease((t - 0.3) / 1.5);
-    ctx.globalAlpha = a; rect(0, 0, W, H, "#2b160b");
+    ctx.globalAlpha = a; rect(0, 0, W, H, "#1a0d05");
     for (let i = 0; i < 4; i++) { const r = (t * 70 + i * 26) % 110; ring(W / 2, H / 2, r, i % 2 ? "#6b3b1f" : "#c98a4b"); }
     for (let i = 0; i < 24; i++) { const ang = i * 0.5 + t * 3, r = i * 3.2; rect(W / 2 + Math.cos(ang) * r, H / 2 + Math.sin(ang) * r * 0.6, 2, 1, "#e0b27a"); }
     ctx.globalAlpha = 1;
@@ -293,9 +294,7 @@ function drawIntro(ctx: CanvasRenderingContext2D, t: number, calm: boolean) {
   ctx.globalAlpha = 0.35; rect(0, 0, W, 2, "#000"); rect(0, H - 2, W, 2, "#000"); rect(0, 0, 2, H, "#000"); rect(W - 2, 0, 2, H, "#000"); ctx.globalAlpha = 1;
 }
 
-type Dive = { x: number; y: number; d: number };
-
-function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
+function Castle({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const input = useRef<Input>(idle());
@@ -304,8 +303,7 @@ function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
   const [stage, setStage] = useState<number | null>(null);
   const [hud, setHud] = useState({ hp: HP, beans: 0, state: "play" as Game["state"] });
   const [note, setNote] = useState("");
-  // Opening: the camera dives into the mug (CSS, from where it sat on the desk), then the title scene plays until a key or tap.
-  const [dive, setDive] = useState(from !== null);
+  // Opening: the title scene (the desk camera has just dived into the mug) plays until a key or tap.
   const [intro, setIntro] = useState(true);
 
   useEffect(() => {
@@ -320,7 +318,6 @@ function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
   useEffect(() => {
     const ctx = canvas.current!.getContext("2d")!;
     if (stage === null && intro) {
-      if (dive) return;
       const calm = matchMedia("(prefers-reduced-motion: reduce)").matches, start = performance.now();
       let frame = 0;
       const tick = () => { drawIntro(ctx, (performance.now() - start) / 1000, calm); if (!calm) frame = requestAnimationFrame(tick); };
@@ -373,7 +370,7 @@ function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
     addEventListener("keydown", press);
     addEventListener("keyup", press);
     return () => { cancelAnimationFrame(frame); removeEventListener("keydown", press); removeEventListener("keyup", press); };
-  }, [stage, intro, dive]);
+  }, [stage, intro]);
 
   // Touch pad: each button holds its input while pressed.
   const pad = (k: keyof Input, label: string, glyph: string) => (
@@ -383,11 +380,7 @@ function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
   const play = (i: number) => { setNote(""); setStage(i); track("stage", String(i)); };
 
   return (
-    <dialog ref={dialog} className={`${room.room} ${dive ? styles.diving : ""}`} aria-label="Castelo do Café" onClose={onClose}>
-      {dive && from && (
-        <div className={styles.dive} aria-hidden="true" onAnimationEnd={(e) => { if (e.target === e.currentTarget) setDive(false); }}
-          style={{ left: from.x, top: from.y, width: from.d, "--s": (2.4 * Math.max(innerWidth, innerHeight)) / from.d } as CSSProperties} />
-      )}
+    <dialog ref={dialog} className={`${room.room} ${styles.arrive}`} aria-label="Castelo do Café" onClose={onClose}>
       <p className={`${room.hud} ${styles.hud}`}>
         {stage === null ? <span>{intro ? "\u00a0" : "Castelo do Café"}</span> : <>
           <span>{STAGES[stage].name}</span>
@@ -400,7 +393,7 @@ function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
       <div className={styles.frame}>
         <canvas ref={canvas} className={`${room.court} ${styles.level}`} width={W} height={H}
           aria-label="Jogo de plataforma: setas ou A e D para andar, espaço ou Z para pular, X ou J para o chicote" />
-        {stage === null && intro && !dive && (
+        {stage === null && intro && (
           <div className={styles.intro} onPointerUp={() => setIntro(false)}>
             <h2 className={`${gothic.className} ${styles.title}`}><span>Castelo</span> <small>do</small> <span>Café</span></h2>
             <p className={styles.subtitle}>— A Brasa da Aurora —</p>
@@ -443,18 +436,20 @@ function Castle({ onClose, from }: { onClose: () => void; from: Dive | null }) {
 }
 
 // Easter egg: the coffee mug on the desk (drawn in WebGL) gets an invisible button on top that opens a pixel castle platformer.
+// The desk camera dives into the coffee first, and climbs back out when the castle closes.
 export default function CoffeeRun() {
-  const [open, setOpen] = useState<{ from: Dive | null } | null>(null);
-  // The dive starts at the mug's projected box on screen; with reduced motion there's no dive.
-  const enter = (e: MouseEvent<HTMLButtonElement>) => {
-    const r = e.currentTarget.getBoundingClientRect(), calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setOpen({ from: calm || !r.width ? null : { x: r.left + r.width / 2, y: r.top + r.height / 2, d: Math.max(12, Math.min(r.width, r.height) * 0.8) } });
+  const [open, setOpen] = useState(false);
+  const mug = useRef<HTMLButtonElement>(null);
+  const dive = (into: boolean, done?: () => void) => {
+    const request: DiveRequest = { into, done };
+    mug.current?.dispatchEvent(new CustomEvent("desk-dive", { bubbles: true, detail: request }));
+    if (!request.handled) done?.();
   };
   return (
     <>
       <span className={styles.steam} aria-hidden="true"><span /><span /><span /></span>
-      <button type="button" className={styles.mug} aria-label="Caneca de café" onClick={enter} />
-      {open && <Castle from={open.from} onClose={() => setOpen(null)} />}
+      <button ref={mug} type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => dive(true, () => setOpen(true))} />
+      {open && <Castle onClose={() => { setOpen(false); dive(false); }} />}
     </>
   );
 }
