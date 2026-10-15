@@ -40,3 +40,12 @@ create table if not exists visit_events (
 );
 create index if not exists visit_events_visit on visit_events (visit, at);
 create index if not exists visit_events_type on visit_events (type, at desc);
+
+-- Names the owner gives visitors in /admin. `hidden` drops a visitor (the owner, a bot, a test) from every number.
+create table if not exists visitor_labels (
+  visitor uuid primary key,
+  name text,
+  note text,
+  hidden boolean not null default false,
+  updated_at timestamptz not null default now()
+);
