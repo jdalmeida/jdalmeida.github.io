@@ -11,6 +11,8 @@
 @property --card-scale { syntax: "<number>"; inherits: false; initial-value: 1; }
 @property --card-tilt { syntax: "<number>"; inherits: false; initial-value: 1; }
 @property --card-landing { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --card-type-scale { syntax: "<number>"; inherits: false; initial-value: 1; }
+@property --card-type-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @property --sticker-y { syntax: "<length>"; inherits: false; initial-value: 0px; }
 @property --sticker-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @property --sticker-scale { syntax: "<number>"; inherits: false; initial-value: 1; }
@@ -77,6 +79,8 @@
   .scene { height: 310svh; }
   .desk { width: min(138vw, 72svh); }
   .scrollCue { font-size: 10px; }
+  /* Laid out at the landed size and scaled down in flight: shrinking keeps the text sharp, growing would blur it. */
+  .card [data-card-type] { --card-type-size: 1.6; }
 }
 @media (prefers-reduced-motion: reduce) {
   .scene { height: 100svh; }
@@ -87,7 +91,6 @@
   .scene[data-landed="true"] .card:has([data-flipped="true"]) { transform: translate3d(0, 0, 100px) scale(.9); }
   .destination { display: none; }
   @media (max-width: 640px) and (orientation: portrait) {
-    .scene { --card-type-scale: 1.6; }
     .card { --card-scale: .05; }
   }
 }
