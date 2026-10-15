@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { getRunBoard, setRunName, submitRun } from "@/lib/runs";
 import { rng } from "@/lib/rng";
 import { track } from "@/lib/track";
-import { act, covers, fresh, LANE, score, step, top, type Action, type Kind, type Ob, type Run } from "./runner";
+import { act, BASE, covers, fresh, LANE, MAX, score, step, top, type Action, type Kind, type Ob, type Run } from "./runner";
+import * as audio from "./run-audio";
 import { device, RUN_TIERS, TIERS } from "./stamp";
 import room from "./paper-toss.module.css";
 import styles from "./desk-run.module.css";
@@ -264,6 +265,25 @@ const groundUnder = (r: Run) => {
   return g;
 };
 
+// Sounds come from what changed in the run, so the game logic stays silent (and testable in node).
+type Before = { lane: number; vy: number; y: number; slide: number; slip: number; drops: number; magnet: number; spring: number; bump: number; chase: number };
+const snapshot = (r: Run): Before => ({ lane: r.lane, vy: r.vy, y: r.y, slide: r.slide, slip: r.slip, drops: r.drops, magnet: r.magnet, spring: r.spring, bump: r.bump, chase: r.chase });
+function listen(r: Run, b: Before) {
+  const { sfx } = audio;
+  if (r.lane !== b.lane) sfx.lane();
+  if (r.vy > b.vy + 5 && b.vy === 0) { if (r.spring > 0) sfx.boing(); else sfx.jump(); }
+  else if (b.vy < -8 && r.vy === 0) sfx.land();
+  if (r.slide > b.slide + 0.1) sfx.slide();
+  if (r.drops > b.drops) sfx.drop(r.drops);
+  if (r.magnet > b.magnet + 0.1) sfx.sun();
+  if (r.spring > b.spring + 0.1) sfx.spring();
+  if (r.slip > 0 && b.slip === 0) sfx.slip();
+  if (r.bump > b.bump) sfx.bump();
+  if (r.chase > b.chase + 0.1) sfx.meow();
+  if (r.over === "caught") sfx.swat();
+  else if (r.over) sfx.crash();
+}
+
 type Board = Awaited<ReturnType<typeof getRunBoard>>;
 type Phase = "ready" | "running" | "paused" | "over";
 
@@ -276,6 +296,17 @@ function Game({ onClose }: { onClose: () => void }) {
   const [end, setEnd] = useState({ score: 0, line: "", record: false });
   const [board, setBoard] = useState<Board>();
   const [note, setNote] = useState("");
+  const [sound, setSound] = useState(() => !audio.muted());
+  const toggleSound = () => setSound((on) => { audio.setMuted(on); return !on; });
+
+  useEffect(() => {
+    audio.unlock();
+    audio.play("garden");
+    // M toggles the sound anywhere in the game.
+    const mute = (e: KeyboardEvent) => { if (e.code === "KeyM" && !e.repeat && !(e.target instanceof HTMLInputElement)) toggleSound(); };
+    addEventListener("keydown", mute);
+    return () => { removeEventListener("keydown", mute); audio.stop(); };
+  }, []);
 
   useEffect(() => {
     dialog.current!.showModal();
@@ -293,6 +324,10 @@ function Game({ onClose }: { onClose: () => void }) {
       setEnd({ score: s, record, line: r.over === "caught" ? "A pata do gato pegou a joaninha" : CRASH[r.hit ?? "pencil"] });
       track("score", "desk-run", { cm: Math.floor(r.dist), drops: r.drops, score: s });
       if (record && s > 0) { best = s; submitRun(device(), s).then(load, () => {}); }
+      audio.stop();
+      // The crash first, then the tune for how it went, then back to the windowsill tune.
+      setTimeout(() => { if (state === "over") (record && s > 0 ? audio.sfx.record : audio.sfx.over)(); }, 400);
+      setTimeout(() => { if (state === "over") audio.play("garden"); }, 2200);
       set("over");
     }
 
@@ -300,7 +335,10 @@ function Game({ onClose }: { onClose: () => void }) {
       const dt = Math.min(0.05, (now - then) / 1000);
       then = now;
       if (state === "running") {
+        const before = snapshot(r);
         step(r, dt);
+        listen(r, before);
+        audio.play("run", 1 + 0.4 * (r.speed - BASE) / (MAX - BASE));
         if (r.over) finish();
       }
       // The camera trails her across lanes and rises a little when she's up on the notebook.
@@ -316,15 +354,18 @@ function Game({ onClose }: { onClose: () => void }) {
     frame = requestAnimationFrame(tick);
 
     game.current = {
-      start: () => { r = fresh(rng(Date.now() | 0), { steady }); set("running"); el.focus(); },
-      pause: (p) => { if (p && state === "running") set("paused"); else if (!p && state === "paused") { set("running"); el.focus(); } },
+      start: () => { audio.unlock(); audio.sfx.start(); r = fresh(rng(Date.now() | 0), { steady }); set("running"); el.focus(); },
+      pause: (p) => {
+        if (p && state === "running") { set("paused"); audio.stop(); }
+        else if (!p && state === "paused") { audio.unlock(); set("running"); el.focus(); }
+      },
     };
     const press = (e: KeyboardEvent) => {
       const a = KEYS[e.code];
       if (!a) return;
       e.preventDefault();
       if (e.repeat) return;
-      if (state === "running") act(r, a);
+      if (state === "running") { const before = snapshot(r); act(r, a); listen(r, before); }
       else if (a === "jump" && state !== "over") game.current!.start();
     };
     // Swipes act as soon as the finger has travelled far enough, not on release, like the original.
@@ -335,7 +376,9 @@ function Game({ onClose }: { onClose: () => void }) {
       const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
       if (Math.hypot(dx, dy) < 22) return;
       swipe.used = true;
+      const before = snapshot(r);
       act(r, Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : dy < 0 ? "jump" : "slide");
+      listen(r, before);
     };
     const up = () => { swipe = null; };
     const hide = () => { if (document.hidden) game.current?.pause(true); };
@@ -367,7 +410,7 @@ function Game({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <dialog ref={dialog} className={`${room.room} ${styles.room}`} aria-label="Corrida na Mesa" onClose={onClose}>
+    <dialog ref={dialog} className={`${room.room} ${styles.room}`} aria-label="Corrida na Mesa" onClose={onClose} onPointerDown={audio.unlock}>
       <p className={`${room.hud} ${styles.hud}`}>
         <span>{hud.cm} cm</span>
         <span>💧 {hud.drops}</span>
@@ -375,6 +418,7 @@ function Game({ onClose }: { onClose: () => void }) {
         {hud.magnet > 0 && <span className={styles.power}>☀ {hud.magnet}</span>}
         {hud.spring > 0 && <span className={styles.power}>⇈ {hud.spring}</span>}
         {hud.chase && <span className={styles.chase}>O gato!</span>}
+        <button type="button" className={styles.sound} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
       </p>
       <div className={room.table}>
         <div className={styles.frame}>
@@ -413,7 +457,7 @@ function Game({ onClose }: { onClose: () => void }) {
           <small>Pontos são centímetros corridos mais 10 por gota. Seu recorde melhora o selo do caderno: {RUN_TIERS[0]} deixam ele {TIERS[1]}, {RUN_TIERS[1]} deixam ele {TIERS[2]}.</small>
         </aside>
       </div>
-      <p className={room.hint}>← → trocar de faixa · ↑ pular · ↓ abaixar · no celular, deslize</p>
+      <p className={room.hint}>← → trocar de faixa · ↑ pular · ↓ abaixar · M som · no celular, deslize</p>
       <button type="button" className={room.back} onClick={() => dialog.current!.close()}>← Voltar à mesa</button>
     </dialog>
   );
@@ -424,7 +468,7 @@ export default function DeskRun() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button type="button" className={styles.plant} aria-label="Suculenta" onClick={() => setOpen(true)} />
+      <button type="button" className={styles.plant} aria-label="Suculenta" onClick={() => { audio.unlock(); setOpen(true); }} />
       {open && <Game onClose={() => setOpen(false)} />}
     </>
   );

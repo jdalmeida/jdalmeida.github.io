@@ -10,6 +10,7 @@
 
 .hud { flex-wrap: wrap; justify-content: center; gap: .5rem 1.5rem; min-height: 1.6rem; }
 .power { color: #ffd84a; }
+.sound { padding: .2rem .7rem; border: 1px solid #e3ddcf55; border-radius: 999px; background: none; color: inherit; font: inherit; cursor: pointer; }
 .chase { color: #e79aa6; animation: blink .5s steps(2) infinite; }
 @keyframes blink { 50% { opacity: .3; } }
 
