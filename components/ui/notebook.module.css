@@ -12,14 +12,16 @@
 .cover {
   position: absolute; inset: 0; display: grid; place-items: center; container-type: inline-size;
   border-radius: 3px 6px 6px 3px; transform-origin: left; transform: translateZ(8px);
-  background: linear-gradient(90deg, #0000 0 5%, #0005 5% 7%, #0000 9%), radial-gradient(ellipse at 30% 20%, #3c5f8c, #1c3452 70%);
-  box-shadow: inset 0 0 0 1px #ffffff1a;
+  background: linear-gradient(90deg, #0000 0 5%, #0005 5% 7%, #0000 9%), radial-gradient(ellipse at 30% 20%, #ffffff1f, #0000 60%),
+    url(/textures/baked/linen.webp) 0 0 / 64px, linear-gradient(#2c4a74, #1c3452);
+  box-shadow: inset 0 0 0 1px #ffffff1a, inset 0 0 0 3px #0000, inset 0 0 6px #0006;
+  outline: 1px dashed #ffffff2e; outline-offset: -5px; /* stitching round the board */
   transition: transform .5s cubic-bezier(.2, .8, .3, 1.1);
 }
 .notebook:hover .cover, .notebook:focus-visible .cover { transform: translateZ(8px) rotateY(-32deg); }
 .cover::after { content: ""; position: absolute; top: 0; bottom: 0; right: 12%; width: 4%; background: #151515; box-shadow: 1px 0 1px #0008; }
 .label {
-  padding: .3em .8em; background: #f4efe2; color: #1c3452; border: 1px solid #1c345255; border-radius: 2px;
+  padding: .3em .8em; background: url(/textures/baked/paper.webp) 0 0 / 128px, #f4efe2; color: #1c3452; border: 1px solid #1c345255; border-radius: 2px;
   font: 700 18cqi/1 var(--font-hand-title), cursive; box-shadow: 1px 1px 2px #0006;
 }
 
@@ -27,7 +29,12 @@
 .room {
   position: fixed; inset: 0; width: 100vw; max-width: none; height: 100svh; max-height: none;
   margin: 0; padding: 0; border: 0; overflow: hidden; color: #1d1a16;
-  background: radial-gradient(ellipse at 50% 45%, #5d4230, #2b1d13 60%, #0c0806); perspective: 2000px;
+  /* The book lies on a walnut desk under the same warm lamp, up and to the left. */
+  background:
+    radial-gradient(ellipse 70% 60% at 40% 36%, #ffcf9a2e, #ffcf9a0a 45%, #0000 70%),
+    radial-gradient(ellipse at 50% 45%, #0000 35%, #000b 95%),
+    url(/textures/baked/walnut.webp) center / cover no-repeat, #2b1d13;
+  perspective: 2000px;
   animation: fade .9s ease both;
 }
 .room::backdrop { background: transparent; }
@@ -47,6 +54,24 @@
   animation: arrive 1s cubic-bezier(.15, .7, .2, 1) both;
 }
 .book[data-state="closed"] { --shift: -25%; }
+/* Hardcover boards: they stand a little proud of the page block and carry the book's shadow on the desk.
+   Each shows only while its cover lies on that side (the left one once the book is opened, the right one until the end). */
+.board {
+  position: absolute; top: -1.8%; bottom: -1.8%; width: 51.4%; transform: translateZ(calc(var(--leaves) * -1px - 3px));
+  background: radial-gradient(ellipse at 30% 20%, #ffffff12, #0000 60%), url(/textures/baked/linen.webp) 0 0 / 96px, linear-gradient(#2c4a74, #1c3452);
+  box-shadow: inset 0 0 0 1px #ffffff14, 0 .4vw .6vw #0009, 0 2.6vw 4vw -.6vw #000c;
+  transition: visibility 0s .45s;
+}
+.board[data-side="left"] { right: 50%; border-radius: 8px 0 0 8px; }
+.board[data-side="right"] { left: 50%; border-radius: 0 8px 8px 0; }
+.book[data-state="closed"] .board[data-side="left"], .book[data-state="end"] .board[data-side="right"] { visibility: hidden; transition-delay: 0s; }
+/* Satin ribbon marker: its tail hangs out under the bottom edge of the left-hand pages. */
+.ribbon {
+  position: absolute; left: 37%; top: 99%; width: 1.1%; height: 8%; transform: translateZ(calc(var(--leaves) * -1px - 2px)) rotate(6deg); transform-origin: top;
+  background: linear-gradient(90deg, #6d0d12, #c0262d 40%, #e8585c 52%, #a3171d 70%, #6d0d12);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%);
+  filter: drop-shadow(.2vw .4vw .2vw #0008);
+}
 .book[data-state="end"] { --shift: 25%; }
 .leaf {
   position: absolute; left: 50%; top: 0; width: 50%; height: 100%;
@@ -62,10 +87,13 @@
   transition: visibility 0s calc(var(--delay) + .38s);
   padding: 7cqi 5cqi 10cqi 13cqi; border-radius: 0 6px 6px 0;
   font: clamp(16px, 4cqi, 22px)/1.6 var(--font-hand), cursive;
+  /* The page curves down into the gutter: dark in the fold, a soft highlight where it rises, then flat. */
   background:
-    linear-gradient(90deg, #0003, #0000 7%),
+    linear-gradient(90deg, #0000004a, #0000001c 2.5%, #ffffff1a 5.5%, #0000 10%),
+    linear-gradient(270deg, #00000012, #0000 3%),
     linear-gradient(90deg, #0000 11cqi, #d9534f66 11cqi calc(11cqi + 1px), #0000 0),
     repeating-linear-gradient(#0000 0 calc(1.6em - 1px), #6a8fc633 calc(1.6em - 1px) 1.6em) 0 7cqi / 100% 100% local,
+    url(/textures/baked/paper.webp) 0 0 / 256px,
     #f6f1e3;
   box-shadow: inset 0 0 0 1px #0000000d, 2px 3px 6px #0005;
 }
@@ -74,8 +102,10 @@
 .face[data-side="back"] {
   transform: rotateY(180deg); border-radius: 6px 0 0 6px;
   background:
-    linear-gradient(270deg, #0003, #0000 7%),
+    linear-gradient(270deg, #0000004a, #0000001c 2.5%, #ffffff1a 5.5%, #0000 10%),
+    linear-gradient(90deg, #00000012, #0000 3%),
     repeating-linear-gradient(#0000 0 calc(1.6em - 1px), #6a8fc633 calc(1.6em - 1px) 1.6em) 0 7cqi / 100% 100% local,
+    url(/textures/baked/paper.webp) 0 0 / 256px,
     #f6f1e3;
   padding: 7cqi 9cqi 10cqi 6cqi;
 }
@@ -84,27 +114,31 @@
   fill: none; stroke: #2a45a0; stroke-opacity: .75; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
 }
 .folio { position: absolute; bottom: 4cqi; right: 6cqi; font: 3cqi var(--font-hand), cursive; opacity: .5; }
-.face[data-side="back"] .doodle {
-  position: absolute; overflow: visible; pointer-events: none; mix-blend-mode: multiply;
-  fill: none; stroke: #2a45a0; stroke-opacity: .75; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
-}
-.folio { right: auto; left: 6cqi; }
+/* Back faces are left-hand pages: folio on the outer (left) corner. */
+.face[data-side="back"] .folio { right: auto; left: 6cqi; }
 
 .coverFace {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4cqi;
-  background: linear-gradient(90deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 30% 20%, #3c5f8c, #1c3452 70%);
+  background: linear-gradient(90deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 30% 20%, #ffffff1c, #0000 60%),
+    url(/textures/baked/linen.webp) 0 0 / 96px, linear-gradient(#2c4a74, #1c3452);
+  outline: 2px dashed #ffffff26; outline-offset: -2.4cqi;
   color: #f4efe2;
 }
 .coverFace .label { font-size: 12cqi; }
 .coverFace small { font: 3cqi var(--font-geist-mono), monospace; letter-spacing: .2em; text-transform: uppercase; opacity: .8; }
 .coverFace::after { content: ""; position: absolute; top: 0; bottom: 0; right: 12%; width: 3.5%; background: #151515; }
-.face[data-side="back"] .coverFace { background: linear-gradient(270deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 70% 20%, #3c5f8c, #1c3452 70%); }
+.face[data-side="back"] .coverFace {
+  background: linear-gradient(270deg, #0000 0 4%, #0005 4% 6%, #0000 8%), radial-gradient(ellipse at 70% 20%, #ffffff1c, #0000 60%),
+    url(/textures/baked/linen.webp) 0 0 / 96px, linear-gradient(#2c4a74, #1c3452);
+}
 .face[data-side="back"] .coverFace::after { right: auto; left: 12%; }
 
 /* Inside of the front cover: same dark board as the cover, so the white signature shows. */
 .owner {
   position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; padding: 0 8cqi; text-align: center;
-  background: radial-gradient(ellipse at 70% 20%, #3c5f8c, #1c3452 70%); color: #f4efe2;
+  background: linear-gradient(270deg, #0000004a, #0000 6%), radial-gradient(ellipse at 70% 20%, #ffffff17, #0000 60%),
+    url(/textures/baked/linen.webp) 0 0 / 96px, linear-gradient(#2c4a74, #1c3452);
+  color: #f4efe2;
 }
 .owner img { width: 70%; margin: 4cqi auto; }
 
@@ -164,6 +198,7 @@
   .book[data-state="open"] { --shift: -25%; }
   .book[data-state="open"][data-page="left"] { --shift: 25%; }
   .face { padding: 6cqi 5cqi 10cqi 13cqi; }
+  .ribbon { display: none; } /* it would hang behind the page buttons */
 }
 @media (prefers-reduced-motion: reduce) {
   .cover, .book, .leaf { transition: none; }

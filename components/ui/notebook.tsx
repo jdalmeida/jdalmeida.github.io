@@ -241,7 +241,10 @@ function Book({ articles, stamps, onPlaced, onClose }: { articles: Article[]; st
       onCancel={(e) => { e.preventDefault(); close(); }}
       onAnimationEnd={(e) => { if (closing && e.target === e.currentTarget) onClose(); }}
     >
-      <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"} data-page={left ? "left" : "right"}>
+      <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"} data-page={left ? "left" : "right"} style={{ "--leaves": leaves } as CSSProperties}>
+        <span className={styles.board} data-side="left" />
+        <span className={styles.board} data-side="right" />
+        <span className={styles.ribbon} />
         {Array.from({ length: leaves }, (_, i) => {
           const turned = i < flipped;
           // Leaves turned in one jump go one after the other, starting from the one nearest the reader.
