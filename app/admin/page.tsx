@@ -4,6 +4,7 @@ import { BarList, Card, DailyChart, duration, flag, Funnel, Kpi, when } from "@/
 import { isAdmin } from "@/lib/admin";
 import { credentialName, gameName, overview, period, PERIODS, stageName, stampNo, visitors } from "@/lib/analytics";
 import { getArticles } from "@/lib/articles";
+import { getCredentialNames } from "@/lib/credentials";
 import { login } from "./actions";
 
 export const metadata: Metadata = { title: "Admin", robots: { index: false, follow: false } };
@@ -18,9 +19,10 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
   const source = typeof q.origem === "string" ? q.origem : undefined;
   const game = typeof q.jogo === "string" ? q.jogo : undefined;
   const hidden = q.ocultos === "1";
-  const [data, people, titles] = await Promise.all([
+  const [data, people, titles, credentials] = await Promise.all([
     overview(days), visitors(days, { source, game, hidden }),
     getArticles().then((a) => Object.fromEntries(a.map((x) => [x.slug, x.title])), () => ({} as Record<string, string>)),
+    getCredentialNames().catch(() => ({} as Record<string, string>)),
   ]);
   const link = (extra: Record<string, string | number | undefined>) => {
     const p = new URLSearchParams();
@@ -74,7 +76,7 @@ export default async function Admin({ searchParams }: PageProps<"/admin">) {
           <Card title="Jogos"><BarList rows={data.games} label={gameName} href={(l) => link({ jogo: l ?? undefined })} empty="Ninguém jogou ainda." /></Card>
           <Card title="Castelo do Café: fases vencidas"><BarList rows={data.stages} label={(l) => `${Number(l) + 1}. ${stageName(l)}`} /></Card>
           <Card title="Artigos lidos"><BarList rows={data.articles} label={(l) => titles[l ?? ""] ?? l} /></Card>
-          <Card title="Credenciais abertas"><BarList rows={data.credentials} label={credentialName} /></Card>
+          <Card title="Credenciais abertas"><BarList rows={data.credentials} label={(l) => credentialName(l, credentials)} /></Card>
           <Card title="Selos e compartilhamentos">
             <BarList rows={[...data.stamps.map((s) => ({ ...s, label: `Selo ${s.label}` })), ...data.shares.map((s) => ({ ...s, label: `Compartilhou ${titles[s.label ?? ""] ?? s.label}` }))]} />
           </Card>

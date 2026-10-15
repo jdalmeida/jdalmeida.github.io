@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/admin/actions";
 
-const LINKS = [["/admin", "Analytics"], ["/admin/links", "Links"], ["/admin/selos", "Selos"], ["/admin/ff", "Family & Friends"], ["/admin/artigos", "Artigos"], ["/admin/projetos", "Projetos"]] as const;
+const LINKS = [["/admin", "Analytics"], ["/admin/links", "Links"], ["/admin/selos", "Selos"], ["/admin/ff", "Family & Friends"], ["/admin/artigos", "Artigos"], ["/admin/projetos", "Projetos"], ["/admin/credenciais", "Credenciais"]] as const;
 
 export default function AdminNav() {
   const path = usePathname();

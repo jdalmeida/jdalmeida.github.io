@@ -6,6 +6,7 @@ import { STAGES } from "@/components/ui/platformer";
 import { isAdmin } from "@/lib/admin";
 import { describe, stampNo, visitor } from "@/lib/analytics";
 import { getArticles } from "@/lib/articles";
+import { getCredentialNames } from "@/lib/credentials";
 import { labelVisitor } from "../../actions";
 
 export const metadata: Metadata = { title: "Visitante · Admin", robots: { index: false, follow: false } };
@@ -18,9 +19,10 @@ export default async function Visitor({ params }: PageProps<"/admin/visitante/[i
   if (!(await isAdmin())) redirect("/admin");
   const { id } = await params;
   if (!UUID.test(id)) notFound();
-  const [data, titles] = await Promise.all([
+  const [data, titles, credentials] = await Promise.all([
     visitor(id),
     getArticles().then((a) => Object.fromEntries(a.map((x) => [x.slug, x.title])), () => ({} as Record<string, string>)),
+    getCredentialNames().catch(() => ({} as Record<string, string>)),
   ]);
   if (!data) notFound();
   const first = data.visits[data.visits.length - 1];
@@ -117,7 +119,7 @@ export default async function Visitor({ params }: PageProps<"/admin/visitante/[i
                   <span className={`absolute -left-[21px] top-1.5 size-2 rounded-full ${DOT[e.type as string] ?? "bg-neutral-600"}`} aria-hidden />
                   <span className="mr-2 tabular-nums text-neutral-500">{new Date(e.at as string).toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo" })}</span>
                   <span className={e.type === "show" || e.type === "hide" ? "text-neutral-500" : ""}>
-                    {describe(e as { type: string; name: string | null; detail: Record<string, unknown> | null }, titles)}
+                    {describe(e as { type: string; name: string | null; detail: Record<string, unknown> | null }, titles, credentials)}
                   </span>
                 </li>
               ))}

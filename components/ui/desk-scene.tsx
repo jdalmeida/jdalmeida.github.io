@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import styles from "./desk-scene.module.css";
-import DeskCredentials from "./desk-credentials";
 import PaperToss from "./paper-toss";
 import CoffeeRun from "./coffee-run";
 import DeskRun from "./desk-run";
@@ -15,7 +14,7 @@ const ease = (value: number) => {
   return t * t * (3 - 2 * t);
 };
 
-export default function DeskScene({ card, stickers, notebook }: { card: ReactNode; stickers: ReactNode; notebook: ReactNode }) {
+export default function DeskScene({ card, stickers, notebook, credentials }: { card: ReactNode; stickers: ReactNode; notebook: ReactNode; credentials: ReactNode }) {
   const scene = useRef<HTMLElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const desk = useRef<HTMLDivElement>(null);
@@ -115,7 +114,7 @@ export default function DeskScene({ card, stickers, notebook }: { card: ReactNod
         <div className={styles.space}>
           <div ref={desk} className={styles.desk} data-desk>
             {notebook}
-            <DeskCredentials />
+            {credentials}
             <PaperToss />
             <CoffeeRun />
             <DeskRun />
