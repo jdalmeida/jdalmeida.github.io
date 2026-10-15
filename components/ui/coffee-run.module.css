@@ -28,8 +28,9 @@
 .hud { flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem 1.5rem; min-height: 1.6rem; }
 .lost { opacity: .25; }
 .menu { padding: .2rem .7rem; border: 1px solid #e3ddcf55; border-radius: 999px; background: none; color: inherit; font: inherit; cursor: pointer; }
-.frame { position: relative; }
-canvas.level { cursor: default; width: min(94vw, calc((100svh - 9rem) * 1.71)); }
+/* The frame carries the size so the title card can size its text off it (container units); the canvas just fills it. */
+.frame { position: relative; width: min(94vw, calc((100svh - 9rem) * 1.71)); container-type: inline-size; }
+canvas.level { cursor: default; width: 100%; display: block; }
 canvas.level:active { cursor: default; }
 .stages {
   position: absolute; inset: 4px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: .4rem; overflow-y: auto; padding: .5rem;
@@ -65,7 +66,67 @@ canvas.level:active { cursor: default; }
 }
 /* Phone on its side: the canvas takes the middle, thumbs get the sides. */
 @media (pointer: coarse) and (orientation: landscape) {
-  canvas.level { width: min(calc(100vw - 20rem), calc((100svh - 4.5rem) * 1.71)); }
+  .frame { width: min(calc(100vw - 20rem), calc((100svh - 4.5rem) * 1.71)); }
   .pad { top: 50%; bottom: auto; translate: 0 -50%; }
   .pad span { flex-direction: column; }
+}
+
+/* Dive into the mug: the room stays see-through while a disc of coffee grows from the mug's spot on the desk until it
+   fills the screen, its crema swirling; the canvas then picks up from the same brown. */
+dialog.diving { background: transparent; overflow: hidden; }
+dialog.diving::backdrop { background: transparent; }
+.diving > :not(.dive) { visibility: hidden; }
+.dive {
+  position: fixed; aspect-ratio: 1; border-radius: 50%; translate: -50% -50%; pointer-events: none;
+  background: radial-gradient(closest-side, #2b160b 0 62%, #4a2511 72%, #c98a4b 82%, #e0b27a 88%, #6b3b1f 94%, #2b160b00);
+  box-shadow: 0 0 0 100vmax #0b0b0a00;
+  animation: dive 1.15s cubic-bezier(.55, 0, .85, .3) forwards;
+}
+.dive::before {
+  content: ""; position: absolute; inset: 14%; border-radius: 50%; opacity: .55;
+  background: conic-gradient(from 0deg, #c98a4b00, #e0b27a88 12%, #c98a4b00 25%, #6b3b1f66 45%, #c98a4b00 60%, #e0b27a66 78%, #c98a4b00);
+  animation: swirl 1.15s linear forwards;
+}
+@keyframes dive {
+  0% { transform: scale(1); box-shadow: 0 0 0 100vmax #0b0b0a00; }
+  35% { transform: scale(1.6); }
+  100% { transform: scale(var(--s)); box-shadow: 0 0 0 100vmax #0b0b0a; }
+}
+@keyframes swirl { to { rotate: 540deg; opacity: 0; } }
+
+/* Title card over the intro scene, sized off the canvas width so it scales with it. */
+.intro {
+  position: absolute; inset: 4px; display: flex; flex-direction: column; align-items: center; padding-top: 4cqi;
+  cursor: pointer; text-transform: none; letter-spacing: 0; user-select: none; -webkit-user-select: none;
+}
+.title {
+  margin: 0; font-size: 10.5cqi; line-height: 1; font-weight: 400; letter-spacing: .02em; text-transform: none;
+  background: linear-gradient(#ffe7a3 15%, #e0a33e 50%, #8a1f24 85%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 .3cqi 0 #1a0508) drop-shadow(0 0 1.6cqi #b3242e88);
+  animation: title 2.2s 1.4s cubic-bezier(.2, .7, .2, 1) both;
+}
+.title small { font-size: .55em; }
+.subtitle { margin: .8cqi 0 0; font-size: 2.1cqi; letter-spacing: .4em; text-transform: uppercase; color: #e8d9bd; animation: fade 1.5s 2.8s both; }
+@keyframes title { from { opacity: 0; transform: scale(1.35); filter: blur(1cqi) drop-shadow(0 0 0 #0000); letter-spacing: .3em; } }
+@keyframes fade { from { opacity: 0; } }
+.prologue { position: relative; margin-top: auto; width: 100%; height: 11cqi; }
+.prologue p {
+  position: absolute; inset: auto 0 0; margin: 0; padding: 1.4cqi 6cqi 2.2cqi; font-size: 2.3cqi; line-height: 1.35; text-align: center;
+  color: #f0e4cc; text-shadow: 0 .2cqi 0 #000, 0 0 1cqi #000; opacity: 0;
+  background: linear-gradient(#0000, #000a 45%);
+  animation: caption 3s calc(3.5s + var(--i) * 3s) both;
+}
+@keyframes caption { 0%, 100% { opacity: 0; translate: 0 .6cqi; } 15%, 85% { opacity: 1; translate: 0 0; } }
+.prologue .press { color: #ffcc55; text-transform: uppercase; letter-spacing: .2em; animation: fade 1s calc(3.5s + var(--i) * 3s) both, blink 1.2s calc(4.5s + var(--i) * 3s) steps(2, jump-none) infinite; opacity: 1; }
+@keyframes blink { 50% { opacity: .2; } }
+.skip {
+  position: absolute; right: 1.5cqi; top: 1.5cqi; padding: .3rem .7rem; border: 1px solid #e3ddcf44; border-radius: 999px;
+  background: #0006; color: #e3ddcfaa; font: 10px var(--font-geist-mono), monospace; letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+}
+.skip:hover, .skip:focus-visible { color: #e3ddcf; border-color: #e3ddcf; outline: none; }
+@media (prefers-reduced-motion: reduce) {
+  .title, .subtitle { animation: none; }
+  .prologue { height: auto; display: flex; flex-direction: column; background: linear-gradient(#0000, #000a 30%); }
+  .prologue p { position: static; padding: .4cqi 6cqi; opacity: 1; animation: none; background: none; }
+  .prologue .press { animation: none; padding-bottom: 2cqi; }
 }
