@@ -208,3 +208,5 @@
   .room, .book { animation: none !important; }
 }
 .share { align-self: flex-start; padding: 0; border: 0; background: none; font: inherit; color: #b3261e; text-decoration: underline; cursor: pointer; }
+.projectLinks { display: flex; flex-wrap: wrap; gap: 1em; }
+.projectLinks a { color: #1c3452; }
