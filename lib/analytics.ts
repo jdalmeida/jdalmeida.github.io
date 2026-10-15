@@ -1,5 +1,4 @@
 import { neon } from "@neondatabase/serverless";
-import events from "./events.json";
 import { STAGES } from "@/components/ui/platformer";
 
 // Read side of the visit log (lib/visits.sql) for /admin. Only call after isAdmin().
@@ -119,13 +118,13 @@ export async function visitor(id: string) {
 
 // Human labels (pt-BR) for event rows and breakdown keys.
 const GAMES: Record<string, string> = { "paper-toss": "Basquete de papel", "coffee-run": "Castelo do Café" };
-const CREDENTIALS: Record<string, string> = Object.fromEntries(events.map((e) => [e.id, e.name]));
 export const gameName = (g: string | null) => (g && GAMES[g]) ?? g ?? "—";
-export const credentialName = (c: string | null) => (c && CREDENTIALS[c]) ?? c ?? "—";
+// `names`: credential id → event name, from getCredentials().
+export const credentialName = (c: string | null, names: Record<string, string> = {}) => (c && names[c]) ?? c ?? "—";
 export const stageName = (s: string | null) => STAGES[Number(s)]?.name ?? `fase ${s}`;
 export const stampNo = (n: number) => `Nº ${String(n).padStart(4, "0")}`;
 
-export function describe(e: { type: string; name: string | null; detail: Record<string, unknown> | null }, titles: Record<string, string>) {
+export function describe(e: { type: string; name: string | null; detail: Record<string, unknown> | null }, titles: Record<string, string>, credentials: Record<string, string> = {}) {
   const d = e.detail ?? {};
   switch (e.type) {
     case "view": return `Abriu a página ${e.name}`;
@@ -135,7 +134,7 @@ export function describe(e: { type: string; name: string | null; detail: Record<
     case "open": return `Abriu o ${e.name}`;
     case "article": return `Leu o artigo “${titles[e.name ?? ""] ?? e.name}”`;
     case "share": return `Compartilhou o artigo “${titles[e.name ?? ""] ?? e.name}”`;
-    case "credential": return `Abriu a credencial ${credentialName(e.name)}`;
+    case "credential": return `Abriu a credencial ${credentialName(e.name, credentials)}`;
     case "game": return `Começou a jogar ${gameName(e.name)}`;
     case "score": return `Basquete de papel: ${d.throws} arremessos, melhor sequência ${d.max}`;
     case "stage": return `Castelo do Café: entrou na fase ${Number(e.name) + 1} (${stageName(e.name)})`;
