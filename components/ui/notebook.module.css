@@ -36,6 +36,7 @@
     url(/textures/baked/walnut.webp) center / cover no-repeat, #2b1d13;
   perspective: 2000px;
   animation: fade .9s ease both;
+  visibility: visible; /* the desk stage around it is hidden while it covers the screen */
 }
 .room::backdrop { background: transparent; }
 .room[data-closing="true"] { animation: fade-out .8s .7s ease both; }
@@ -100,6 +101,11 @@
   box-shadow: inset 0 0 0 1px #0000000d, 2px 3px 6px #0005;
 }
 .leaf .face[data-side="back"], .leaf[data-turned="true"] .face[data-side="front"] { visibility: hidden; }
+/* Leaves deep in either stack are covered by the ones on top. Each face is a page-sized GPU layer, and with every page
+   painted the Instagram/Android WebView ran out of tile memory and left parts of the screen unpainted (half a cover,
+   no desk, black buttons). Far leaves keep their place in the stack but paint nothing. Not visibility: its delayed
+   transition would show a hole while a jump turns past them. */
+.leaf[data-far] .face { content-visibility: hidden; background: none; box-shadow: none; }
 .leaf[data-turned="true"] .face[data-side="back"] { visibility: visible; }
 .face[data-side="back"] {
   transform: rotateY(180deg); border-radius: 6px 0 0 6px;

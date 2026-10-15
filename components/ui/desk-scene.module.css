@@ -21,6 +21,9 @@
   background: #111110;
 }
 .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; isolation: isolate; }
+/* The open notebook (a modal over the whole screen) hides the desk: no reason to keep painting the 3D desk, WebGL
+   canvas, card and stickers under it, and on phones they took the GPU memory the book needed. */
+.stage:has(dialog[data-covering="true"]) { visibility: hidden; }
 .stage::before {
   content: ""; position: absolute; inset: 0;
   background: radial-gradient(ellipse at 50% 40%, #30302c, #151513 60%, #0c0c0b);
