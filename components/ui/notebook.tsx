@@ -85,6 +85,8 @@ function Book({ articles, projects, stamps, onPlaced, onClose }: { articles: Art
   const [beans] = useState(() => beanShare(readLocal())); // % of castle beans, once the Count is beaten in this browser
   const [start] = useState(() => articles.findIndex((a) => location.pathname === `/blog/${a.slug}`)); // opened from a post link
   const [copied, setCopied] = useState("");
+  // Once the room has faded in it covers the screen; the desk scene behind it stops being painted (desk-scene.module.css).
+  const [covering, setCovering] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const go = (n: number, l = true) => {
     setFlip(([now]) => [Math.max(0, Math.min(leaves, n)), now]);
     setLeft(l);
@@ -258,6 +260,13 @@ function Book({ articles, projects, stamps, onPlaced, onClose }: { articles: Art
     return () => removeEventListener("keydown", key);
   });
 
+  // Once the turn is over, forget where it started, so the leaves it passed go back to being far (and unpainted).
+  useEffect(() => {
+    if (from === flipped) return;
+    const timer = setTimeout(() => setFlip(([now]) => [now, now]), 1100 + Math.min(Math.abs(flipped - from), 8) * 90);
+    return () => clearTimeout(timer);
+  }, [flipped, from]);
+
   const close = () => {
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) return onClose();
     go(0);
@@ -269,9 +278,14 @@ function Book({ articles, projects, stamps, onPlaced, onClose }: { articles: Art
       ref={dialog}
       className={styles.room}
       data-closing={closing}
+      data-covering={covering && !closing}
       aria-label="Caderno"
       onCancel={(e) => { e.preventDefault(); close(); }}
-      onAnimationEnd={(e) => { if (closing && e.target === e.currentTarget) onClose(); }}
+      onAnimationEnd={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (closing) onClose();
+        else setCovering(true);
+      }}
     >
       <div className={styles.book} data-state={flipped === 0 ? "closed" : flipped === leaves ? "end" : "open"} data-page={left ? "left" : "right"} style={{ "--leaves": leaves } as CSSProperties}>
         <span className={styles.ribbon} />
@@ -280,7 +294,8 @@ function Book({ articles, projects, stamps, onPlaced, onClose }: { articles: Art
           // Leaves turned in one jump go one after the other, starting from the one nearest the reader.
           const order = flipped > from ? i - from : from - 1 - i;
           return (
-            <div key={i} className={styles.leaf} data-turned={turned} data-cover={i === 0 ? "front" : i === leaves - 1 ? "back" : undefined} style={{ "--z": `${turned ? i : -i}px`, "--delay": `${Math.max(0, Math.min(order, 8)) * 90}ms` } as CSSProperties}>
+            <div key={i} className={styles.leaf} data-turned={turned} data-cover={i === 0 ? "front" : i === leaves - 1 ? "back" : undefined}
+              data-far={i > 0 && i < leaves - 1 && (i < Math.min(flipped, from) - 2 || i > Math.max(flipped, from) + 1) ? "" : undefined} style={{ "--z": `${turned ? i : -i}px`, "--delay": `${Math.max(0, Math.min(order, 8)) * 90}ms` } as CSSProperties}>
               {[2 * i, 2 * i + 1].map((f) => (
                 <div key={f} className={styles.face} data-side={f % 2 ? "back" : "front"} inert={f !== 2 * flipped - 1 && f !== 2 * flipped}>
                   {f > 0 && f < faces.length - 1 && <Doodles seed={seed + f * 7919} back={f % 2 === 1} />}
