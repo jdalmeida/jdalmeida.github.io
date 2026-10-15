@@ -8,8 +8,8 @@ import styles from "./evidence-board.module.css";
 type Event = (typeof events)[number];
 
 // Pin spots on the board (percent of its width/height); each clipping hangs from its pin.
-const PINS = { note: [21, 43], photoA: [56, 31], photoB: [82, 47] } as const;
-const STRINGS = [["note", "photoA"], ["photoA", "photoB"]] as const;
+const PINS = { note: [21, 43], photoA: [56, 31], photoB: [82, 47], card: [53, 71.4], badge: [80.5, 16.5] } as const;
+const STRINGS = [["note", "photoA"], ["photoA", "photoB"], ["photoB", "card"], ["photoB", "badge"]] as const;
 const FONTS = ["Georgia, serif", "Impact, 'Arial Black', sans-serif", "'Courier New', monospace", "'Times New Roman', serif", "'Trebuchet MS', sans-serif", "Verdana, sans-serif"];
 const PAPERS = ["#f4efe2", "#111", "#d9352b", "#f2d64b", "#fff", "#1e4fa8", "#e8e1cf"];
 
@@ -74,14 +74,30 @@ export default function EvidenceBoard({ event, onClose }: { event: Event; onClos
               <p>{event.note}</p>
               <small>{event.role} · {event.place}, {event.year}</small>
             </div>
+            <span className={styles.stain} aria-hidden="true" />
             {event.images.map((src, i) => (
               <figure key={src} className={styles.polaroid} data-photo={i}>
                 <Image src={src} alt={`${event.name}, foto ${i + 1}`} width={480} height={480} />
                 <figcaption>{event.number}{i ? "-B" : "-A"}</figcaption>
+                {i === 0 && <span className={styles.tape} aria-hidden="true" />}
               </figure>
             ))}
+            {/* Typed index card: the case file. */}
+            <div className={styles.card}>
+              <dl>
+                <dt>Caso</dt><dd>{event.number}</dd>
+                <dt>Local</dt><dd>{event.location}</dd>
+                <dt>Data</dt><dd><span className={styles.circled}>{event.year}</span></dd>
+                <dt>Função</dt><dd>{event.role}</dd>
+              </dl>
+              <span className={styles.closed} aria-hidden="true">Encerrado</span>
+            </div>
+            <Image className={styles.badge} src={`/credentials/${event.id}.svg`} alt={`Credencial: ${event.name}`} width={1000} height={1450} />
             <svg className={styles.threads} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              {/* Each yarn is drawn three times: its shadow on the cork, the strand, and a lighter twist along it. */}
+              {STRINGS.map(([a, b]) => <path key={a + b} className={styles.threadShadow} d={thread(PINS[a], PINS[b])} />)}
               {STRINGS.map(([a, b]) => <path key={a + b} d={thread(PINS[a], PINS[b])} />)}
+              {STRINGS.map(([a, b]) => <path key={a + b} className={styles.twist} d={thread(PINS[a], PINS[b])} />)}
             </svg>
             {Object.entries(PINS).map(([key, [x, y]]) => (
               <span key={key} className={styles.pin} style={{ left: `${x}%`, top: `${y}%` } as CSSProperties} />

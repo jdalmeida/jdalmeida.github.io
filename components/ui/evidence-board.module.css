@@ -4,9 +4,8 @@
   position: fixed; inset: 0; width: 100vw; max-width: none; height: 100svh; max-height: none;
   margin: 0; padding: 0; border: 0; overflow: hidden; color: #111;
   background: #050505; perspective: 1000px;
-  /* Procedural textures: stained plaster (one stretched blotch layer so it never visibly repeats + tiled fine grain) and streaky wood grain. */
-  --plaster: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .7 -.22'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23b)'/%3E%3C/svg%3E"), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000' preserveAspectRatio='none' width='1000' height='1000'%3E%3Cfilter id='a' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004' numOctaves='5' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .16 0 0 0 0 .14 0 0 0 0 .08 0 0 0 2.2 -.75'/%3E%3C/filter%3E%3Crect width='1000' height='1000' filter='url(%23a)'/%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
-  --wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='800'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.12 .004' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='.6 0 0 0 .17 .34 0 0 0 .07 .16 0 0 0 .02 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='240' height='800' filter='url(%23w)'/%3E%3C/svg%3E");
+  /* Baked surfaces (scripts/bake-textures.ts): as inline SVG filters they were re-rasterized while the camera moved. */
+  --plaster: url(/textures/baked/plaster-grain.webp) 0 0 / 200px, url(/textures/baked/plaster-stains.webp) 0 0 / 100% 100% no-repeat;
   animation: fade 1.4s ease both;
 }
 .room::backdrop { background: transparent; }
@@ -26,12 +25,13 @@
 .wall {
   top: -25svh; height: 150svh; transform: translateZ(calc(-1 * var(--depth)));
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at 50% 42%, #fff1 0 15%, #0000 30%, #0006 58%, #000d 85%), var(--plaster), #767461;
+  /* Pendant lamp above the board: a warm pool that falls off into the corners. */
+  background: radial-gradient(ellipse 55% 50% at 50% 40%, #ffe3b02e, #ffe3b00f 40%, #0000 60%), radial-gradient(ellipse at 50% 42%, #0000 30%, #0006 58%, #000d 85%), var(--plaster), #767461;
 }
 .floor {
   top: 125svh; height: var(--depth); transform-origin: top; transform: translateZ(calc(-1 * var(--depth))) rotateX(90deg);
   background: linear-gradient(#0008, #000d), repeating-linear-gradient(90deg, #0000 0 11vw, #0c0603 11vw calc(11vw + 3px)),
-    repeating-linear-gradient(90deg, #0000 0 calc(11vw + 3px), #0003 0 calc(22vw + 6px)), var(--wood) 0 0 / 11vw auto;
+    repeating-linear-gradient(90deg, #0000 0 calc(11vw + 3px), #0003 0 calc(22vw + 6px)), url(/textures/baked/walnut.webp) 0 0 / 60vw auto;
 }
 .ceiling {
   top: calc(-25svh - var(--depth)); height: var(--depth); transform-origin: bottom;
@@ -46,11 +46,18 @@
 .side[data-side="right"] { left: 125vw; transform-origin: left; transform: translateZ(calc(-1 * var(--depth))) rotateY(-90deg) scaleX(-1); }
 
 /* ponytail: landscape board; on portrait phones it just shrinks, give it a stacked layout if that's too small. */
+/* Cork in a walnut frame: the frame is the border box's background, the cork the padding box's. Lit from above. */
 .board {
   position: relative; width: min(82%, 190svh); aspect-ratio: 16 / 10; container-type: inline-size;
-  border: 1.6cqi solid #5b3a20; border-radius: .6cqi;
-  background: radial-gradient(#0000 60%, #0006), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Crect width='300' height='300' fill='%23c09062'/%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.035' numOctaves='3' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.28 0 0 0 0 0.13 0 0 0 2.6 -1.1'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23p)'/%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.22' numOctaves='3' seed='5' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.32 0 0 0 0 0.15 0 0 0 4 -1.8'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23g)'/%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.3' numOctaves='3' seed='8' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.78 0 0 0 0 0.55 0 0 0 6 -3.6'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23l)'/%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.11 0 0 0 0 0.05 0 0 0 10 -6.2'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23s)'/%3E%3C/svg%3E") 0 0 / 22cqi;
-  box-shadow: 0 3cqi 6cqi #000b, inset 0 0 2cqi #0008;
+  border: 1.8cqi solid #0000; border-radius: .6cqi;
+  background:
+    radial-gradient(ellipse 80% 70% at 50% 15%, #fff4dc1c, #0000 70%) padding-box,
+    radial-gradient(#0000 60%, #0006) padding-box,
+    url(/textures/baked/cork.webp) 0 0 / 22cqi padding-box,
+    linear-gradient(#ffffff1a, #0000 30%, #0000 70%, #0004) border-box,
+    url(/textures/baked/walnut.webp) center / 120cqi auto border-box, #4a2e18;
+  box-shadow: 0 3cqi 6cqi #000b, 0 .6cqi 1cqi #0008,
+    inset 0 0 0 .15cqi #0008, inset .6cqi .8cqi 1.4cqi #0009; /* the cork sits below the frame's lip */
 }
 
 .title {
@@ -64,26 +71,76 @@
 .note {
   position: absolute; left: 8%; top: 40%; width: 26%; aspect-ratio: 1; padding: 2.4% 2%;
   display: flex; flex-direction: column; justify-content: space-between;
-  background: linear-gradient(#0000 85%, #0001), #f7e66b; transform: rotate(-4deg);
-  font: 1.45cqi/1.35 "Comic Sans MS", "Bradley Hand", cursive; box-shadow: .3cqi .6cqi 1cqi #0007;
+  background: linear-gradient(160deg, #fff7 0, #fff0 18%), linear-gradient(#0000 85%, #0001), url(/textures/baked/paper.webp) 0 0 / 20cqi, #f7e66b; transform: rotate(-4deg);
+  font: 1.45cqi/1.35 "Comic Sans MS", "Bradley Hand", cursive;
+  box-shadow: .15cqi .25cqi .3cqi #0006, 1cqi 1.6cqi 1.4cqi -.6cqi #0008; /* the free bottom edge curls off the cork */
 }
 .note p { margin: 0; }
 .note small { font-size: 1.1cqi; opacity: .7; }
 
 .polaroid {
-  position: absolute; width: 22%; margin: 0; padding: 1.1% 1.1% 0; background: #f5f3ec;
-  box-shadow: .3cqi .6cqi 1cqi #0008; transform: rotate(5deg);
+  position: absolute; width: 22%; margin: 0; padding: 1.1% 1.1% 0;
+  background: linear-gradient(150deg, #fff 0, #f5f3ec 30%, #e9e5da), url(/textures/baked/paper.webp) 0 0 / 20cqi;
+  box-shadow: .15cqi .25cqi .3cqi #0007, 1.2cqi 1.8cqi 1.6cqi -.5cqi #0009; transform: rotate(5deg);
+}
+/* Gloss of the print, and the slight sheen of light along the top. */
+.polaroid::after {
+  content: ""; position: absolute; left: 5%; right: 5%; top: 4%; aspect-ratio: 1; pointer-events: none;
+  background: linear-gradient(120deg, #fff0 35%, #ffffff2e 47%, #fff0 60%), linear-gradient(#ffffff14, #fff0 40%);
 }
 .polaroid[data-photo="0"] { left: 45%; top: 29%; }
 .polaroid[data-photo="1"] { left: 71%; top: 45%; transform: rotate(-6deg); }
-.polaroid img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; filter: sepia(.25) contrast(1.05); }
+.polaroid img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; filter: sepia(.25) contrast(1.05); box-shadow: inset 0 0 0 1px #0002; }
+/* Masking tape over a corner, torn at both ends. */
+.tape {
+  position: absolute; right: -7%; bottom: 12%; width: 30%; height: 7%; rotate: -38deg;
+  background: linear-gradient(#f1e7c8cc, #e4d6abc0); box-shadow: 0 .1cqi .2cqi #0003;
+  clip-path: polygon(0 8%, 6% 0, 12% 10%, 20% 0, 80% 0, 88% 9%, 94% 0, 100% 10%, 100% 92%, 93% 100%, 87% 90%, 80% 100%, 20% 100%, 13% 91%, 6% 100%, 0 90%);
+}
 .polaroid figcaption { padding: .6cqi 0 1.2cqi; text-align: center; font: 1.3cqi "Courier New", monospace; }
 
 .threads { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.threads path { fill: none; stroke: #c01a1a; stroke-width: 2.5; vector-effect: non-scaling-stroke; filter: drop-shadow(1px 2px 1px #0008); }
+.threads path { fill: none; stroke: #b5161a; stroke-width: 2.6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+/* A path shadow instead of a drop-shadow filter: no filter pass when the camera dollies. */
+.threads .threadShadow { stroke: #0007; stroke-width: 3; transform: translate(.35px, .9px); }
+.threads .twist { stroke: #ff6f6f66; stroke-width: 1.1; stroke-dasharray: 2 3; }
+/* Push pin: domed head, a highlight, and the long shadow its height throws on the cork. */
 .pin {
-  position: absolute; width: 1.4cqi; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
-  background: radial-gradient(circle at 35% 35%, #ff8a8a, #b30f0f 60%, #5a0505); box-shadow: .2cqi .4cqi .4cqi #0009;
+  position: absolute; width: 1.5cqi; aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 34% 30%, #ffd0d0 0 8%, #ff7a7a 18%, #c4161a 52%, #6e0608 80%);
+  box-shadow: inset -.15cqi -.2cqi .3cqi #0006, .1cqi .15cqi .1cqi #0008, .45cqi .6cqi .35cqi #0006, .9cqi 1.2cqi .7cqi #0003;
+}
+
+/* Coffee ring someone left on the cork. */
+.stain {
+  position: absolute; left: 10%; top: 13%; width: 9%; aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, #5a2e1012 0 80%, #5a2e1066 88%, #5a2e1022 94%, #0000); rotate: 20deg;
+  -webkit-mask: conic-gradient(#000 0 300deg, #0000 330deg); mask: conic-gradient(#000 0 300deg, #0000 330deg);
+}
+
+/* Typed index card: ruled, red header line, a rubber stamp across it. */
+.card {
+  position: absolute; left: 36%; top: 70%; width: 23%; aspect-ratio: 5 / 3; padding: 1.4% 1.6%; box-sizing: border-box;
+  background: linear-gradient(#0000 0 22%, #d9534f88 22% calc(22% + 1px), #0000 0),
+    repeating-linear-gradient(#0000 0 calc(1.7cqi - 1px), #6a8fc644 calc(1.7cqi - 1px) 1.7cqi) 0 calc(22% + 1.7cqi),
+    url(/textures/baked/paper.webp) 0 0 / 20cqi, #f7f3e6;
+  font: 1.15cqi/1.48 "Courier New", Courier, monospace; color: #222; transform: rotate(3deg);
+  box-shadow: .15cqi .25cqi .3cqi #0006, 1cqi 1.4cqi 1.4cqi -.5cqi #0008;
+}
+.card dl { display: grid; grid-template-columns: auto 1fr; gap: .25cqi 1cqi; margin: 0; }
+.card dt { text-transform: uppercase; letter-spacing: .08em; opacity: .7; }
+.card dd { margin: 0; }
+.circled { padding: 0 .4em; border: .18cqi solid #c4161ac0; border-radius: 50% 45% 55% 40%; }
+.closed {
+  position: absolute; right: 4%; bottom: 8%; padding: .2cqi .9cqi; rotate: -14deg;
+  border: .25cqi solid #b3261ec0; border-radius: .4cqi; color: #b3261ec0;
+  font: 700 1.5cqi "Courier New", monospace; letter-spacing: .15em; text-transform: uppercase; mix-blend-mode: multiply;
+}
+
+/* The event's own badge, pinned up as evidence. */
+.badge {
+  position: absolute; left: 76%; top: 15%; width: 9%; height: auto; border-radius: .3cqi; transform: rotate(-7deg);
+  box-shadow: .15cqi .25cqi .3cqi #0007, .9cqi 1.3cqi 1.4cqi -.4cqi #0008;
 }
 
 .back {
@@ -113,7 +170,12 @@
   .polaroid { position: static; width: auto; padding: 7px 7px 0; transform: rotate(2deg); }
   .polaroid[data-photo="1"] { transform: rotate(-2deg); }
   .polaroid figcaption { padding: 5px 0 8px; font-size: .7rem; }
-  .threads, .pin { display: none; }
+  .card { position: static; grid-column: 1 / -1; width: auto; aspect-ratio: auto; padding: 14px 16px; font-size: .8rem; transform: rotate(1deg); }
+  .card dl { gap: 2px 12px; }
+  .circled { border-width: 2px; }
+  .closed { font-size: .8rem; border-width: 2px; padding: 2px 8px; }
+  .badge { position: static; grid-column: 1 / -1; justify-self: center; width: 38%; transform: rotate(-3deg); }
+  .threads, .pin, .stain { display: none; }
   .back { z-index: 1; top: auto; bottom: max(12px, env(safe-area-inset-bottom)); left: 50%; translate: -50% 0; white-space: nowrap; }
 }
 

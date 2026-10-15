@@ -32,8 +32,14 @@ for (const [name, layer, width, height] of [
   await sharp(Buffer.from(svg), { density: 72 }).webp({ quality: 90, effort: 5 })
     .toFile(new URL(`${name}.webp`, output).pathname);
 }
+// Evidence room surfaces, drawn as SVG filters in scripts/textures. As CSS backgrounds they were re-rasterized
+// whenever the room's camera moved; as images they decode once.
+for (const [name, width, height] of [["plaster-grain", 256, 256], ["plaster-stains", 512, 512], ["cork", 600, 600]] as const) {
+  await sharp(new URL(`textures/${name}.svg`, import.meta.url).pathname, { density: 144 }).resize(width, height)
+    .webp({ quality: 88, effort: 5 }).toFile(new URL(`${name}.webp`, output).pathname);
+}
 await sharp(new URL("../public/textures/holo-foil.svg", import.meta.url).pathname, { density: 144 })
   .resize(1024, 640)
   .webp({ quality: 90, effort: 5 })
   .toFile(new URL("holo-foil.webp", output).pathname);
-console.log("Baked 8 surface textures.");
+console.log("Baked 11 surface textures.");
