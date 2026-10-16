@@ -108,6 +108,10 @@
   border: 6px solid #fff;
 }
 
+/* Signature, name and text are layers of their own (translateZ, will-change). Raised above the grime and glare so those
+   paint into the face instead: under them, every blend layer was promoted too and re-blended on each scroll frame. */
+.cardSignature, .cardName, .cardText { z-index: 1; }
+
 .cardSignature {
   position: absolute; left: 10%; top: 12%; width: 54%;
   filter: drop-shadow(0 1px 1px #0004);
