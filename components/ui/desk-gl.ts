@@ -1,6 +1,6 @@
 import { Camera, Geometry, Mat4, Mesh, Program, Renderer, RenderTarget, Texture, Transform, Vec3 } from "ogl";
-import { ballsAt, binAt, coffeeSpot, cupAt, lampAt, legsAt, paintDesk } from "./desk-textures";
-import { bin, buf, cuboid, lathe, MAT, mug, paperBall, pen, pencil, plane, stickyNote, succulent, tabletop, type Buf, type V } from "./desk-geometry";
+import { ampAt, ballsAt, binAt, coffeeSpot, guitarAt, cupAt, lampAt, legsAt, paintDesk } from "./desk-textures";
+import { amp, bin, buf, guitar, cuboid, lathe, MAT, mug, paperBall, pen, pencil, plane, stickyNote, succulent, tabletop, type Buf, type V } from "./desk-geometry";
 import { LIGHTMAP, SOLID, SURFACE, WOOD } from "./desk-shaders";
 import { rng } from "./grime";
 
@@ -194,6 +194,9 @@ export function createDeskGL(parent: HTMLElement, className: string) {
     bin(parts.faded, [b.x, b.y, floorZ], b.r, bh);
     paperBall(parts.faded, b.r * 0.4, [b.x - b.r * 0.2, b.y + b.r * 0.05, floorZ + 2 + b.r * 0.38], "#e8e2d4", seed);
     paperBall(parts.faded, b.r * 0.34, [b.x + b.r * 0.3, b.y - b.r * 0.22, floorZ + 2 + b.r * 0.33], "#ddd6c6", seed + 1);
+    const g = guitarAt(W, H, v.leg), a = ampAt(W, H, v.leg);
+    guitar(parts.faded, [g.x, g.y, floorZ], g.angle, g.s);
+    amp(parts.faded, [a.x, a.y, floorZ], a.w, a.d, a.h);
     ballsAt(W, H).forEach((ball, i) => paperBall(parts.faded, ball.r, [ball.x, ball.y, floorZ + ball.r * 0.9], i ? "#ddd6c6" : "#e8e2d4", seed + 2 + i));
 
     const order: Record<keyof typeof parts, number> = { top: 0, edge: 0, note: 0, solid: 0, floor: 1, faded: 2, chalk: 3 };
