@@ -1,7 +1,7 @@
 "use client";
 
 import { Pirata_One } from "next/font/google";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
 import { loadCastle, saveCastle } from "@/lib/castle";
 import { countStamp } from "@/lib/stamps";
 import { track } from "@/lib/track";
@@ -332,6 +332,8 @@ function Castle({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const input = useRef<Input>(idle());
+  // Touch pad: which button each finger is on.
+  const thumbs = useRef(new Map<number, Element>());
   const [progress, setProgress] = useState<Progress>({ cleared: 0, best: [] });
   const saved = useRef(progress);
   const [stage, setStage] = useState<number | null>(null);
@@ -379,7 +381,7 @@ function Castle({ onClose }: { onClose: () => void }) {
       return () => { cancelAnimationFrame(frame); removeEventListener("keydown", skip); removeEventListener("keyup", skip); };
     }
     if (stage === null) { draw(ctx, fresh(Math.min(saved.current.cleared, STAGES.length - 1))); return; }
-    input.current = idle();
+    input.current = idle(); thumbs.current.clear();
     let g = fresh(stage), frame = 0, then = performance.now(), shown = "";
     function tick(now: number) {
       const dt = Math.min(0.05, (now - then) / 1000);
@@ -428,11 +430,30 @@ function Castle({ onClose }: { onClose: () => void }) {
     return () => clearTimeout(later);
   }, [stage]);
 
-  // Touch pad: each button holds its input while pressed.
-  const pad = (k: keyof Input, label: string, glyph: string) => (
-    <button type="button" aria-label={label} onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); input.current[k] = true; }}
-      onPointerUp={() => { input.current[k] = false; }} onPointerCancel={() => { input.current[k] = false; }} onContextMenu={(e) => e.preventDefault()}>{glyph}</button>
-  );
+  // Touch pad: each thumb holds the nearest button of its pair and can slide to the other one (◀ to ▶, B to A) without lifting.
+  const thumb = (e: PointerEvent<HTMLSpanElement>) => {
+    const pair = e.currentTarget;
+    if (e.type === "pointerdown") pair.setPointerCapture(e.pointerId);
+    else if (!thumbs.current.has(e.pointerId)) return;
+    if (e.type === "pointerup" || e.type === "pointercancel") thumbs.current.delete(e.pointerId);
+    else {
+      let near = pair.firstElementChild!, dist = Infinity;
+      for (const b of pair.children) {
+        const r = b.getBoundingClientRect(), d = Math.hypot(e.clientX - r.x - r.width / 2, e.clientY - r.y - r.height / 2);
+        if (d < dist) { dist = d; near = b; }
+      }
+      thumbs.current.set(e.pointerId, near);
+    }
+    const held = new Set(thumbs.current.values());
+    for (const b of pair.parentElement!.querySelectorAll<HTMLElement>("[data-k]")) {
+      const k = b.dataset.k as keyof Input, on = held.has(b);
+      if (on && !input.current[k]) navigator.vibrate?.(8);
+      input.current[k] = on;
+      b.toggleAttribute("data-on", on);
+    }
+  };
+  const pad = (k: keyof Input, label: string, glyph: string) => <button type="button" data-k={k} aria-label={label} tabIndex={-1}>{glyph}</button>;
+  const pair = { onPointerDown: thumb, onPointerMove: thumb, onPointerUp: thumb, onPointerCancel: thumb, onContextMenu: (e: { preventDefault(): void }) => e.preventDefault() };
   const play = (i: number) => { audio.sfx.start(); setNote(""); setStage(i); track("stage", String(i)); };
   const speaker = (
     <button type="button" className={styles.menu} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
@@ -485,8 +506,8 @@ function Castle({ onClose }: { onClose: () => void }) {
       {(stage !== null || !intro) && <p className={`${room.hint} ${styles.hint}`}>← → andar · espaço/Z pular · X/J chicote · pule por baixo das plataformas finas</p>}
       {stage !== null && (
         <div className={styles.pad}>
-          <span>{pad("left", "Andar para a esquerda", "◀")}{pad("right", "Andar para a direita", "▶")}</span>
-          <span>{pad("whip", "Chicote", "B")}{pad("jump", "Pular", "A")}</span>
+          <span {...pair}>{pad("left", "Andar para a esquerda", "◀")}{pad("right", "Andar para a direita", "▶")}</span>
+          <span {...pair}>{pad("whip", "Chicote", "B")}{pad("jump", "Pular", "A")}</span>
         </div>
       )}
       <p className={styles.rotate}>Gire o celular para jogar maior</p>

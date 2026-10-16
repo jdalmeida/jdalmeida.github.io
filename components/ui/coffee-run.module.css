@@ -53,12 +53,13 @@ canvas.level:active { cursor: default; }
 /* Touch: pad pinned to the bottom corners, big enough for thumbs. */
 .pad, .rotate { display: none; }
 .pad { position: fixed; left: 1rem; right: 1rem; bottom: max(1rem, env(safe-area-inset-bottom)); justify-content: space-between; pointer-events: none; }
-.pad span { display: flex; gap: .8rem; pointer-events: auto; }
+/* The pair, not each button, takes the touch: the gap and a margin around it still count, as the nearest button. */
+.pad span { display: flex; gap: .8rem; padding: .6rem; margin: -.6rem; pointer-events: auto; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .pad button {
   width: 4.2rem; aspect-ratio: 1; border: 2px solid #e3ddcf55; border-radius: 50%; background: #1e1d1acc; color: inherit;
-  font: 700 1.2rem var(--font-geist-mono), monospace; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  font: 700 1.2rem var(--font-geist-mono), monospace; pointer-events: none;
 }
-.pad button:active { background: #3a3833; }
+.pad button[data-on] { background: #3a3833; border-color: #e3ddcf; scale: .94; }
 @media (pointer: coarse) {
   .pad { display: flex; }
   .hint { display: none; }
