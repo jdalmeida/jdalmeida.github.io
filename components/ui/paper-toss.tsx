@@ -47,7 +47,7 @@ export function step(b: Ball, dt: number, wind: number) {
 }
 
 // Crisp pixel circle (canvas arcs antialias into blur once scaled up).
-function disc(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
+export function disc(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
   ctx.fillStyle = color;
   for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++)
     if (dx * dx + dy * dy <= r * r + r * 0.8) ctx.fillRect(Math.round(x) + dx, Math.round(y) + dy, 1, 1);

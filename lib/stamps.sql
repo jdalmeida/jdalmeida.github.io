@@ -50,3 +50,12 @@ create table if not exists runs (
   name text,                       -- set by the player; only named rows show on the leaderboard
   updated_at timestamptz not null default now() -- when `best` was reached; ties go to whoever got there first
 );
+
+-- Solo de Strato best score per device on the official song (same seed as stamps). It raises the stamp rarity too.
+-- Visitor-made jams travel in links and are never stored.
+create table if not exists jams (
+  seed integer primary key,
+  best integer not null default 0, -- points: 100 per perfect, 50 per good, times the combo multiplier
+  name text,                       -- set by the player; only named rows show on the leaderboard
+  updated_at timestamptz not null default now() -- when `best` was reached; ties go to whoever got there first
+);

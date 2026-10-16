@@ -5,8 +5,10 @@ import styles from "./desk-scene.module.css";
 import PaperToss from "./paper-toss";
 import CoffeeRun from "./coffee-run";
 import DeskRun from "./desk-run";
+import GuitarHero from "./guitar-hero";
 import { createDeskGL } from "./desk-gl";
-import { binAt } from "./desk-textures";
+import { binAt, guitarAt } from "./desk-textures";
+import { GUITAR, turnAt } from "./desk-geometry";
 import type { DiveRequest, DiveTarget } from "./desk-dive";
 import { track } from "@/lib/track";
 
@@ -108,6 +110,10 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
         const [x0, y0, z0, r] = (() => {
           const H = width / 1.85;
           if (aim === "bin") { const b = binAt(width, H, leg); return [b.x, b.y, b.z + 0.4 * leg, 0.85 * b.r]; } // into the bin, over its rim
+          if (aim === "guitar") { // down the neck, halfway up the fretboard
+            const g = guitarAt(width, H, leg), [x, y] = turnAt([0, 33], [g.x, g.y], g.angle, g.s);
+            return [x, y, g.z + GUITAR.thick * g.s, 30 * g.s];
+          }
           if (aim === "plant") { const r = width * 0.032; return [(0.052 - 0.5) * width, (0.5 - 0.1) * H, 0.9 * r, 1.25 * r]; } // the rosette
           const D = gl.cup.d * width;
           return [(gl.cup.x - 0.5) * width, (0.5 - gl.cup.y) * H, 0.68 * D, 0.445 * D]; // the coffee surface
@@ -205,6 +211,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
             <PaperToss />
             <CoffeeRun />
             <DeskRun />
+            <GuitarHero />
           </div>
           <div className={styles.cardAnchor}>
             <div className={styles.card} data-desk-card><div className={styles.flight}>{card}</div></div>
