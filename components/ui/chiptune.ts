@@ -71,7 +71,7 @@ export const hiss = (at: number, dur: number, vol: number, type: BiquadFilterTyp
 
 // --- Music ---------------------------------------------------------------------------------------------------------
 // Each token is one step: a note, "-" to hold the previous one, "." for silence; drums use k (kick), s (snare), h (hat).
-let playing: Song | null = null, timer = 0, bus: GainNode | null = null, tempo = 1;
+let playing: Song | null = null, timer = 0, bus: GainNode | null = null, tempo = 1, begun = 0;
 
 function drum(out: AudioNode, kind: string, at: number) {
   if (kind === "k") note(out, "sine", at, 0.12, 0.35, 150, 40);
@@ -91,6 +91,7 @@ export function play(song: Song, rate = 1) {
   const tracks = song.tracks.map((t) => ({ ...t, steps: t.notes.split(/\s+/) }));
   const length = Math.max(...tracks.map((t) => t.steps.length));
   let index = 0, next = c.currentTime + 0.05;
+  begun = next;
   // Looks a little ahead and schedules on the audio clock, so timer jitter never reaches the beat.
   const pump = () => {
     const step = song.step / tempo;
@@ -110,6 +111,10 @@ export function play(song: Song, rate = 1) {
   pump();
   timer = window.setInterval(pump, 25);
 }
+
+// Seconds since the playing song's first step, on the audio clock (null with no audio): what a rhythm game judges against.
+// ponytail: exact only at rate 1; a game that changes `rate` mid-song would need the step index instead.
+export const clock = () => (ctx && playing ? ctx.currentTime - begun : null);
 
 export function stop() {
   clearInterval(timer);

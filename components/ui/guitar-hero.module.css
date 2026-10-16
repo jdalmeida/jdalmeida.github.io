@@ -1,0 +1,37 @@
+/* Sits over the WebGL Stratocaster's body (desk-gl.ts, guitarAt in desk-textures.ts): centre 0.665W left / 0.25H down
+   of the desk centre, about 0.16W wide; on the floor, at floorZ = -12 - leg where leg mirrors desk-scene.tsx's clamp. */
+.guitar {
+  position: absolute; left: -16.5%; top: 75%; width: 17%; aspect-ratio: .75; padding: 0; border: 0; border-radius: 45%;
+  background: none; cursor: pointer;
+  transform: translate(-50%, -50%) translateZ(calc(-12px - clamp(140px, 22vw, 250px)));
+}
+.guitar:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+[data-landed="false"] .guitar { visibility: hidden; }
+
+.offset { display: flex; flex-direction: column; gap: .4rem; }
+.offset > span { display: flex; align-items: center; gap: .6rem; }
+.offset output { min-width: 4.5rem; text-align: center; }
+
+.editor { display: flex; flex-direction: column; align-items: center; gap: .8rem; max-width: min(94vw, 40rem); }
+.editor p { margin: 0; }
+.fields { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem 1rem; font-size: 12px; }
+.fields label { display: flex; align-items: center; gap: .4rem; }
+.editor input, .editor select, .editor button {
+  min-width: 0; padding: .35rem .6rem; border: 2px solid #e3ddcf55; background: #1e1d1a; color: inherit; font: inherit;
+  letter-spacing: inherit; text-transform: none;
+}
+.fields input[type="number"] { width: 4.5rem; }
+.editor button { cursor: pointer; text-transform: uppercase; }
+.editor button:disabled { opacity: .4; cursor: default; }
+.editor :is(input, select, button):focus-visible { outline: 2px solid #e3ddcf; }
+
+.grid { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+.row { display: grid; grid-template-columns: 2rem repeat(16, 1fr); gap: 2px; }
+.pitch { font-size: 10px; opacity: .6; align-self: center; text-transform: none; }
+.cell { aspect-ratio: 1; padding: 0 !important; border: 1px solid #e3ddcf22 !important; background: #1a1917 !important; }
+.row > :nth-child(8n + 2) { border-left-color: #e3ddcf66 !important; } /* each bar starts on a brighter line */
+.row > :is(:nth-child(4n + 2), :nth-child(4n + 3)) { background: #222120 !important; }
+.cell[aria-pressed="true"] { background: var(--lane) !important; border-color: var(--lane) !important; }
+.bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem; font-size: 12px; }
+.link { width: 100%; font-size: 11px !important; }
+.legal { opacity: .6; text-transform: none; letter-spacing: .04em; font-size: 11px; text-align: center; }

@@ -119,7 +119,7 @@ export async function visitor(id: string) {
 }
 
 // Human labels (pt-BR) for event rows and breakdown keys.
-const GAMES: Record<string, string> = { "paper-toss": "Basquete de papel", "coffee-run": "Castelo do Café", "desk-run": "Corrida na Mesa" };
+const GAMES: Record<string, string> = { "paper-toss": "Basquete de papel", "coffee-run": "Castelo do Café", "desk-run": "Corrida na Mesa", guitar: "Solo de Strato" };
 export const gameName = (g: string | null) => (g && GAMES[g]) ?? g ?? "—";
 // `names`: credential id → event name, from getCredentials().
 export const credentialName = (c: string | null, names: Record<string, string> = {}) => (c && names[c]) ?? c ?? "—";
@@ -139,6 +139,7 @@ export function describe(e: { type: string; name: string | null; detail: Record<
     case "credential": return `Abriu a credencial ${credentialName(e.name, credentials)}`;
     case "game": return `Começou a jogar ${gameName(e.name)}`;
     case "score":
+      if (e.name === "guitar") return `Solo de Strato${d.custom ? " (música de visitante)" : ""}: ${d.score} pontos, ${d.notes}% das notas, combo ${d.max}`;
       if (e.name === "desk-run") return `Corrida na Mesa: ${d.score} pontos (${d.cm} cm, ${d.drops} gotas)`;
       return `Basquete de papel: ${d.throws} arremessos, melhor sequência ${d.max}`;
     case "stage": return `Castelo do Café: entrou na fase ${Number(e.name) + 1} (${stageName(e.name)})`;

@@ -2,7 +2,7 @@
 // Event types (name / detail):
 //   view (path) · show / hide (tab came back / went away; keeps the visit's duration honest) · desk (scrolled down to the desk)
 //   open (caderno) · article (slug) · share (slug) · credential (event id)
-//   game (paper-toss | coffee-run | desk-run) · score (paper-toss, { throws, max } | desk-run, { cm, drops, score }) · stage / won (castle stage index, { beans })
+//   game (paper-toss | coffee-run | desk-run | guitar) · score (paper-toss, { throws, max } | desk-run, { cm, drops, score } | guitar, { score, notes, max, custom }) · stage / won (castle stage index, { beans })
 //   stamp (gerado | colado | conde, { id?, beans? })
 export type TrackType = "view" | "show" | "hide" | "desk" | "open" | "article" | "share" | "credential" | "game" | "score" | "stage" | "won" | "stamp";
 
