@@ -118,11 +118,11 @@
   transform: translateZ(30px);
 }
 
-/* Name and text grow and slide while the card lands on phones: a transform on their own layer. Animating font-size and
-   bottom relaid and repainted them, and the card-sized layer they share, on every scroll frame. */
+/* Name and text grow and slide while the card lands on phones: a transform animation (desk-scene.tsx) on their own layer.
+   Animating font-size and bottom relaid and repainted them, and the card-sized layer they share, on every scroll frame. */
 .cardText {
   position: absolute; right: 7%; bottom: 9%;
-  transform: translateY(var(--card-type-y, 0px)) scale(var(--card-type-scale, 1)); transform-origin: 100% 100%; will-change: transform;
+  transform-origin: 100% 100%; will-change: transform;
   text-transform: uppercase; letter-spacing: .12em;
   font-size: calc(clamp(9px, 2.4vw, 16px) * var(--card-type-size, 1)); line-height: 1.5; text-align: right;
   text-shadow: 0 1px 2px #000a;
@@ -133,7 +133,7 @@
 
 .cardName {
   position: absolute; left: 7%; bottom: 9%;
-  transform: translateY(var(--card-type-y, 0px)) scale(var(--card-type-scale, 1)); transform-origin: 0 100%; will-change: transform;
+  transform-origin: 0 100%; will-change: transform;
   text-transform: uppercase; letter-spacing: .12em;
   font-size: calc(clamp(9px, 2.4vw, 16px) * var(--card-type-size, 1)); line-height: 1.5; text-align: left;
   text-shadow: 0 1px 2px #000a;
