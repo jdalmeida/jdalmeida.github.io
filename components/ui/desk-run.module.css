@@ -33,3 +33,14 @@ canvas.track:active { cursor: default; }
 .record { color: #ffd84a; font-weight: normal; }
 /* The portrait track fills a phone's height, so the content starts at the top: keep it clear of the back button. */
 @media (max-width: 640px) { .room { justify-content: flex-start; padding-top: 4.5rem; } }
+
+/* Title card (guitar-hero.module.css's .intro): the name drifts down like the falling leaf. */
+.logo {
+  display: flex; flex-direction: column; align-items: center; margin: 0; font-size: 16cqi; line-height: .9; font-weight: 400; text-transform: none; letter-spacing: 0;
+  background: linear-gradient(#fff6d8 10%, #ffd84a 40%, #8fb898 65%, #3f6b4a 95%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 .5cqi 0 #1a2a1c) drop-shadow(0 0 2cqi #ffd84a66);
+  animation: logo 2.2s 1.6s cubic-bezier(.2, .7, .2, 1) both;
+}
+.logo small { font-size: .5em; line-height: 1.1; }
+@keyframes logo { from { opacity: 0; transform: translateY(-8cqi) rotate(-6deg); filter: blur(1.2cqi) drop-shadow(0 0 0 #0000); } }
+@media (prefers-reduced-motion: reduce) { .logo { animation: none; } }

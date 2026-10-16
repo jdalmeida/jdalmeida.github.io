@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Chewy } from "next/font/google";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { getRunBoard, setRunName, submitRun } from "@/lib/runs";
 import { rng } from "@/lib/rng";
 import { track } from "@/lib/track";
@@ -10,6 +11,10 @@ import * as audio from "./run-audio";
 import { device, RUN_TIERS, TIERS } from "./stamp";
 import room from "./paper-toss.module.css";
 import styles from "./desk-run.module.css";
+import card from "./guitar-hero.module.css";
+
+// Storybook display face for the title card, loaded only with the game.
+const storybook = Chewy({ subsets: ["latin"], weight: "400" });
 
 // Portrait viewport in canvas px; CSS scales it up with `image-rendering: pixelated`.
 // Camera: CAMD behind the ladybug, looking down the desk; F is the focal length in px, HOR the horizon row.
@@ -285,6 +290,76 @@ function listen(r: Run, b: Before) {
   else if (r.over) sfx.crash();
 }
 
+const ease = (x: number) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+
+// Title scene: out of the succulent, the windowsill at sunrise, seen at ladybug size. A leaf drops from the rosette, the
+// ladybug scurries over and lifts it like a parasol, while the cat on the sill wakes up. `t` is seconds since the dive;
+// `calm` drops motion.
+function drawIntro(ctx: CanvasRenderingContext2D, t: number, calm: boolean) {
+  const rect = (x: number, y: number, w: number, h: number, color: string) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), Math.max(1, Math.round(w)), Math.max(1, Math.round(h))); };
+  if (calm) t = 7;
+  // Dawn through the window: bands warming towards the horizon, the sun climbing.
+  const SKY = ["#1d2140", "#3a2f55", "#6b3f5e", "#b0586a", "#e98a6b", "#f6be7a"];
+  SKY.forEach((c, i) => rect(0, i * 14, W, 14, c));
+  const sun = 92 - 30 * ease(t / 6);
+  for (let dy = -9; dy <= 9; dy++) { const w = Math.round(Math.sqrt(81 - dy * dy)); rect(84 - w, sun + dy, w * 2, 1, "#ffe7a0"); }
+  rect(0, 84, W, 2, "#3a2a20"); rect(0, 0, 4, 86, "#3a2a20"); rect(W - 4, 0, 4, 86, "#3a2a20"); rect(58, 0, 3, 86, "#3a2a20"); // window frame
+
+  // The cat on the sill, a silhouette against the sky: tail swishing, eyes opening at the end.
+  const ink = "#140e10", cx = 44;
+  rect(cx - 9, 66, 20, 18, ink); rect(cx - 6, 58, 13, 10, ink); rect(cx - 6, 54, 3, 4, ink); rect(cx + 4, 54, 3, 4, ink);
+  for (let i = 0; i < 12; i++) rect(cx + 11 + i, 82 - i * 0.4 - Math.sin(t * 2 + i * 0.4) * (i / 4), 2, 2, ink);
+  if (t > 5.5) { const open = calm ? 1 : Math.min(1, (t - 5.5) * 3); rect(cx - 4, 62, 2, open, "#ffd84a"); rect(cx + 2, 62, 2, open, "#ffd84a"); }
+
+  // The desk, in planks running away from us.
+  rect(0, 86, W, H - 86, "#8f5b33");
+  for (let y = 88; y < H; y += 6 + Math.floor((y - 86) / 8)) rect(0, y, W, 1, "#5e3a20");
+  ctx.globalAlpha = 0.25; rect(0, 86, W, 4, "#ffd8a0"); ctx.globalAlpha = 1;
+
+  // The succulent rosette at the back left: fat leaves fanning out from its pot, pink at the tips.
+  rect(4, 98, 34, 12, "#b46a45"); rect(2, 96, 38, 4, "#c97b52"); rect(4, 108, 34, 2, "#7d4530");
+  for (let i = 0; i < 9; i++) {
+    const a = Math.PI * (0.08 + i * 0.105), len = 16 - Math.abs(i - 4) * 1.5;
+    for (let k = 0; k < len; k++) {
+      const x = 21 - Math.cos(a) * k, y = 96 - Math.sin(a) * k, half = 2.4 * Math.sin(Math.PI * Math.min(1, (k + 2) / (len + 2)));
+      rect(x - half, y, half * 2 + 1, 2, k > len - 3 ? "#b8606f" : k % 3 ? "#5f8f6c" : "#8fb898");
+    }
+  }
+
+  // The leaf drops from the rosette (2s–3.6s), fluttering down to the desk.
+  const fall = ease((t - 2) / 1.6), lx = 32 + 34 * fall + (calm ? 0 : Math.sin(t * 7) * 3 * (1 - fall)), ly = 86 + 30 * fall;
+  // The ladybug scurries in from the right (3s–5s) to the leaf, then lifts it overhead.
+  const walk = ease((t - 3) / 2), bx = 140 - 72 * walk, by = 116, held = t > 5.3;
+  leaf(ctx, held ? Math.round(bx) : Math.round(lx), held ? by - 16 : Math.round(ly), 1, calm ? 0 : t, !held);
+  // Side view, facing left: red shell with spots, black head, legs scurrying while she walks.
+  const step = !calm && walk > 0 && walk < 1 ? Math.floor(t * 14) % 2 : 0;
+  for (let i = 0; i < 3; i++) rect(bx - 5 + i * 5 + ((i + step) % 2), by + 3, 1, 2, ink);
+  for (let dy = -5; dy <= 2; dy++) { const w = Math.round(8 * Math.sqrt(1 - ((dy + 1.5) / 4.5) ** 2) || 0); rect(bx - w, by + dy, w * 2, 1, dy < -3 ? "#f27b68" : "#d23a2c"); }
+  rect(bx - 12, by - 2, 5, 4, ink); rect(bx - 12, by - 1, 1, 1, "#fff6e0");
+  for (const [x, y] of [[-4, -3], [2, -2], [-1, 0], [5, 0]]) rect(bx + x, by + y, 2, 2, ink);
+  if (held) rect(bx - 1, by - 14, 1, 9, ink); // her arm, holding the stem up
+
+  // Out of the plant: the rosette's leaves the dive went through, parting and thinning out.
+  if (!calm && t < 1.8) {
+    ctx.globalAlpha = 1 - ease((t - 0.2) / 1.5);
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2 + t * 0.6, reach = 30 + 120 * ease(t / 1.6);
+      ctx.fillStyle = i % 2 ? "#5f8f6c" : "#4c7a59";
+      ctx.beginPath(); ctx.moveTo(W / 2, H / 2);
+      ctx.arc(W / 2, H / 2, reach, a, a + 0.75); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  ctx.globalAlpha = 0.3; rect(0, 0, W, 2, "#000"); rect(0, H - 2, W, 2, "#000"); rect(0, 0, 2, H, "#000"); rect(W - 2, 0, 2, H, "#000"); ctx.globalAlpha = 1;
+}
+
+// The prologue, one caption at a time under the title (timed in guitar-hero.module.css: 4s in, 3.2s each).
+const PROLOGUE = [
+  "Amanhece na janela. Uma folha se solta da suculenta.",
+  "A joaninha vai levá-la para brotar do outro lado da mesa.",
+  "Mas o gato acordou, e tem fome de bichinho.",
+];
+
 type Board = Awaited<ReturnType<typeof getRunBoard>>;
 type Phase = "ready" | "running" | "paused" | "over";
 
@@ -293,6 +368,10 @@ function Game({ onClose }: { onClose: () => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const game = useRef<{ start: () => void; pause: (p: boolean) => void } | null>(null);
   const [phase, setPhase] = useState<Phase>("ready");
+  // Opening: the title scene (the desk camera has just dived into the plant) plays until a key or tap.
+  const [intro, setIntro] = useState(true);
+  const introRef = useRef(intro);
+  const enter = () => { if (!introRef.current) return; introRef.current = false; setIntro(false); audio.sfx.sun(); audio.play("garden"); };
   const [hud, setHud] = useState({ cm: 0, drops: 0, best: 0, magnet: 0, spring: 0, chase: false });
   const [end, setEnd] = useState({ score: 0, line: "", record: false });
   const [board, setBoard] = useState<Board>();
@@ -302,7 +381,7 @@ function Game({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     audio.unlock();
-    audio.play("garden");
+    audio.play("title");
     // M toggles the sound anywhere in the game.
     const mute = (e: KeyboardEvent) => { if (e.code === "KeyM" && !e.repeat && !(e.target instanceof HTMLInputElement)) toggleSound(); };
     addEventListener("keydown", mute);
@@ -314,6 +393,7 @@ function Game({ onClose }: { onClose: () => void }) {
     const el = canvas.current!, ctx = el.getContext("2d")!, img = ctx.createImageData(W, H);
     const steady = matchMedia("(prefers-reduced-motion: reduce)").matches;
     let r = fresh(rng(Date.now() | 0), { steady }), state: Phase = "ready", best = 0, frame = 0, then = performance.now(), shown = "";
+    const opened = then;
     const cam: Cam = { x: 0, y: 5 };
     track("game", "desk-run");
     const load = () => getRunBoard(device()).then((b) => { best = Math.max(best, b.me.best); setBoard(b); setHud((h) => ({ ...h, best })); }).catch(() => {});
@@ -345,8 +425,8 @@ function Game({ onClose }: { onClose: () => void }) {
       // The camera trails her across lanes and rises a little when she's up on the notebook.
       cam.x += (r.x * 0.45 - cam.x) * Math.min(1, dt * 8);
       cam.y += (5 + groundUnder(r) * 0.6 - cam.y) * Math.min(1, dt * 6);
-      ground(img, r.dist, cam);
-      draw(ctx, img, r, cam, now / 1000);
+      if (introRef.current) drawIntro(ctx, (now - opened) / 1000, steady);
+      else { ground(img, r.dist, cam); draw(ctx, img, r, cam, now / 1000); }
       const h = { cm: Math.floor(r.dist), drops: r.drops, best, magnet: Math.ceil(r.magnet), spring: Math.ceil(r.spring), chase: r.chase > 0 };
       const k = JSON.stringify(h);
       if (k !== shown) { shown = k; setHud(h); }
@@ -362,6 +442,9 @@ function Game({ onClose }: { onClose: () => void }) {
       },
     };
     const press = (e: KeyboardEvent) => {
+      // Any key but Escape (closes) and Tab ends the title, on keyup, so the space that skipped can't also start the run.
+      if (introRef.current) { if (e.code !== "Escape" && e.code !== "Tab") { e.preventDefault(); if (e.type === "keyup") enter(); } return; }
+      if (e.type === "keyup") return;
       const a = KEYS[e.code];
       if (!a) return;
       e.preventDefault();
@@ -384,6 +467,7 @@ function Game({ onClose }: { onClose: () => void }) {
     const up = () => { swipe = null; };
     const hide = () => { if (document.hidden) game.current?.pause(true); };
     addEventListener("keydown", press);
+    addEventListener("keyup", press);
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
@@ -392,6 +476,7 @@ function Game({ onClose }: { onClose: () => void }) {
     return () => {
       cancelAnimationFrame(frame);
       removeEventListener("keydown", press);
+      removeEventListener("keyup", press);
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up);
@@ -411,21 +496,34 @@ function Game({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <dialog ref={dialog} className={`${room.room} ${styles.room}`} aria-label="Corrida na Mesa" onClose={onClose} onPointerDown={audio.unlock}>
+    <dialog ref={dialog} className={`${room.room} ${styles.room} ${card.arrive}`} aria-label="Corrida na Mesa" onClose={onClose} onPointerDown={audio.unlock}>
       <p className={`${room.hud} ${styles.hud}`}>
-        <span>{hud.cm} cm</span>
-        <span>💧 {hud.drops}</span>
-        <span>Recorde {hud.best}</span>
-        {hud.magnet > 0 && <span className={styles.power}>☀ {hud.magnet}</span>}
-        {hud.spring > 0 && <span className={styles.power}>⇈ {hud.spring}</span>}
-        {hud.chase && <span className={styles.chase}>O gato!</span>}
+        {intro ? <span>{"\u00a0"}</span> : <>
+          <span>{hud.cm} cm</span>
+          <span>💧 {hud.drops}</span>
+          <span>Recorde {hud.best}</span>
+          {hud.magnet > 0 && <span className={styles.power}>☀ {hud.magnet}</span>}
+          {hud.spring > 0 && <span className={styles.power}>⇈ {hud.spring}</span>}
+          {hud.chase && <span className={styles.chase}>O gato!</span>}
+        </>}
         <button type="button" className={styles.sound} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
       </p>
       <div className={room.table}>
-        <div className={styles.frame}>
+        <div className={`${styles.frame} ${card.stage}`}>
           <canvas ref={canvas} className={`${room.court} ${styles.track}`} width={W} height={H} tabIndex={-1}
             aria-label="A joaninha corre pela mesa com a folha da suculenta. Setas ou deslizar: trocar de faixa, pular e abaixar" />
-          {phase !== "running" && (
+          {intro && (
+            <div className={card.intro} onPointerUp={enter}>
+              <h2 className={`${storybook.className} ${styles.logo}`}><span>Corrida</span> <small>na</small> <span>Mesa</span></h2>
+              <p className={card.subtitle}>— A Folha da Suculenta —</p>
+              <div className={card.prologue}>
+                {PROLOGUE.map((line, i) => <p key={line} style={{ "--i": i } as CSSProperties}>{line}</p>)}
+                <p className={card.press} style={{ "--i": PROLOGUE.length } as CSSProperties}>Aperte uma tecla ou toque para correr</p>
+              </div>
+              <button type="button" className={card.skip} onClick={enter}>Pular ›</button>
+            </div>
+          )}
+          {!intro && phase !== "running" && (
             <div className={styles.overlay}>
               {phase === "ready" && <>
                 <p className={styles.title}>Corrida na Mesa</p>
