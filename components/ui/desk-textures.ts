@@ -1,4 +1,5 @@
 import { rng, type Layer } from "@/components/ui/grime";
+import { GUITAR, turnAt } from "./desk-geometry";
 
 // Flat desk layers painted once into 2D canvases, then uploaded as WebGL textures. Sizes are CSS px of the desk.
 // The wood itself is procedural (desk-shaders.ts WOOD); these canvases only carry what sits on it: stains,
@@ -256,9 +257,12 @@ function paintFloor(s: Surface, W: number, H: number, leg: number, drawerHeight:
   paintRug(ctx, fw * 0.18, fh * 0.2, fw * 0.64, fh * 0.6, grain);
   const cable = new Path2D();
   cable.addPath(new Path2D("M44 38 C38 30 30 40 24 34 S14 20 2 24"), new DOMMatrix().scale(fw / 100, fh / 100));
-  s.shadow(2, 3, 3, "#000a", () => { ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.strokeStyle = "#000"; ctx.stroke(cable); });
-  ctx.strokeStyle = "#141413"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.stroke(cable);
-  ctx.strokeStyle = "#ffffff14"; ctx.lineWidth = 1.2; ctx.stroke(cable);
+  const cord = (path: Path2D) => {
+    s.shadow(2, 3, 3, "#000a", () => { ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.strokeStyle = "#000"; ctx.stroke(path); });
+    ctx.strokeStyle = "#141413"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.stroke(path);
+    ctx.strokeStyle = "#ffffff14"; ctx.lineWidth = 1.2; ctx.stroke(path);
+  };
+  cord(cable);
 
   // Lamp projection of a desk-space point onto the floor, in floor canvas px.
   const proj = (x: number, y: number, z: number) => {
@@ -285,6 +289,23 @@ function paintFloor(s: Surface, W: number, H: number, leg: number, drawerHeight:
     ctx.beginPath(); ctx.arc(bt[0], bt[1], b.r, 0, 2 * Math.PI); ctx.fill();
     ctx.lineWidth = b.r * 2; ctx.beginPath(); ctx.moveTo(bf[0], bf[1]); ctx.lineTo(bt[0], bt[1]); ctx.stroke();
   });
+  // Guitar on its back and the amp: contact shadows, the amp's cast, and the cable between them, run under the desk.
+  const fl = ([x, y]: number[]) => [x + fw / 2, fh / 2 - y];
+  const g = guitarAt(W, H, leg), gp = (pt: number[]) => fl(turnAt(pt, [g.x, g.y], g.angle, g.s));
+  const outline = poly(GUITAR.body.map(gp)), neck = poly(GUITAR.neck.map(gp));
+  s.shadow(0, 0, 5, "rgb(0 0 0 / .7)", () => ctx.fill(outline));
+  s.shadow(0, 0, 10, "rgb(0 0 0 / .45)", () => ctx.fill(neck));
+  const a = ampAt(W, H, leg), corners = (z: number) => poly([[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([u, v]) => proj(a.x + u * a.w / 2, a.y + v * a.d / 2, z)));
+  s.shadow(0, 0, 4, "rgb(0 0 0 / .75)", () => ctx.fill(corners(floorZ)));
+  s.shadow(0, 0, 16, "rgb(0 0 0 / .45)", () => {
+    ctx.fill(corners(floorZ + a.h));
+    const [f, t] = [fl([a.x, a.y]), proj(a.x, a.y, floorZ + a.h)];
+    ctx.lineWidth = Math.min(a.w, a.d); ctx.beginPath(); ctx.moveTo(f[0], f[1]); ctx.lineTo(t[0], t[1]); ctx.stroke();
+  });
+  const [jx, jy] = gp(GUITAR.jack), [ex, ey] = fl([a.x - a.w * 0.4, a.y - a.d / 2 - a.w * 0.03 - 4]);
+  const lead = new Path2D(), [c1x, c1y] = fl([-0.42 * W, -0.36 * H]), [c2x, c2y] = fl([0.25 * W, -0.05 * H]);
+  lead.moveTo(jx, jy); lead.bezierCurveTo(c1x, c1y, c2x, c2y, ex, ey);
+  cord(lead);
   for (const ball of ballsAt(W, H)) {
     const [x, y] = [ball.x + fw / 2, fh / 2 - ball.y];
     s.shadow(2, 3, 5, "rgb(0 0 0 / .6)", () => { ctx.beginPath(); ctx.arc(x, y, ball.r * 0.8, 0, 2 * Math.PI); ctx.fill(); });
@@ -294,6 +315,9 @@ function paintFloor(s: Surface, W: number, H: number, leg: number, drawerHeight:
 // Furniture positions shared by the floor shadows and the meshes (desk space).
 export const legsAt = (W: number, H: number) => [-1, 1].flatMap((x) => [0.42, -0.41].map((y) => [x * (W * 0.45 - 12.5), y * H]));
 export const binAt = (W: number, H: number, leg: number) => ({ x: 0.69 * W, y: -0.31 * H, r: 0.06 * W, z: -12 - leg });
+// The guitar lies left of the desk, neck to the back; the amp stands back right, beside the bin.
+export const guitarAt = (W: number, H: number, leg: number) => ({ x: -0.665 * W, y: -0.25 * H, angle: 6, s: 0.5 * W / GUITAR.length, z: -12 - leg });
+export const ampAt = (W: number, H: number, leg: number) => { const w = 0.11 * W; return { x: 0.635 * W, y: 0.4 * H, w, d: 0.075 * W, h: Math.min(0.85 * w, 0.5 * leg), z: -12 - leg }; };
 export const ballsAt = (W: number, H: number) => [{ x: 0.528 * W, y: -0.572 * H, r: W * 0.0143 }, { x: 0.737 * W, y: -0.442 * H, r: W * 0.0121 }];
 
 const load = (src: string) => {
