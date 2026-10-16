@@ -31,7 +31,8 @@ export function createDeskGL(parent: HTMLElement, className: string) {
   canvas.className = className;
   canvas.setAttribute("aria-hidden", "true");
   const dpr = Math.min(devicePixelRatio, 2);
-  const renderer = new Renderer({ canvas, dpr, alpha: true, premultipliedAlpha: true, antialias: true, powerPreference: "high-performance" });
+  // Touch screens draw the canvas at 1.5x: on a mid-range phone the 2x frame was what held scrolling back. Textures keep `dpr`.
+  const renderer = new Renderer({ canvas, dpr: matchMedia("(pointer: coarse)").matches ? Math.min(dpr, 1.5) : dpr, alpha: true, premultipliedAlpha: true, antialias: true, powerPreference: "high-performance" });
   const gl = renderer.gl;
   if (!gl) return null;
   parent.prepend(canvas);
