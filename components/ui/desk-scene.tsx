@@ -102,8 +102,8 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
         "--sticker-scale": 1 + progress * 0.3,
         "--sticker-opacity": fade,
       });
-      // Faded out, the sticker layer would still be composited every frame; hidden, it costs nothing.
-      stickers.style.visibility = fade > 0 ? "" : "hidden";
+      // Faded out, the sticker layer stays: hiding it dropped its tiles, and scrolling back up re-rasterized all of it
+      // (~60ms of GPU on a mid-range phone) and stalled the scroll animation for ~100ms.
       gl?.draw({
         width: viewport.clientWidth, height, desk: width, leg,
         mobile: mobile.matches, entry, pitch, turn, floor: overhead, dive: shift, glint: aim === "cup" ? 1 - ease((dive - 0.45) / 0.45) : 1,
