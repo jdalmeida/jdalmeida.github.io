@@ -6,6 +6,8 @@ import PaperToss from "./paper-toss";
 import CoffeeRun from "./coffee-run";
 import DeskRun from "./desk-run";
 import { createDeskGL } from "./desk-gl";
+import { binAt } from "./desk-textures";
+import type { DiveRequest, DiveTarget } from "./desk-dive";
 import { track } from "@/lib/track";
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
@@ -14,9 +16,6 @@ const ease = (value: number) => {
   return t * t * (3 - 2 * t);
 };
 const DEG = Math.PI / 180, PERSPECTIVE = 1400; // `.space`'s perspective, which desk-gl.ts's camera mirrors
-
-// A game on the desk asks for the camera to go into the mug (`into`) or back out; `done` runs when it gets there.
-export type DiveRequest = { into: boolean; done?: () => void; handled?: boolean };
 
 export default function DeskScene({ card, stickers, notebook, credentials }: { card: ReactNode; stickers: ReactNode; notebook: ReactNode; credentials: ReactNode }) {
   const scene = useRef<HTMLElement>(null);
@@ -35,7 +34,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
     else for (const [key, value] of [["--cup-x", gl.cup.x], ["--cup-y", gl.cup.y], ["--cup-d", gl.cup.d]] as const) surface.style.setProperty(key, `${value * 100}%`);
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
     const mobile = matchMedia("(max-width: 640px) and (orientation: portrait)");
-    let frame = 0, drawn = "", arrived = false, dive = 0, diving = 0;
+    let frame = 0, drawn = "", arrived = false, dive = 0, diving = 0, aim: DiveTarget = "cup";
 
     function update() {
       frame = 0;
@@ -44,7 +43,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
       const width = surface.offsetWidth;
       const cardHeight = card.offsetHeight;
       // Past the scene (or between identical frames) nothing moves: skip the style writes and the redraw.
-      const key = `${progress}|${width}|${viewport.clientWidth}|${height}|${mobile.matches}|${dive}`;
+      const key = `${progress}|${width}|${viewport.clientWidth}|${height}|${mobile.matches}|${dive}|${aim}`;
       if (key === drawn) return;
       drawn = key;
       const arrival = ease(progress / 0.5);
@@ -54,14 +53,22 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
       const entry = height * 1.25 * (1 - arrival);
       const pitch = 78 * (1 - overhead);
       const turn = mobile.matches ? 90 * overhead : 0;
-      // The dive moves the camera from where it sits straight down to just over the coffee, close enough for it to fill
+      const leg = Math.min(250, Math.max(140, innerWidth * 0.22));
+      // The dive moves the camera from where it sits straight down to just over its object, close enough for it to fill
       // the screen; done as the opposite shift of the whole world, so the CSS desk and the canvas move as one.
       let shift: [number, number, number] = [0, 0, 0];
       if (dive && gl) {
-        const D = gl.cup.d * width, c = Math.cos(turn * DEG), s = Math.sin(turn * DEG), cp = Math.cos(pitch * DEG), sp = Math.sin(pitch * DEG);
-        const x0 = (gl.cup.x - 0.5) * width, y0 = (0.5 - gl.cup.y) * (width / 1.85), z0 = 0.68 * D; // coffee surface, desk space (y up)
+        const c = Math.cos(turn * DEG), s = Math.sin(turn * DEG), cp = Math.cos(pitch * DEG), sp = Math.sin(pitch * DEG);
+        // What it dives to, in desk space (y up), and the radius around it that should fill the screen.
+        const [x0, y0, z0, r] = (() => {
+          const H = width / 1.85;
+          if (aim === "bin") { const b = binAt(width, H, leg); return [b.x, b.y, b.z + 0.4 * leg, 0.85 * b.r]; } // into the bin, over its rim
+          if (aim === "plant") { const r = width * 0.032; return [(0.052 - 0.5) * width, (0.5 - 0.1) * H, 0.9 * r, 1.25 * r]; } // the rosette
+          const D = gl.cup.d * width;
+          return [(gl.cup.x - 0.5) * width, (0.5 - gl.cup.y) * H, 0.68 * D, 0.445 * D]; // the coffee surface
+        })();
         const x = x0 * c + y0 * s, y1 = -x0 * s + y0 * c, y = y1 * cp + z0 * sp - entry, z = -y1 * sp + z0 * cp;
-        const stop = Math.max(24, (0.445 * D * PERSPECTIVE) / (0.5 * Math.hypot(viewport.clientWidth, height)));
+        const stop = Math.max(24, (r * PERSPECTIVE) / (0.5 * Math.hypot(viewport.clientWidth, height)));
         shift = [-dive * x, -dive * y, -dive * (z + stop - PERSPECTIVE)];
       }
       // Each element gets only its own variables, so a scroll frame restyles three small subtrees, not the whole scene.
@@ -98,8 +105,8 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
       // Faded out, the sticker layer would still be composited every frame; hidden, it costs nothing.
       stickers.style.visibility = fade > 0 ? "" : "hidden";
       gl?.draw({
-        width: viewport.clientWidth, height, desk: width, leg: Math.min(250, Math.max(140, innerWidth * 0.22)),
-        mobile: mobile.matches, entry, pitch, turn, floor: overhead, dive: shift, glint: 1 - ease((dive - 0.45) / 0.45),
+        width: viewport.clientWidth, height, desk: width, leg,
+        mobile: mobile.matches, entry, pitch, turn, floor: overhead, dive: shift, glint: aim === "cup" ? 1 - ease((dive - 0.45) / 0.45) : 1,
       });
       root.dataset.diving = String(dive > 0);
       root.dataset.started = String(progress > 0.03);
@@ -112,6 +119,7 @@ export default function DeskScene({ card, stickers, notebook, credentials }: { c
       if (!gl || motion.matches) return; // flat desk or reduced motion: the caller opens right away
       request.handled = true;
       cancelAnimationFrame(diving);
+      aim = request.target;
       const from = dive, to = request.into ? 1 : 0, start = performance.now(), ms = request.into ? 1500 : 1100;
       const tick = (now: number) => {
         const t = clamp((now - start) / ms);

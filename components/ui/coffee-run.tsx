@@ -8,7 +8,7 @@ import { track } from "@/lib/track";
 import { ARENA, BOSS_HP, HP, PW, STAGES, T, WIND, beanShare, fresh, lash, loot, merge, retry, step, tileAt, validProgress, type Game, type Input, type Progress } from "./platformer";
 import room from "./paper-toss.module.css";
 import * as audio from "./castle-audio";
-import type { DiveRequest } from "./desk-scene";
+import { dive } from "./desk-dive";
 import { device } from "./stamp";
 import styles from "./coffee-run.module.css";
 
@@ -500,16 +500,11 @@ function Castle({ onClose }: { onClose: () => void }) {
 export default function CoffeeRun() {
   const [open, setOpen] = useState(false);
   const mug = useRef<HTMLButtonElement>(null);
-  const dive = (into: boolean, done?: () => void) => {
-    const request: DiveRequest = { into, done };
-    mug.current?.dispatchEvent(new CustomEvent("desk-dive", { bubbles: true, detail: request }));
-    if (!request.handled) done?.();
-  };
   return (
     <>
       <span className={styles.steam} aria-hidden="true"><span /><span /><span /></span>
-      <button ref={mug} type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => { audio.unlock(); dive(true, () => setOpen(true)); }} />
-      {open && <Castle onClose={() => { setOpen(false); dive(false); }} />}
+      <button ref={mug} type="button" className={styles.mug} aria-label="Caneca de café" onClick={() => { audio.unlock(); dive(mug.current, "cup", true, () => setOpen(true)); }} />
+      {open && <Castle onClose={() => { setOpen(false); dive(mug.current, "cup", false); }} />}
     </>
   );
 }

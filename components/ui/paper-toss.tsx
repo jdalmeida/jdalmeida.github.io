@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getScoreboard, setScoreName, submitScore } from "@/lib/stamps";
 import { track } from "@/lib/track";
+import { dive } from "./desk-dive";
 import * as audio from "./paper-audio";
 import { device, SCORE_TIERS, TIERS } from "./stamp";
 import styles from "./paper-toss.module.css";
@@ -228,12 +229,14 @@ function Game({ onClose }: { onClose: () => void }) {
 }
 
 // Easter egg: the waste bin beside the desk (drawn in WebGL) gets an invisible button on top that opens paper-ball basketball.
+// The desk camera dives into the bin first, and climbs back out when the game closes.
 export default function PaperToss() {
   const [open, setOpen] = useState(false);
+  const bin = useRef<HTMLButtonElement>(null);
   return (
     <>
-      <button type="button" className={styles.bin} aria-label="Lata de lixo" onClick={() => { audio.unlock(); setOpen(true); }} />
-      {open && <Game onClose={() => setOpen(false)} />}
+      <button ref={bin} type="button" className={styles.bin} aria-label="Lata de lixo" onClick={() => { audio.unlock(); dive(bin.current, "bin", true, () => setOpen(true)); }} />
+      {open && <Game onClose={() => { setOpen(false); dive(bin.current, "bin", false); }} />}
     </>
   );
 }
