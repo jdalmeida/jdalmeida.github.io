@@ -20,6 +20,16 @@ const LOUNGE: Song = {
   ],
 };
 export const play = () => chip.play(LOUNGE);
+// Title scene: a ballpark organ "charge" in F, for the final of the after-hours paper-ball league. Loops until skipped.
+const TITLE: Song = {
+  step: 60 / 132 / 2,
+  tracks: [
+    { wave: "square", vol: 0.04, notes: "f4 - a4 - c5 - f5 - e5 - c5 - d5 - - - bb4 - d5 - f5 - bb5 - a5 - f5 - g5 - - - c5 - e5 - g5 - c6 - bb5 - g5 - a5 - f5 - d5 - f5 - e5 - c5 - f5 - - - . - - -" },
+    { wave: "triangle", vol: 0.12, notes: "f2 . c3 . f2 . c3 . c2 . g2 . d2 . a2 . bb1 . f2 . bb1 . f2 . c2 . g2 . c2 . e2 . c2 . g2 . c2 . g2 . c2 . bb2 . f2 . a2 . bb1 . d2 . c2 . e2 . f2 . c2 . f2 . . ." },
+    { wave: "drums", vol: 1, notes: "k . h k s . h . k . h k s . h h k . h k s . h . k . h k s s s s k . h k s . h . k . h k s . h h k . h k s . h . k . s . s s s s" },
+  ],
+};
+export const title = () => chip.play(TITLE);
 export const stop = chip.stop;
 
 // --- Effects -------------------------------------------------------------------------------------------------------

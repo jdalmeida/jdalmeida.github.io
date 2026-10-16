@@ -44,3 +44,18 @@
   background: #0008; color: #eee; font: 500 .9rem var(--font-geist-sans), sans-serif; text-transform: none; letter-spacing: 0; cursor: pointer;
 }
 .back:hover, .back:focus-visible { background: #000c; border-color: #fff9; }
+
+/* The frame carries the size so the title card (coffee-run.module.css's .intro) can size its text off it (container units). */
+.stage { position: relative; width: min(94vw, calc((100svh - 9rem) * 1.6)); container-type: inline-size; }
+.stage .court { width: 100%; display: block; }
+@media (min-width: 900px) { .stage { width: min(calc(94vw - 16.5rem), calc((100svh - 9rem) * 1.6)); } }
+/* The title bounces in like a ball off the backboard. */
+.logo {
+  margin: 0; font-size: 8.5cqi; line-height: 1; font-weight: 400; letter-spacing: .02em; text-transform: none;
+  background: linear-gradient(#fff8e6 20%, #f2a341 55%, #b8441f 90%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 .4cqi 0 #2a1408) drop-shadow(0 0 1.4cqi #f2a34188);
+  animation: logo 1.4s 1.4s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+.logo small { font-size: .5em; }
+@keyframes logo { from { opacity: 0; transform: translateY(-25cqi) scale(.6); } }
+@media (prefers-reduced-motion: reduce) { .logo { animation: none; } }

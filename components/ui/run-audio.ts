@@ -9,7 +9,16 @@ export const muted = () => chip.muted(MUTE);
 export const setMuted = (off: boolean) => chip.setMuted(MUTE, off);
 
 // --- Music ---------------------------------------------------------------------------------------------------------
-const SONGS: Record<"garden" | "run", Song> = {
+const SONGS: Record<"title" | "garden" | "run", Song> = {
+  // Title scene: sunrise on the windowsill, a slow music-box tune in G over rolling arpeggios.
+  title: {
+    step: 60 / 76 / 2,
+    tracks: [
+      { wave: "square", vol: 0.035, notes: "d5 - g5 - b5 - a5 g5 e5 - - - d5 - - - c5 - e5 - a5 - g5 f#5 d5 - - - - - . . b4 - d5 - g5 - f#5 e5 c5 - e5 - d5 - c5 b4 a4 - c5 - b4 - a4 f#4 g4 - - - - - . ." },
+      { wave: "sine", vol: 0.05, notes: ". . . . . . d6 . . . . . . . g5 . . . . . . . e6 . . . . . a5 . f#5 . . . . . . . d6 . . . . . . . e5 . . . . . . . c6 . . . . . d5 . b5 ." },
+      { wave: "triangle", vol: 0.1, notes: "g2 - d3 - b3 - d3 - c3 - g3 - e3 - g3 - a2 - e3 - c3 - e3 - d3 - a3 - f#3 - a3 - g2 - d3 - b2 - d3 - c3 - g3 - e3 - g3 - d3 - a3 - f#3 - c3 - g2 - d3 - g3 - - -" },
+    ],
+  },
   // Before the run and after it: a lazy G-major tune for a sunny windowsill.
   garden: {
     step: 60 / 92 / 2,

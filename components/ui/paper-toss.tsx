@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Bungee } from "next/font/google";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { getScoreboard, setScoreName, submitScore } from "@/lib/stamps";
 import { track } from "@/lib/track";
 import { dive } from "./desk-dive";
 import * as audio from "./paper-audio";
 import { device, SCORE_TIERS, TIERS } from "./stamp";
 import styles from "./paper-toss.module.css";
+import card from "./coffee-run.module.css";
+
+// Scoreboard display face for the title card, loaded only with the game.
+const arena = Bungee({ subsets: ["latin"], weight: "400" });
 
 // Playfield in canvas px; CSS scales it up with `image-rendering: pixelated`. Speeds are px/s, accelerations px/s².
 const W = 160, H = 100, FLOOR = 90, G = 150, R = 3, PULL = 40, POWER = 4;
@@ -77,6 +82,62 @@ function draw(ctx: CanvasRenderingContext2D, b: Ball, pull: { x: number; y: numb
   ctx.fillStyle = "#8b8d88"; ctx.fillRect(CAN.left - 1, CAN.top - 1, CAN.right - CAN.left + 2, 2);
 }
 
+const ease = (x: number) => { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); };
+// Fixed pseudo-random numbers, so city lights and paper scraps stay put between frames.
+const hash = (i: number) => { const x = Math.sin(i * 127.1) * 43758.5453; return x - Math.floor(x); };
+// The demo throw: launched every PERIOD seconds from START, it drops into the can after FLIGHT seconds (no wind).
+const PERIOD = 2.4, LAUNCH = 0.3, FLIGHT = 1.1, AIM = (CAN.left + CAN.right) / 2;
+const VX = (AIM - START.x) / FLIGHT, VY = (CAN.top - START.y - (G / 2) * FLIGHT * FLIGHT) / FLIGHT;
+
+// Title scene: out of the bin, the office after hours. The city lights up the window, a lamp spots the can, scraps of
+// paper drift down and a ball keeps swishing in. Drawn over `draw`'s room, so the court is the one you'll play on.
+// `t` is seconds since the dive; `calm` drops motion.
+function drawIntro(ctx: CanvasRenderingContext2D, t: number, calm: boolean) {
+  const rect = (x: number, y: number, w: number, h: number, color: string) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
+  const u = calm ? LAUNCH + FLIGHT / 2 : t % PERIOD, f = Math.max(0, u - LAUNCH);
+  const ball = fresh();
+  if (f > FLIGHT) Object.assign(ball, { x: AIM, y: Math.min(FLOOR - R, CAN.top + 50 * (f - FLIGHT)) });
+  else if (f > 0) Object.assign(ball, { x: START.x + VX * f, y: START.y + VY * f + (G / 2) * f * f });
+  draw(ctx, ball, null);
+
+  // The window: night sky, a moon, the city's lit windows blinking on and off.
+  rect(34, 8, 64, 42, "#1e1d1a"); rect(36, 10, 60, 38, "#0f1a2b"); rect(36, 34, 60, 14, "#14223a");
+  rect(84, 14, 4, 4, "#f4ecd2"); rect(85, 13, 2, 1, "#f4ecd2"); rect(83, 15, 1, 2, "#f4ecd2");
+  for (let i = 0; i < 9; i++) {
+    const x = 36 + i * 7, top = 26 + Math.round(hash(i) * 12);
+    rect(x, top, 6, 48 - top, "#0a1120");
+    for (let y = top + 2; y < 46; y += 3) for (let k = 0; k < 2; k++) if (hash(i * 31 + y * 7 + k + Math.floor(calm ? 0 : t / 3 + hash(y + i))) > 0.55) rect(x + 1 + k * 3, y, 1, 1, "#f2c94c");
+  }
+  rect(65, 10, 2, 38, "#1e1d1a"); rect(36, 28, 60, 1, "#1e1d1a");
+
+  // A desk lamp's cone on the can, swaying a little.
+  ctx.globalAlpha = 0.08;
+  const aim = AIM + (calm ? 0 : Math.sin(t * 1.3) * 4);
+  for (let y = 0; y < FLOOR; y++) { const k = y / FLOOR, half = 3 + 18 * k; rect(140 + (aim - 140) * k - half, y, half * 2, 1, "#fff0c4"); }
+  ctx.globalAlpha = 1;
+
+  // Scraps of paper drifting down like confetti.
+  for (let i = 0; i < 14; i++) {
+    const y = calm ? hash(i + 5) * FLOOR : ((t * (6 + hash(i) * 6) + hash(i + 5) * 110) % 110) - 10;
+    rect(hash(i + 9) * W + (calm ? 0 : Math.sin(t * 2 + i) * 3), y, 2, 1, i % 2 ? "#e3ddcf" : "#a9a28f");
+  }
+  // Swish: a sparkle over the rim as the ball drops in.
+  if (!calm && f > FLIGHT && f < FLIGHT + 0.4) for (const [dx, dy] of [[-8, -4], [8, -5], [-4, -9], [5, -10]]) rect(AIM + dx, CAN.top + dy - (f - FLIGHT) * 10, 1, 1, "#fff3b0");
+
+  // Out of the bin: the room opens up from the can's mouth.
+  if (!calm && t < 1.6) {
+    ctx.fillStyle = "#000"; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(AIM, CAN.top, 4 + 190 * ease(t / 1.5), 0, Math.PI * 2, true); ctx.fill();
+  }
+  ctx.globalAlpha = 0.35; rect(0, 0, W, 2, "#000"); rect(0, H - 2, W, 2, "#000"); rect(0, 0, 2, H, "#000"); rect(W - 2, 0, 2, H, "#000"); ctx.globalAlpha = 1;
+}
+
+// The prologue, one caption at a time under the title (timed in coffee-run.module.css: 3.5s in, 3s each).
+const PROLOGUE = [
+  "Sexta, 18h. O escritório esvaziou, mas a lixeira do canto ficou de olho.",
+  "Hoje é a final da liga de basquete de papel.",
+  "Só você, uma bolinha amassada e o vento do ar-condicionado.",
+];
+
 // Sounds come from what changed in a step, so `step` stays pure. The rim and the bin's sides are told apart from the
 // floor by where the ball is; any kick beyond gravity and wind means it hit something.
 function listen(b: Ball, was: Ball, dt: number, wind: number) {
@@ -92,6 +153,10 @@ type Board = Awaited<ReturnType<typeof getScoreboard>>;
 function Game({ onClose }: { onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
+  // Opening: the title scene (the desk camera has just dived into the bin) plays until a key or tap.
+  const [intro, setIntro] = useState(true);
+  const introRef = useRef(intro);
+  const enter = () => { if (!introRef.current) return; introRef.current = false; setIntro(false); audio.sfx.basket(1); audio.play(); };
   const [hud, setHud] = useState({ score: 0, best: 0, wind: 0 });
   const [board, setBoard] = useState<Board>();
   const [note, setNote] = useState("");
@@ -100,7 +165,7 @@ function Game({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     audio.unlock();
-    audio.play();
+    audio.title();
     // M toggles the sound anywhere in the game (but not while typing a name).
     const mute = (e: KeyboardEvent) => { if (e.code === "KeyM" && !e.repeat && !(e.target instanceof HTMLInputElement)) toggleSound(); };
     addEventListener("keydown", mute);
@@ -112,6 +177,7 @@ function Game({ onClose }: { onClose: () => void }) {
     const el = canvas.current!, ctx = el.getContext("2d")!;
     // First throw is windless; each later one gets a new gust.
     let ball = fresh(), wind = 0, score = 0, best = 0, frame = 0, then = performance.now(), throws = 0, max = 0, cheered = false;
+    const opened = then, calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
     track("game", "paper-toss");
     let drag: { x: number; y: number; pull: { x: number; y: number } } | null = null;
     const load = () => getScoreboard(device()).then((b) => {
@@ -141,7 +207,8 @@ function Game({ onClose }: { onClose: () => void }) {
         if (wind) audio.sfx.wind(Math.abs(wind) / 30);
         setHud({ score, best, wind });
       }
-      draw(ctx, ball, drag?.pull ?? null);
+      if (introRef.current) drawIntro(ctx, (now - opened) / 1000, calm);
+      else draw(ctx, ball, drag?.pull ?? null);
       frame = requestAnimationFrame(tick);
     }
     frame = requestAnimationFrame(tick);
@@ -171,11 +238,21 @@ function Game({ onClose }: { onClose: () => void }) {
       audio.sfx.throw(Math.hypot(x, y) / PULL);
       throws++;
     };
+    // Any key but Escape (closes) and Tab ends the title, on keyup, so it can't also press a button behind it.
+    const skip = (e: KeyboardEvent) => {
+      if (!introRef.current || e.code === "Escape" || e.code === "Tab") return;
+      e.preventDefault();
+      if (e.type === "keyup") enter();
+    };
+    addEventListener("keydown", skip);
+    addEventListener("keyup", skip);
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
     el.addEventListener("pointerup", up);
     el.addEventListener("pointercancel", up);
     return () => {
+      removeEventListener("keydown", skip);
+      removeEventListener("keyup", skip);
       if (throws) track("score", "paper-toss", { throws, max });
       cancelAnimationFrame(frame);
       el.removeEventListener("pointerdown", down);
@@ -196,15 +273,30 @@ function Game({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <dialog ref={dialog} className={styles.room} aria-label="Basquete de papel" onClose={onClose} onPointerDown={audio.unlock}>
+    <dialog ref={dialog} className={`${styles.room} ${card.arrive}`} aria-label="Basquete de papel" onClose={onClose} onPointerDown={audio.unlock}>
       <p className={styles.hud}>
-        <span>Cestas {hud.score}</span>
-        <span>Recorde {hud.best}</span>
-        <span>Vento {hud.wind < 0 ? "←" : hud.wind > 0 ? "→" : "·"} {Math.abs(hud.wind / 10).toFixed(1)}</span>
+        {intro ? <span>{"\u00a0"}</span> : <>
+          <span>Cestas {hud.score}</span>
+          <span>Recorde {hud.best}</span>
+          <span>Vento {hud.wind < 0 ? "←" : hud.wind > 0 ? "→" : "·"} {Math.abs(hud.wind / 10).toFixed(1)}</span>
+        </>}
         <button type="button" className={styles.sound} aria-pressed={sound} onClick={toggleSound} title="Som (M)">{sound ? "♪ Som" : "♪ Mudo"}</button>
       </p>
       <div className={styles.table}>
-        <canvas ref={canvas} className={styles.court} width={W} height={H} aria-label="Arraste para trás e solte para arremessar a bolinha de papel na lata de lixo" />
+        <div className={styles.stage}>
+          <canvas ref={canvas} className={styles.court} width={W} height={H} aria-label="Arraste para trás e solte para arremessar a bolinha de papel na lata de lixo" />
+          {intro && (
+            <div className={card.intro} onPointerUp={enter}>
+              <h2 className={`${arena.className} ${styles.logo}`}>Basquete <small>de</small> Papel</h2>
+              <p className={card.subtitle}>— A Final do Expediente —</p>
+              <div className={card.prologue}>
+                {PROLOGUE.map((line, i) => <p key={line} style={{ "--i": i } as CSSProperties}>{line}</p>)}
+                <p className={card.press} style={{ "--i": PROLOGUE.length } as CSSProperties}>Aperte uma tecla ou toque para arremessar</p>
+              </div>
+              <button type="button" className={card.skip} onClick={enter}>Pular ›</button>
+            </div>
+          )}
+        </div>
         <aside className={styles.board}>
           <h2>Top 10</h2>
           <ol>
