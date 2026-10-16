@@ -35,3 +35,48 @@
 .bar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: .5rem; font-size: 12px; }
 .link { width: 100%; font-size: 11px !important; }
 .legal { opacity: .6; text-transform: none; letter-spacing: .04em; font-size: 11px; text-align: center; }
+
+/* Out of the neck the desk camera dived down: the room fades in over it. */
+.arrive[open] { animation: arrive .5s ease-out both; }
+@keyframes arrive { from { opacity: 0; } }
+
+/* The frame carries the size so the title card can size its text off it (container units). */
+.stage { width: min(94vw, calc((100svh - 10rem) * .75)); container-type: inline-size; }
+.stage canvas { width: 100%; display: block; }
+@media (min-width: 900px) { .stage { width: min(calc(94vw - 16.5rem), calc((100svh - 10rem) * .75)); } }
+/* Title card over the intro scene, as in the café castle (coffee-run.module.css), sized for the portrait neck. */
+.intro {
+  position: absolute; inset: 4px; display: flex; flex-direction: column; align-items: center; padding-top: 7cqi;
+  cursor: pointer; text-transform: none; letter-spacing: 0; user-select: none; -webkit-user-select: none;
+}
+.title {
+  display: flex; flex-direction: column; align-items: center; margin: 0; font-size: 17cqi; line-height: .9; font-weight: 400; text-transform: none;
+  background: linear-gradient(#fff3d0 10%, #f2c94c 40%, #e5534b 70%, #5a0f1c 95%); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 .5cqi 0 #1a0508) drop-shadow(0 0 2.4cqi #e5534b88);
+  animation: title 2.2s 1.6s cubic-bezier(.2, .7, .2, 1) both;
+}
+.title small { font-size: .45em; line-height: 1.1; }
+.subtitle { margin: 2cqi 0 0; font-size: 3.6cqi; letter-spacing: .35em; text-transform: uppercase; color: #e8d9bd; animation: fade 1.5s 3s both; }
+@keyframes title { from { opacity: 0; transform: scale(1.4) rotate(-4deg); filter: blur(1.5cqi) drop-shadow(0 0 0 #0000); } }
+@keyframes fade { from { opacity: 0; } }
+.prologue { position: relative; margin-top: auto; width: 100%; height: 30cqi; }
+.prologue p {
+  position: absolute; inset: auto 0 0; margin: 0; padding: 3cqi 7cqi 5cqi; font-size: 4.4cqi; line-height: 1.35; text-align: center;
+  color: #f0e4cc; text-shadow: 0 .3cqi 0 #000, 0 0 2cqi #000; opacity: 0;
+  background: linear-gradient(#0000, #000c 40%);
+  animation: caption 3.2s calc(4s + var(--i) * 3.2s) both;
+}
+@keyframes caption { 0%, 100% { opacity: 0; translate: 0 1cqi; } 15%, 85% { opacity: 1; translate: 0 0; } }
+.prologue .press { color: #f2c94c; text-transform: uppercase; letter-spacing: .2em; animation: fade 1s calc(4s + var(--i) * 3.2s) both, blink 1.2s calc(5s + var(--i) * 3.2s) steps(2, jump-none) infinite; opacity: 1; }
+@keyframes blink { 50% { opacity: .2; } }
+.skip {
+  position: absolute; right: 2.5cqi; top: 2.5cqi; padding: .3rem .7rem; border: 1px solid #e3ddcf44; border-radius: 999px;
+  background: #0006; color: #e3ddcfaa; font: 10px var(--font-geist-mono), monospace; letter-spacing: .1em; text-transform: uppercase; cursor: pointer;
+}
+.skip:hover, .skip:focus-visible { color: #e3ddcf; border-color: #e3ddcf; outline: none; }
+@media (prefers-reduced-motion: reduce) {
+  .arrive[open], .title, .subtitle { animation: none; }
+  .prologue { height: auto; display: flex; flex-direction: column; background: linear-gradient(#0000, #000c 30%); }
+  .prologue p { position: static; padding: .8cqi 7cqi; opacity: 1; animation: none; background: none; }
+  .prologue .press { animation: none; padding-bottom: 4cqi; }
+}

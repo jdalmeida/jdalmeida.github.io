@@ -27,6 +27,18 @@ export function play(jam: Jam, lead = false) {
   chip.play(song);
 }
 
+// Title scene: a slow, menacing blues riff in E with a flat fifth, half-time drums and a pedal bass. Loops until skipped.
+const TITLE: Song = {
+  step: 60 / 84 / 2,
+  tracks: [
+    { wave: "square", vol: 0.045, notes: "e3 - - g3 a3 - bb3 a3 g3 - e3 - d3 - e3 - e3 - - g3 a3 - bb3 - b3 - d4 - e4 - - - e3 - - g3 a3 - bb3 a3 g3 - e3 - d3 - b2 - e3 - - - - - - - . . . . e4 d4 b3 a3" },
+    { wave: "sawtooth", vol: 0.018, notes: "e3 - - - - - - - - - - - - - - - e3 - - - - - - - - - - - - - - - e3 - - - - - - - - - - - - - - - e3 - - - - - - - - - - - - - - -" },
+    { wave: "triangle", vol: 0.13, notes: "e2 . e2 . e2 . e2 . e2 . e2 . e2 . e2 . e2 . e2 . e2 . e2 . a2 . b2 . e2 . e2 . e2 . e2 . e2 . e2 . e2 . b1 . e2 . e2 . e2 . e2 . e2 . e2 . a2 . b2 ." },
+    { wave: "drums", vol: 1, notes: "k . h . s . h . k k h . s . h h k . h . s . h . k k h . s s s s k . h . s . h . k k h . s . h h k . h . s . h . k . . . s s s s" },
+  ],
+};
+export const title = () => chip.play(TITLE);
+
 // A hit note: two detuned squares and a saw an octave down, a little crunch like a cranked practice amp.
 export function pluck(pitch: number, seconds: number) {
   const f = hz(midi(SCALE[pitch]));
@@ -39,6 +51,8 @@ export function pluck(pitch: number, seconds: number) {
 }
 
 export const sfx = {
+  // Skipping the title: a power chord stab.
+  select: () => once("select", (t) => { tone("square", t, 0.25, 0.05, hz(midi("e3"))); tone("square", t, 0.25, 0.04, hz(midi("b3"))); tone("sawtooth", t, 0.25, 0.03, hz(midi("e2"))); }),
   // A strum at nothing, or a missed note: a muted, scratchy plec.
   plec: () => once("plec", (t) => { hiss(t, 0.06, 0.12, "bandpass", 1800, 600); tone("square", t, 0.05, 0.03, 110, 80); }),
   miss: () => once("miss", (t) => tone("sawtooth", t, 0.18, 0.04, 140, 90)),
