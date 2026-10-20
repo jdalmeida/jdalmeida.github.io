@@ -43,9 +43,9 @@
   transform: translate3d(var(--dive-x), var(--dive-y), var(--dive-z));
   transform-style: preserve-3d;
   will-change: transform;
-  pointer-events: auto;
 }
-.flight { transform: translateZ(1px); transform-style: preserve-3d; will-change: transform; }
+/* Hit-testable here, not on .card: .card keeps the unscaled card's box, which covers the notebook and credentials. */
+.flight { transform: translateZ(1px); transform-style: preserve-3d; will-change: transform; pointer-events: auto; }
 .scrollCue {
   position: absolute; bottom: max(28px, env(safe-area-inset-bottom)); left: 50%; translate: -50% 0;
   display: flex; align-items: center; gap: 16px; padding: 12px 20px;
